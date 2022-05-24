@@ -2343,7 +2343,8 @@ int rtklib_pvt_gs::work(int noutput_items, gr_vector_const_void_star& input_item
                                                 {
                                                     std::cout << "First position fix at " << d_user_pvt_solver->get_position_UTC_time() << " UTC";
                                                 }
-                                            std::cout << " is Lat = " << d_user_pvt_solver->get_latitude() << " [deg], Long = " << d_user_pvt_solver->get_longitude()
+//                                            std::cout << " is Lat = " << d_user_pvt_solver->get_latitude() << " [deg], Long = " << d_user_pvt_solver->get_longitude()
+                                            std::cout << " is Lat = DATA EXPUNGED [deg], Long = DATA EXPUNGED"
                                                       << " [deg], Height= " << d_user_pvt_solver->get_height() << " [m]\n";
                                             d_ttff_msgbuf ttff;
                                             ttff.mtype = 1;
@@ -2430,8 +2431,9 @@ int rtklib_pvt_gs::work(int noutput_items, gr_vector_const_void_star& input_item
                                 << "Position at " << time_solution << UTC_solution_str
                                 << " using " << d_user_pvt_solver->get_num_valid_observations()
                                 << std::fixed << std::setprecision(9)
-                                << " observations is Lat = " << d_user_pvt_solver->get_latitude() << " [deg], Long = " << d_user_pvt_solver->get_longitude()
-                                << std::fixed << std::setprecision(3)
+//                                << " observations is Lat = " << d_user_pvt_solver->get_latitude() << " [deg], Long = " << d_user_pvt_solver->get_longitude()
+//                                << std::fixed << std::setprecision(3)
+                                << " observations is Lat = DATA EXPUNGED [deg], Long = DATA EXPUNGED "
                                 << " [deg], Height = " << d_user_pvt_solver->get_height() << " [m]" << TEXT_RESET << '\n';
 
                             std::cout << std::setprecision(ss);
