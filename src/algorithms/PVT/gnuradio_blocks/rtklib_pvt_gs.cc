@@ -2387,7 +2387,8 @@ int rtklib_pvt_gs::work(int noutput_items, gr_vector_const_void_star& input_item
                                                 {
                                                     std::cout << "First position fix at " << d_user_pvt_solver->get_position_UTC_time() << " UTC";
                                                 }
-                                            std::cout << " is Lat = " << d_user_pvt_solver->get_latitude() << " [deg], Long = " << d_user_pvt_solver->get_longitude()
+                                            // std::cout << " is Lat = " << d_user_pvt_solver->get_latitude() << " [deg], Long = " << d_user_pvt_solver->get_longitude()
+                                            std::cout << " is Lat = DATA EXPUNGED [deg], Long = DATA EXPUNGED"
                                                       << " [deg], Height= " << d_user_pvt_solver->get_height() << " [m]\n";
                                             d_ttff_msgbuf ttff;
                                             ttff.mtype = 1;
@@ -2473,8 +2474,9 @@ int rtklib_pvt_gs::work(int noutput_items, gr_vector_const_void_star& input_item
                                 << TEXT_BOLD_GREEN
                                 << "Position at " << time_solution << UTC_solution_str
                                 << " using " << d_user_pvt_solver->get_num_valid_observations() << " observations is Lat = "
-                                << std::fixed << std::setprecision(6) << d_user_pvt_solver->get_latitude()
-                                << " [deg], Long = " << d_user_pvt_solver->get_longitude() << " [deg], Height = "
+                                // << std::fixed << std::setprecision(6) << d_user_pvt_solver->get_latitude()
+                                // << " [deg], Long = " << d_user_pvt_solver->get_longitude() << " [deg], Height = "
+                                << "DATA EXPUNGED [deg], Long = DATA EXPUNGED  [deg], Height = "
                                 << std::fixed << std::setprecision(2) << d_user_pvt_solver->get_height() << std::setprecision(ss) << " [m]" << TEXT_RESET << std::endl;
                             DLOG(INFO) << "RX clock offset: " << d_user_pvt_solver->get_time_offset_s() << "[s]";
 
