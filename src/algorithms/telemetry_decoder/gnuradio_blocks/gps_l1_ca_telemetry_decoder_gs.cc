@@ -350,6 +350,7 @@ bool gps_l1_ca_telemetry_decoder_gs::decode_subframe(bool flag_invert)
             const int32_t subframe_ID = d_nav.subframe_decoder(subframe.data());  // decode the subframe
             if (subframe_ID > 0 && subframe_ID < 6)
                 {
+                    std::cout <<"@ "<<d_sample_counter<<"  =>  ";
                     std::cout << "New GPS NAV message received in channel " << this->d_channel << ": "
                               << "subframe "
                               << subframe_ID << " from satellite "
