@@ -89,6 +89,7 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
 
     // Perform crc computation (tbd)
     flag_crc_test = true;
+    std::cout << "++++++++++++++++++++++++++++++New BDS " << i_satellite_PRN << " D1 subframe " << subframe_ID;
 
     // Decode all 5 sub-frames
     switch (subframe_ID)
@@ -263,6 +264,8 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
             d_SOW = d_SOW_SF5;  // Set transmission time
             SV_page_5 = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_PNUM));
 
+            std::cout << " page " << SV_page_5;
+
             if (SV_page_5 < 7)
                 {
                     d_SOW_SF4 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
@@ -369,7 +372,7 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
         default:
             break;
         }  // switch subframeID ...
-
+    std::cout << "\n";
     return subframe_ID;
 }
 
@@ -384,6 +387,7 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
     // Perform crc computation (tbd)
     flag_crc_test = true;
 
+    std::cout << "++++++++++++++++++++++++++++++New BDS " << i_satellite_PRN << " D2 subframe " << subframe_ID << "\n";
     // Decode all 5 sub-frames
     switch (subframe_ID)
         {
