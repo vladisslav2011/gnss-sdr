@@ -36,8 +36,8 @@
 #include <iostream>         // for cout
 #include <memory>           // for shared_ptr, make_shared
 
-#define CRC_ERROR_LIMIT 2
-#define CRC_ERROR_LIMIT2 8
+#define CRC_ERROR_LIMIT 1
+#define CRC_ERROR_LIMIT2 5
 
 
 beidou_b1i_telemetry_decoder_gs_sptr
@@ -221,6 +221,7 @@ void beidou_b1i_telemetry_decoder_gs::decode_word(
                 {
                     dec_word_symbols[j + 15] = first_branch[j];
                 }
+            d_CRC_error_counter *= CRC_ERROR_LIMIT;
         }
     else
         {
@@ -346,6 +347,7 @@ void beidou_b1i_telemetry_decoder_gs::set_satellite(const Gnss_Satellite &satell
 
     // Update satellite information for DNAV decoder
     sat_prn = d_satellite.get_PRN();
+    d_nav = Beidou_Dnav_Navigation_Message();
     d_nav.set_satellite_PRN(sat_prn);
     d_nav.set_signal_type(1);  // BDS: data source (0:unknown,1:B1I,2:B1Q,3:B2I,4:B2Q,5:B3I,6:B3Q)
     d_symbol_history.clear();
@@ -442,6 +444,9 @@ void beidou_b1i_telemetry_decoder_gs::reset()
     d_flag_valid_word = false;
     d_symbol_history.clear();
     d_stat = 0;
+    d_nav = Beidou_Dnav_Navigation_Message();
+    d_nav.set_satellite_PRN(d_satellite.get_PRN());
+    d_nav.set_signal_type(1);  // BDS: data source (0:unknown,1:B1I,2:B1Q,3:B2I,4:B2Q,5:B3I,6:B3Q)
     DLOG(INFO) << "Beidou B1I Telemetry decoder reset for satellite " << d_satellite;
 }
 
@@ -496,7 +501,7 @@ int beidou_b1i_telemetry_decoder_gs::general_work(int noutput_items __attribute_
             if (abs(corr_value0) >= d_samples_per_preamble && abs(corr_value1) >= d_samples_per_preamble)
                 {
                     // Record the preamble sample stamp
-                    d_preamble_index = d_sample_counter - d_required_symbols;
+                    d_preamble_index = d_sample_counter - BEIDOU_DNAV_PREAMBLE_PERIOD_SYMBOLS;
                     DLOG(INFO) << "Preamble detection for BEIDOU B1I SAT " << this->d_satellite;
                     // Enter into frame pre-detection status
                     d_stat = 1;
@@ -504,57 +509,59 @@ int beidou_b1i_telemetry_decoder_gs::general_work(int noutput_items __attribute_
         }
     if (d_stat == 1)  // possible preamble lock
         {
-            if (abs(corr_value0) >= d_samples_per_preamble && abs(corr_value1) >= d_samples_per_preamble)
+            if (d_sample_counter - d_preamble_index >= BEIDOU_DNAV_PREAMBLE_PERIOD_SYMBOLS)
                 {
-                    // ******* SAMPLES TO SYMBOLS *******
-                    if (corr_value0 > 0)  // normal PLL lock
+                    if (abs(corr_value0) + abs(corr_value1) >= d_samples_per_preamble * 2)
                         {
-                            for (uint32_t i = 0; i < BEIDOU_DNAV_PREAMBLE_PERIOD_SYMBOLS; i++)
+                            // ******* SAMPLES TO SYMBOLS *******
+                            if (corr_value0 > 0)  // normal PLL lock
                                 {
-                                    d_subframe_symbols[i] = d_symbol_history[i];
+                                    for (uint32_t i = 0; i < BEIDOU_DNAV_PREAMBLE_PERIOD_SYMBOLS; i++)
+                                        {
+                                            d_subframe_symbols[i] = d_symbol_history[i];
+                                        }
                                 }
-                        }
-                    else  // 180 deg. inverted carrier phase PLL lock
-                        {
-                            for (uint32_t i = 0; i < BEIDOU_DNAV_PREAMBLE_PERIOD_SYMBOLS; i++)
+                            else  // 180 deg. inverted carrier phase PLL lock
                                 {
-                                    d_subframe_symbols[i] = -d_symbol_history[i];
+                                    for (uint32_t i = 0; i < BEIDOU_DNAV_PREAMBLE_PERIOD_SYMBOLS; i++)
+                                        {
+                                            d_subframe_symbols[i] = -d_symbol_history[i];
+                                        }
                                 }
-                        }
 
-                    // call the decoder
-                    d_CRC_error_counter = 0;
-                    decode_subframe(d_subframe_symbols.data());
+                            // call the decoder
+                            d_CRC_error_counter = 0;
+                            decode_subframe(d_subframe_symbols.data());
 
-                    if (d_CRC_error_counter < CRC_ERROR_LIMIT2)
-                        {
-                            d_flag_preamble = true;               // valid preamble indicator (initialized to false every work())
-                            d_preamble_index += BEIDOU_DNAV_PREAMBLE_PERIOD_SYMBOLS;  // record the preamble sample stamp (t_P)
-                            if (!d_flag_frame_sync)
+                            if (d_CRC_error_counter < CRC_ERROR_LIMIT2)
                                 {
-                                    d_flag_frame_sync = true;
-                                    DLOG(INFO) << "BeiDou DNAV frame sync found for SAT " << this->d_satellite;
+                                    d_flag_preamble = true;               // valid preamble indicator (initialized to false every work())
+                                    d_preamble_index = d_sample_counter;  // record the preamble sample stamp (t_P)
+                                    if (!d_flag_frame_sync)
+                                        {
+                                            d_flag_frame_sync = true;
+                                            DLOG(INFO) << "BeiDou DNAV frame sync found for SAT " << this->d_satellite;
+                                        }
+                                }
+                            else
+                                {
+                                    d_preamble_index = d_sample_counter;  // record the preamble sample stamp
+                                    d_flag_frame_sync = false;
+                                    d_stat = 0;
+                                    d_flag_SOW_set = false;
                                 }
                         }
                     else
                         {
-                            d_preamble_index = d_sample_counter;  // record the preamble sample stamp
-                            DLOG(INFO) << "BeiDou DNAV frame sync lost for SAT " << this->d_satellite;
                             d_flag_frame_sync = false;
                             d_stat = 0;
                             d_flag_SOW_set = false;
                         }
                 }
-            else
-                {
-                        d_flag_frame_sync = false;
-                        d_stat = 0;
-                        d_flag_SOW_set = false;
-                }
         }
     // UPDATE GNSS SYNCHRO DATA
     // 2. Add the telemetry decoder information
-    if (this->d_flag_preamble == true && d_nav.get_flag_new_SOW_available() == true)
+    if (this->d_flag_preamble == true && d_nav.get_flag_new_SOW_available() == true && d_CRC_error_counter < CRC_ERROR_LIMIT)
         // update TOW at the preamble instant
         {
             // Reporting sow as gps time of week
@@ -571,11 +578,14 @@ int beidou_b1i_telemetry_decoder_gs::general_work(int noutput_items __attribute_
                     DLOG(INFO) << "Warning: BEIDOU B1I TOW update in ch " << d_channel
                               << " does not match the TLM TOW counter " << static_cast<int64_t>(d_TOW_at_current_symbol_ms) - int64_t(last_d_TOW_at_current_symbol_ms) << " ms \n";
 
-                    d_TOW_at_current_symbol_ms = 0;
+                    d_TOW_at_current_symbol_ms = last_d_TOW_at_current_symbol_ms + d_symbol_duration_ms;
                     d_flag_valid_word = false;
                     d_flag_frame_sync = false;
                     d_stat = 0;
                     d_flag_SOW_set = false;
+                    d_nav = Beidou_Dnav_Navigation_Message();
+                    d_nav.set_satellite_PRN(d_satellite.get_PRN());
+                    d_nav.set_signal_type(1);  // BDS: data source (0:unknown,1:B1I,2:B1Q,3:B2I,4:B2Q,5:B3I,6:B3Q)
                 }
             else
                 {
