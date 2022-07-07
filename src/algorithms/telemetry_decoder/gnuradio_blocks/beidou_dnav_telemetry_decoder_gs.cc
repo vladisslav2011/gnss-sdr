@@ -563,7 +563,7 @@ int beidou_dnav_telemetry_decoder_gs::general_work(int noutput_items __attribute
                     LOG(INFO) << "Warning: BEIDOU B" << d_band << "I TOW update in ch " << d_channel
                               << " does not match the TLM TOW counter " << tow_update_error_ms << " ms \n";
 
-                    d_TOW_at_current_symbol_ms = last_d_TOW_at_current_symbol_ms + d_symbol_duration_ms;
+                    d_TOW_at_current_symbol_ms = 0;
                     d_flag_valid_word = false;
                     d_flag_frame_sync = false;
                     d_stat = 0;
