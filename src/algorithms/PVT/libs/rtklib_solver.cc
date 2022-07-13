@@ -466,7 +466,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
     const Glonass_Gnav_Utc_Model gnav_utc = this->glonass_gnav_utc_model;
 
     this->set_averaging_flag(flag_averaging);
-
+    std::cerr<<">Rtklib_Solver::get_PVT\n";
     // ********************************************************************************
     // ****** PREPARE THE DATA (SV EPHEMERIS AND OBSERVATIONS) ************************
     // ********************************************************************************
@@ -474,6 +474,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
     int glo_valid_obs = 0;  // GLONASS L1/L2 valid observations counter
 
     d_obs_data.fill({});
+    std::cerr<<"Rtklib_Solver::get_PVT d_obs_data.fill\n";
     std::vector<eph_t> eph_data(MAXOBS);
     std::vector<geph_t> geph_data(MAXOBS);
 
@@ -506,11 +507,13 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                     }
                 }
         }
+    std::cerr<<"Rtklib_Solver::get_PVT observables loop1 done\n";
     if (band1 == true and band2 == true)
         {
             gps_dual_band = true;
         }
 
+    std::cerr<<"Rtklib_Solver::get_PVT band test done\n";
     for (gnss_observables_iter = gnss_observables_map.cbegin();
          gnss_observables_iter != gnss_observables_map.cend();
          ++gnss_observables_iter)  // CHECK INCONSISTENCY when combining GLONASS + other system
@@ -634,9 +637,12 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                         const std::string sig_(gnss_observables_iter->second.Signal);
                         if (sig_ == "1C")
                             {
+                                std::cerr<<"Rtklib_Solver::get_PVT sig_ == 1C\n";
                                 gps_ephemeris_iter = gps_ephemeris_map.find(gnss_observables_iter->second.PRN);
+                                std::cerr<<"Rtklib_Solver::get_PVT gps_ephemeris_map.find "<<gnss_observables_iter->second.PRN<<"\n";
                                 if (gps_ephemeris_iter != gps_ephemeris_map.cend())
                                     {
+                                        std::cerr<<"Rtklib_Solver::get_PVT gps_ephemeris_iter != gps_ephemeris_map.cend()\n";
                                         // convert ephemeris from GNSS-SDR class to RTKLIB structure
                                         eph_data[valid_obs] = eph_to_rtklib(gps_ephemeris_iter->second, this->is_pre_2009());
                                         // convert observation from GNSS-SDR class to RTKLIB structure
@@ -646,6 +652,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                                             gps_ephemeris_iter->second.WN,
                                             d_rtklib_band_index[sig_],
                                             this->is_pre_2009());
+                                        std::cerr<<"Rtklib_Solver::get_PVT insert_obs_to_rtklib done\n";
                                         valid_obs++;
                                     }
                                 else  // the ephemeris are not available for this SV
@@ -899,6 +906,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
     this->set_valid_position(false);
     if ((valid_obs + glo_valid_obs) > 3)
         {
+            std::cerr<<"Rtklib_Solver::get_PVT (valid_obs + glo_valid_obs) > 3\n";
             int result = 0;
             nav_t nav_data{};
             nav_data.eph = eph_data.data();
@@ -907,6 +915,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
             nav_data.ng = glo_valid_obs;
             if (gps_iono.valid)
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT gps_iono.valid\n";
                     nav_data.ion_gps[0] = gps_iono.alpha0;
                     nav_data.ion_gps[1] = gps_iono.alpha1;
                     nav_data.ion_gps[2] = gps_iono.alpha2;
@@ -918,6 +927,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
             if (!(gps_iono.valid) and gps_cnav_iono.valid)
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT !(gps_iono.valid) and gps_cnav_iono.valid\n";
                     nav_data.ion_gps[0] = gps_cnav_iono.alpha0;
                     nav_data.ion_gps[1] = gps_cnav_iono.alpha1;
                     nav_data.ion_gps[2] = gps_cnav_iono.alpha2;
@@ -929,6 +939,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
             if (galileo_iono.ai0 != 0.0)
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT galileo_iono.ai0 != 0.0\n";
                     nav_data.ion_gal[0] = galileo_iono.ai0;
                     nav_data.ion_gal[1] = galileo_iono.ai1;
                     nav_data.ion_gal[2] = galileo_iono.ai2;
@@ -936,6 +947,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
             if (beidou_dnav_iono.valid)
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT beidou_dnav_iono.valid\n";
                     nav_data.ion_cmp[0] = beidou_dnav_iono.alpha0;
                     nav_data.ion_cmp[1] = beidou_dnav_iono.alpha1;
                     nav_data.ion_cmp[2] = beidou_dnav_iono.alpha2;
@@ -947,6 +959,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
             if (gps_utc_model.valid)
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT gps_utc_model.valid\n";
                     nav_data.utc_gps[0] = gps_utc_model.A0;
                     nav_data.utc_gps[1] = gps_utc_model.A1;
                     nav_data.utc_gps[2] = gps_utc_model.tot;
@@ -955,6 +968,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
             if (!(gps_utc_model.valid) and gps_cnav_utc_model.valid)
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT !(gps_utc_model.valid) and gps_cnav_utc_model.valid\n";
                     nav_data.utc_gps[0] = gps_cnav_utc_model.A0;
                     nav_data.utc_gps[1] = gps_cnav_utc_model.A1;
                     nav_data.utc_gps[2] = gps_cnav_utc_model.tot;
@@ -963,6 +977,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
             if (glonass_gnav_utc_model.valid)
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT glonass_gnav_utc_model.valid\n";
                     nav_data.utc_glo[0] = glonass_gnav_utc_model.d_tau_c;  // ??
                     nav_data.utc_glo[1] = 0.0;                             // ??
                     nav_data.utc_glo[2] = 0.0;                             // ??
@@ -970,6 +985,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
             if (galileo_utc_model.A0 != 0.0)
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT galileo_utc_model.A0 != 0.0\n";
                     nav_data.utc_gal[0] = galileo_utc_model.A0;
                     nav_data.utc_gal[1] = galileo_utc_model.A1;
                     nav_data.utc_gal[2] = galileo_utc_model.tot;
@@ -978,6 +994,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
             if (beidou_dnav_utc_model.valid)
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT beidou_dnav_utc_model.valid\n";
                     nav_data.utc_cmp[0] = beidou_dnav_utc_model.A0_UTC;
                     nav_data.utc_cmp[1] = beidou_dnav_utc_model.A1_UTC;
                     nav_data.utc_cmp[2] = 0.0;  // ??
@@ -986,14 +1003,18 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
 
             /* update carrier wave length using native function call in RTKlib */
+            std::cerr<<"Rtklib_Solver::get_PVT for (int i = 0; i < MAXSAT; i++)\n";
             for (int i = 0; i < MAXSAT; i++)
                 {
                     for (int j = 0; j < NFREQ; j++)
                         {
+                            std::cerr<<"Rtklib_Solver::get_PVT i="<<i<<" j="<<j;
                             nav_data.lam[i][j] = satwavelen(i + 1, d_rtklib_freq_index[j], &nav_data);
+                            std::cerr<<" nav_data.lam="<< nav_data.lam[i][j]<<"\n";
                         }
                 }
 
+            std::cerr<<"Rtklib_Solver::get_PVT rtkpos\n";
             result = rtkpos(&d_rtk, d_obs_data.data(), valid_obs + glo_valid_obs, &nav_data);
 
             if (result == 0)
@@ -1005,10 +1026,12 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                 }
             else
                 {
+                    std::cerr<<"Rtklib_Solver::get_PVT this->set_num_valid_observations\n";
                     this->set_num_valid_observations(d_rtk.sol.ns);  // record the number of valid satellites used by the PVT solver
                     pvt_sol = d_rtk.sol;
                     // DOP computation
                     unsigned int used_sats = 0;
+                    std::cerr<<"Rtklib_Solver::get_PVT for (unsigned int i = 0; i < MAXSAT; i++)\n";
                     for (unsigned int i = 0; i < MAXSAT; i++)
                         {
                             pvt_ssat[i] = d_rtk.ssat[i];
@@ -1020,6 +1043,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
 
                     std::vector<double> azel(used_sats * 2);
                     int index_aux = 0;
+                    std::cerr<<"Rtklib_Solver::get_PVT for (auto &i : d_rtk.ssat)\n";
                     for (auto &i : d_rtk.ssat)
                         {
                             if (i.vs == 1)
@@ -1032,6 +1056,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
 
                     if (index_aux > 0)
                         {
+                            std::cerr<<"Rtklib_Solver::get_PVT index_aux > 0\n";
                             dops(index_aux, azel.data(), 0.0, d_dop.data());
                         }
                     this->set_valid_position(true);
@@ -1052,13 +1077,16 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                             // add also the clock offset from gps to galileo (pvt_sol.dtr[2])
                             rx_position_and_time[3] = pvt_sol.dtr[2] + pvt_sol.dtr[0] / SPEED_OF_LIGHT_M_S;
                         }
+                    std::cerr<<"Rtklib_Solver::get_PVT his->set_rx_pos\n";
                     this->set_rx_pos({rx_position_and_time[0], rx_position_and_time[1], rx_position_and_time[2]});  // save ECEF position for the next iteration
 
                     // compute Ground speed and COG
                     double ground_speed_ms = 0.0;
                     std::array<double, 3> pos{};
                     std::array<double, 3> enuv{};
+                    std::cerr<<"Rtklib_Solver::get_PVT ecef2pos\n";
                     ecef2pos(pvt_sol.rr, pos.data());
+                    std::cerr<<"Rtklib_Solver::get_PVT ecef2enu\n";
                     ecef2enu(pos.data(), &pvt_sol.rr[3], enuv.data());
                     this->set_speed_over_ground(norm_rtk(enuv.data(), 2));
                     double new_cog;
@@ -1232,5 +1260,6 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                         }
                 }
         }
+    std::cerr<<"<Rtklib_Solver::get_PVT\n";
     return this->is_valid_position();
 }
