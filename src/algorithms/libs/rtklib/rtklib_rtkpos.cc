@@ -37,6 +37,7 @@
 #include "rtklib_tides.h"
 #include <cmath>
 #include <cstring>
+#include <iostream>
 
 static int resamb_WLNL(rtk_t *rtk __attribute((unused)), const obsd_t *obs __attribute((unused)), const int *sat __attribute((unused)),
     const int *iu __attribute((unused)), const int *ir __attribute((unused)), int ns __attribute__((unused)), const nav_t *nav __attribute((unused)),
@@ -2772,12 +2773,13 @@ int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
     int nr;
     char msg[128] = "";
 
-    trace(3, "rtkpos  : time=%s n=%d\n", time_str(obs[0].time, 3), n);
-    trace(4, "obs=\n");
+    std::cerr<<"rtkpos  : time="<<time_str(obs[0].time, 3)<<","<<n<<"\n";
+    std::cerr<<"obs="<<n<<"\n";
     traceobs(4, obs, n);
     /*trace(5,"nav=\n"); tracenav(5,nav);*/
 
     /* set base station position */
+     std::cerr<<"rtkpos: set base station position\n";
     if (opt->refpos <= POSOPT_RINEX && opt->mode != PMODE_SINGLE &&
         opt->mode != PMODE_MOVEB)
         {
@@ -2787,6 +2789,7 @@ int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
                 }
         }
     /* count rover/base station observations */
+     std::cerr<<"rtkpos: count rover/base station observations\n";
     for (nu = 0; nu < n && obs[nu].rcv == 1; nu++)
         {
         }
@@ -2797,6 +2800,7 @@ int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
     time = rtk->sol.time; /* previous epoch */
 
     /* rover position by single point positioning */
+     std::cerr<<"rtkpos: rover position by single point positioning\n";
     if (!pntpos(obs, nu, nav, &rtk->opt, &rtk->sol, nullptr, rtk->ssat, msg))
         {
             errmsg(rtk, "point pos error (%s)\n", msg);
@@ -2812,17 +2816,20 @@ int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         }
 
     /* single point positioning */
+     std::cerr<<"rtkpos: single point positioning\n";
     if (opt->mode == PMODE_SINGLE)
         {
             outsolstat(rtk);
             return 1;
         }
     /* suppress output of single solution */
+     std::cerr<<"rtkpos: suppress output of single solution\n";
     if (!opt->outsingle)
         {
             rtk->sol.stat = SOLQ_NONE;
         }
     /* precise point positioning */
+     std::cerr<<"rtkpos: precise point positioning\n";
     if (opt->mode >= PMODE_PPP_KINEMA)
         {
             pppos(rtk, obs, nu, nav);
@@ -2830,6 +2837,7 @@ int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
             return 1;
         }
     /* check number of data of base station and age of differential */
+     std::cerr<<"rtkpos: check number of data of base station and age of differential\n";
     if (nr == 0)
         {
             errmsg(rtk, "no base station observation data for rtk\n");
@@ -2839,6 +2847,7 @@ int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
     if (opt->mode == PMODE_MOVEB)
         { /*  moving baseline */
             /* estimate position/velocity of base station */
+     std::cerr<<"rtkpos: estimate position/velocity of base station\n";
             if (!pntpos(obs + nu, nr, nav, &rtk->opt, &solb, nullptr, nullptr, msg))
                 {
                     errmsg(rtk, "base station position error (%s)\n", msg);
@@ -2857,6 +2866,7 @@ int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
                 }
 
             /* time-synchronized position of base station */
+     std::cerr<<"rtkpos: time-synchronized position of base station\n";
             for (i = 0; i < 3; i++)
                 {
                     rtk->rb[i] += rtk->rb[i + 3] * rtk->sol.age;
@@ -2864,6 +2874,7 @@ int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         }
     else
         {
+     std::cerr<<"rtkpos: !moving baseline\n";
             rtk->sol.age = static_cast<float>(timediff(obs[0].time, obs[nu].time));
 
             if (std::fabs(rtk->sol.age) > opt->maxtdiff)
@@ -2874,8 +2885,11 @@ int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
                 }
         }
     /* relative potitioning */
+     std::cerr<<"rtkpos: relative potitioning\n";
     relpos(rtk, obs, nu, nr, nav);
+     std::cerr<<"rtkpos: outsolstat\n";
     outsolstat(rtk);
+     std::cerr<<"<rtkpos\n";
 
     return 1;
 }
