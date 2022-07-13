@@ -474,7 +474,6 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
     int glo_valid_obs = 0;  // GLONASS L1/L2 valid observations counter
 
     d_obs_data.fill({});
-    std::cerr<<"Rtklib_Solver::get_PVT d_obs_data.fill\n";
     std::vector<eph_t> eph_data(MAXOBS);
     std::vector<geph_t> geph_data(MAXOBS);
 
@@ -507,13 +506,11 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                     }
                 }
         }
-    std::cerr<<"Rtklib_Solver::get_PVT observables loop1 done\n";
     if (band1 == true and band2 == true)
         {
             gps_dual_band = true;
         }
 
-    std::cerr<<"Rtklib_Solver::get_PVT band test done\n";
     for (gnss_observables_iter = gnss_observables_map.cbegin();
          gnss_observables_iter != gnss_observables_map.cend();
          ++gnss_observables_iter)  // CHECK INCONSISTENCY when combining GLONASS + other system
@@ -637,12 +634,11 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                         const std::string sig_(gnss_observables_iter->second.Signal);
                         if (sig_ == "1C")
                             {
-                                std::cerr<<"Rtklib_Solver::get_PVT sig_ == 1C\n";
                                 gps_ephemeris_iter = gps_ephemeris_map.find(gnss_observables_iter->second.PRN);
-                                std::cerr<<"Rtklib_Solver::get_PVT gps_ephemeris_map.find "<<gnss_observables_iter->second.PRN<<"\n";
+//                                std::cerr<<"Rtklib_Solver::get_PVT gps_ephemeris_map.find "<<gnss_observables_iter->second.PRN<<"\n";
                                 if (gps_ephemeris_iter != gps_ephemeris_map.cend())
                                     {
-                                        std::cerr<<"Rtklib_Solver::get_PVT gps_ephemeris_iter != gps_ephemeris_map.cend()\n";
+//                                        std::cerr<<"Rtklib_Solver::get_PVT gps_ephemeris_iter != gps_ephemeris_map.cend()\n";
                                         // convert ephemeris from GNSS-SDR class to RTKLIB structure
                                         eph_data[valid_obs] = eph_to_rtklib(gps_ephemeris_iter->second, this->is_pre_2009());
                                         // convert observation from GNSS-SDR class to RTKLIB structure
@@ -652,7 +648,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                                             gps_ephemeris_iter->second.WN,
                                             d_rtklib_band_index[sig_],
                                             this->is_pre_2009());
-                                        std::cerr<<"Rtklib_Solver::get_PVT insert_obs_to_rtklib done\n";
+//                                        std::cerr<<"Rtklib_Solver::get_PVT insert_obs_to_rtklib done\n";
                                         valid_obs++;
                                     }
                                 else  // the ephemeris are not available for this SV
