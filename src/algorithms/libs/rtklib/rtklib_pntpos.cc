@@ -34,6 +34,7 @@
 #include "rtklib_ionex.h"
 #include "rtklib_sbas.h"
 #include <cstring>
+#include <iostream>
 
 /* pseudorange measurement error variance ------------------------------------*/
 double varerr(const prcopt_t *opt, double el, int sys)
@@ -991,11 +992,13 @@ int pntpos(const obsd_t *obs, int n, const nav_t *nav,
     int vsat[MAXOBS] = {0};
     int svh[MAXOBS];
 
+    std::cerr<<">pntpos\n";
     sol->stat = SOLQ_NONE;
 
     if (n <= 0)
         {
             std::strncpy(msg, "no observation data", 20);
+            std::cerr<<"<pntpos no observation data\n";
             return 0;
         }
 
@@ -1019,17 +1022,21 @@ int pntpos(const obsd_t *obs, int n, const nav_t *nav,
             opt_.tropopt = TROPOPT_SAAS;
         }
     /* satellite positions, velocities and clocks */
+    std::cerr<<"pntpos satellite positions, velocities and clocks\n";
     satposs(sol->time, obs, n, nav, opt_.sateph, rs, dts, var, svh);
 
     /* estimate receiver position with pseudorange */
+    std::cerr<<"pntpos estimate receiver position with pseudorange\n";
     stat = estpos(obs, n, rs, dts, var, svh, nav, &opt_, sol, azel_, vsat, resp, msg);
 
     /* raim fde */
+    std::cerr<<"pntpos raim fde\n";
     if (!stat && n >= 6 && opt->posopt[4])
         {
             stat = raim_fde(obs, n, rs, dts, var, svh, nav, &opt_, sol, azel_, vsat, resp, msg);
         }
     /* estimate receiver velocity with doppler */
+    std::cerr<<"pntpos estimate receiver velocity with doppler\n";
     if (stat)
         {
             estvel(obs, n, rs, dts, nav, &opt_, sol, azel_, vsat);
@@ -1037,6 +1044,7 @@ int pntpos(const obsd_t *obs, int n, const nav_t *nav,
 
     if (azel)
         {
+            std::cerr<<"pntpos azel\n";
             for (i = 0; i < n * 2; i++)
                 {
                     azel[i] = azel_[i];
@@ -1044,6 +1052,7 @@ int pntpos(const obsd_t *obs, int n, const nav_t *nav,
         }
     if (ssat)
         {
+            std::cerr<<"pntpos ssat\n";
             for (i = 0; i < MAXSAT; i++)
                 {
                     ssat[i].vs = 0;
@@ -1051,6 +1060,7 @@ int pntpos(const obsd_t *obs, int n, const nav_t *nav,
                     ssat[i].resp[0] = ssat[i].resc[0] = 0.0;
                     ssat[i].snr[0] = 0;
                 }
+            std::cerr<<"pntpos ssat loop 2\n";
             for (i = 0; i < n; i++)
                 {
                     ssat[obs[i].sat - 1].azel[0] = azel_[i * 2];
@@ -1064,10 +1074,12 @@ int pntpos(const obsd_t *obs, int n, const nav_t *nav,
                     ssat[obs[i].sat - 1].resp[0] = resp[i];
                 }
         }
+    std::cerr<<"pntpos free\n";
     free(rs);
     free(dts);
     free(var);
     free(azel_);
     free(resp);
+    std::cerr<<"<pntpos "<<stat<<"\n";
     return stat;
 }
