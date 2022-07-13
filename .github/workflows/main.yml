@@ -24,6 +24,6 @@ jobs:
     - name: check
       run: cd build && ninja check && ../install/volk_gnsssdr_profile && ../install/run_tests
     - name: default position_test
-      run: cd build && cmake -DENABLE_SYSTEM_TESTING_EXTRA=ON .. && ninja -j 4 && ../install/position_test
+      run: cd build && cmake -DENABLE_SYSTEM_TESTING_EXTRA=ON .. && ninja -j 4 && ../install/position_test -logtostderr 1
 
 
