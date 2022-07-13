@@ -35,6 +35,7 @@
 #include "rtklib_sbas.h"
 #include <cstring>
 #include <iostream>
+#include <vector>
 
 /* pseudorange measurement error variance ------------------------------------*/
 double varerr(const prcopt_t *opt, double el, int sys)
@@ -989,8 +990,8 @@ int pntpos(const obsd_t *obs, int n, const nav_t *nav,
     double *resp;
     int i;
     int stat;
-    int vsat[MAXOBS] = {0};
-    int svh[MAXOBS];
+    std::vector<int> vsat(MAXOBS, 0);
+    std::vector<int> svh(MAXOBS, 0);
 
     std::cerr<<">pntpos\n";
     sol->stat = SOLQ_NONE;
@@ -1023,23 +1024,23 @@ int pntpos(const obsd_t *obs, int n, const nav_t *nav,
         }
     /* satellite positions, velocities and clocks */
     std::cerr<<"pntpos satellite positions, velocities and clocks\n";
-    satposs(sol->time, obs, n, nav, opt_.sateph, rs, dts, var, svh);
+    satposs(sol->time, obs, n, nav, opt_.sateph, rs, dts, var, svh.data());
 
     /* estimate receiver position with pseudorange */
     std::cerr<<"pntpos estimate receiver position with pseudorange\n";
-    stat = estpos(obs, n, rs, dts, var, svh, nav, &opt_, sol, azel_, vsat, resp, msg);
+    stat = estpos(obs, n, rs, dts, var, svh.data(), nav, &opt_, sol, azel_, vsat.data(), resp, msg);
 
     /* raim fde */
     std::cerr<<"pntpos raim fde\n";
     if (!stat && n >= 6 && opt->posopt[4])
         {
-            stat = raim_fde(obs, n, rs, dts, var, svh, nav, &opt_, sol, azel_, vsat, resp, msg);
+            stat = raim_fde(obs, n, rs, dts, var, svh.data(), nav, &opt_, sol, azel_, vsat.data(), resp, msg);
         }
     /* estimate receiver velocity with doppler */
     std::cerr<<"pntpos estimate receiver velocity with doppler\n";
     if (stat)
         {
-            estvel(obs, n, rs, dts, nav, &opt_, sol, azel_, vsat);
+            estvel(obs, n, rs, dts, nav, &opt_, sol, azel_, vsat.data());
         }
 
     if (azel)
