@@ -463,7 +463,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
     std::map<int, Glonass_Gnav_Ephemeris>::const_iterator glonass_gnav_ephemeris_iter;
     std::map<int, Beidou_Dnav_Ephemeris>::const_iterator beidou_ephemeris_iter;
 
-    const Glonass_Gnav_Utc_Model gnav_utc = this->glonass_gnav_utc_model;
+    const Glonass_Gnav_Utc_Model &gnav_utc = this->glonass_gnav_utc_model;
 
     this->set_averaging_flag(flag_averaging);
     std::cerr<<">Rtklib_Solver::get_PVT\n";
@@ -901,7 +901,8 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
         {
             std::cerr<<"Rtklib_Solver::get_PVT (valid_obs + glo_valid_obs) > 3\n";
             int result = 0;
-            nav_t nav_data{};
+            d_nav_data = {};
+            nav_t &nav_data = d_nav_data;
             nav_data.eph = eph_data.data();
             nav_data.geph = geph_data.data();
             nav_data.n = valid_obs;
