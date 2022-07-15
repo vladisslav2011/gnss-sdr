@@ -23,6 +23,7 @@
 #include <functional>
 #include <numeric>
 #include <vector>
+#include <iostream>
 
 
 double Gnss_Ephemeris::sv_clock_drift(double transmitTime)
@@ -163,6 +164,44 @@ void Gnss_Ephemeris::satellitePosition(double transmitTime)
     this->satvel_Y = pos_vel_dtr[4];
     this->satvel_Z = pos_vel_dtr[5];
     this->dtr = pos_vel_dtr[6];
+}
+
+#define upd_dev(NN)\
+{\
+    if (std::fabs(NN - from.NN) > dev )\
+        {\
+            dev = std::fabs(NN - from.NN);\
+            std::cout<<"Gnss_Ephemeris::max_deviation " #NN << ": "<<NN<<"-"<<from.NN<<"="<<std::fabs(NN - from.NN)<<"\n";\
+        }\
+}
+
+double Gnss_Ephemeris::max_deviation(Gnss_Ephemeris &from)
+{
+    double dev = 0.0;
+    upd_dev(PRN);
+    upd_dev(M_0);
+    upd_dev(delta_n);
+    upd_dev(ecc);
+    upd_dev(sqrtA);
+    upd_dev(OMEGA_0);
+    upd_dev(i_0);
+    upd_dev(omega);
+    upd_dev(OMEGAdot);
+    upd_dev(idot);
+    upd_dev(Cuc);
+    upd_dev(Cus);
+    upd_dev(Crc);
+    upd_dev(Crs);
+    upd_dev(Cic);
+    upd_dev(Cis);
+    //upd_dev(toe);
+    //upd_dev(toc);
+    upd_dev(af0);
+    upd_dev(af1);
+    upd_dev(af2);
+    upd_dev(satClkDrift);
+    upd_dev(dtr);
+    return dev;
 }
 
 
