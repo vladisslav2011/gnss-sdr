@@ -66,6 +66,7 @@ public:
     double predicted_doppler(double rx_time_s, double lat, double lon, double h, double ve, double vn, double vu, int band) const;
 
     void satellitePosition(double transmitTime);  //!< Computes the ECEF SV coordinates and ECEF velocity
+    double max_deviation(Gnss_Ephemeris &from);  //!< Compare a set of ephemeris to another one
 
     uint32_t PRN{};     //!< SV ID
     double M_0{};       //!< Mean anomaly at reference time [rad]
