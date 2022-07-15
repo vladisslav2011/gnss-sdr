@@ -74,7 +74,10 @@ beidou_b3i_telemetry_decoder_gs::beidou_b3i_telemetry_decoder_gs(
       d_enable_navdata_monitor(conf.enable_navdata_monitor),
       d_dump_crc_stats(conf.dump_crc_stats),
       d_ecc_errors_reject(conf.ecc_errors_reject),
-      d_ecc_errors_resync(conf.ecc_errors_resync)
+      d_ecc_errors_resync(conf.ecc_errors_resync),
+      d_prev_valid_eph(),
+      d_prev_valid_eph_count(0),
+      d_last_eph()
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -308,11 +311,59 @@ void beidou_b3i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
             // get object for this SV (mandatory)
             const std::shared_ptr<Beidou_Dnav_Ephemeris> tmp_obj =
                 std::make_shared<Beidou_Dnav_Ephemeris>(d_nav.get_ephemeris());
-            this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
-            LOG(INFO) << "BEIDOU DNAV Ephemeris have been received in channel"
-                      << d_channel << " from satellite " << d_satellite;
-            std::cout << TEXT_YELLOW << "New BEIDOU B3I DNAV message received in channel " << d_channel
-                      << ": ephemeris from satellite " << d_satellite << TEXT_RESET << '\n';
+            double dev_last = -1.0;
+            double dev_val = -1.0;
+            bool pub = false;
+            if (d_last_eph.get())
+                {
+                    dev_last = d_last_eph->max_deviation(*tmp_obj.get());
+                }
+            if (d_prev_valid_eph.get())
+                {
+                    dev_val = d_prev_valid_eph->max_deviation(*tmp_obj.get());
+                    if (d_prev_valid_eph_count > 1)
+                        {
+                            if (dev_last <= dev_val)
+                                {
+                                    //if (dev_last < dev_thr)
+                                    d_prev_valid_eph = tmp_obj;
+                                    d_prev_valid_eph_count = 2;
+                                    pub = true;
+                                }
+                            else
+                                {
+                                    //if (dev_val < dev_thr)
+                                    d_prev_valid_eph_count ++;
+                                    pub = true;
+                                }
+                        }
+                    else
+                        {
+                            if (dev_last <= dev_val)
+                                {
+                                    //if (dev_last < dev_thr)
+                                    d_prev_valid_eph = tmp_obj;
+                                    d_prev_valid_eph_count = 2;
+                                    pub = true;
+                                }
+                        }
+                }
+            else
+                {
+                    d_prev_valid_eph = tmp_obj;
+                    d_prev_valid_eph_count = 1;
+                    pub = true;
+                }
+            d_last_eph = tmp_obj;
+            std::cout << "dev_last = "<<dev_last<<" dev_val = "<<dev_val<<"\n";
+            if (pub)
+                {
+                    this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
+                    LOG(INFO) << "BEIDOU DNAV Ephemeris have been received in channel"
+                            << d_channel << " from satellite " << d_satellite;
+                    std::cout << TEXT_YELLOW << "New BEIDOU B3I DNAV message received in channel " << d_channel
+                            << ": ephemeris from satellite " << d_satellite << TEXT_RESET << '\n';
+                }
         }
     if (d_nav.have_new_utc_model() == true && crc_ok)
         {
@@ -369,6 +420,9 @@ void beidou_b3i_telemetry_decoder_gs::set_satellite(
     sat_prn = d_satellite.get_PRN();
     d_nav.set_satellite_PRN(sat_prn);
     d_nav.set_signal_type(5);  // BDS: data source (0:unknown,1:B1I,2:B1Q,3:B2I,4:B2Q,5:B3I,6:B3Q)
+    d_prev_valid_eph.reset();
+    d_last_eph.reset();
+    d_prev_valid_eph_count = 0;
 
     // Update tel dec parameters for D2 NAV Messages
     if ((sat_prn > 0 && sat_prn < 6) || sat_prn > 58)

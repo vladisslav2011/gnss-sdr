@@ -36,6 +36,14 @@
 #include <iostream>         // for cout
 #include <memory>           // for shared_ptr, make_shared
 
+#define EPH_PUB_THR 1
+
+struct Prev_Ephemeris
+{
+    std::shared_ptr<Beidou_Dnav_Ephemeris> valid_eph;
+    std::shared_ptr<Beidou_Dnav_Ephemeris> last_eph;
+    int valid_eph_count;
+};
 
 beidou_b1i_telemetry_decoder_gs_sptr
 beidou_b1i_make_telemetry_decoder_gs(const Gnss_Satellite &satellite, const Tlm_Conf &conf)
@@ -74,8 +82,8 @@ beidou_b1i_telemetry_decoder_gs::beidou_b1i_telemetry_decoder_gs(
                             d_enable_navdata_monitor(conf.enable_navdata_monitor),
                             d_dump_crc_stats(conf.dump_crc_stats),
                             d_ecc_errors_reject(conf.ecc_errors_reject),
-                            d_ecc_errors_resync(conf.ecc_errors_resync)
-
+                            d_ecc_errors_resync(conf.ecc_errors_resync),
+                            d_dev_thr(0.00000001)
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -306,10 +314,58 @@ void beidou_b1i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
     if (d_nav.have_new_ephemeris() == true && crc_ok)
         {
             // get object for this SV (mandatory)
+            std::cerr<<"@\n";
             const std::shared_ptr<Beidou_Dnav_Ephemeris> tmp_obj = std::make_shared<Beidou_Dnav_Ephemeris>(d_nav.get_ephemeris());
-            this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
-            LOG(INFO) << "BEIDOU DNAV Ephemeris have been received in channel" << d_channel << " from satellite " << d_satellite;
-            std::cout << "New BEIDOU B1I DNAV message received in channel " << d_channel << ": ephemeris from satellite " << d_satellite << '\n';
+            static std::array<Prev_Ephemeris, 63> prev;
+            double dev_last = -1.0;
+            double dev_val = -1.0;
+            bool pub = false;
+            if (tmp_obj->PRN == d_satellite.get_PRN())
+                {
+                    if (prev[tmp_obj->PRN].last_eph.get())
+                        {
+                            dev_last = prev[tmp_obj->PRN].last_eph->max_deviation(*tmp_obj.get());
+                        }
+                    if (prev[tmp_obj->PRN].valid_eph.get())
+                        {
+                            dev_val = prev[tmp_obj->PRN].valid_eph->max_deviation(*tmp_obj.get());
+                            if (dev_last < dev_val)
+                                {
+                                    if (dev_last < d_dev_thr)
+                                        {
+                                            prev[tmp_obj->PRN].valid_eph = tmp_obj;
+                                            prev[tmp_obj->PRN].valid_eph_count = 2;
+                                            pub = prev[tmp_obj->PRN].valid_eph_count >= EPH_PUB_THR;
+                                        }
+                                }
+                            else
+                                {
+                                    if (dev_val < d_dev_thr)
+                                        {
+                                            prev[tmp_obj->PRN].valid_eph_count ++;
+                                            pub = prev[tmp_obj->PRN].valid_eph_count >= EPH_PUB_THR;
+                                        }
+                                }
+                        }
+                    else
+                        {
+                            prev[tmp_obj->PRN].valid_eph = tmp_obj;
+                            prev[tmp_obj->PRN].valid_eph_count = 1;
+                            pub = prev[tmp_obj->PRN].valid_eph_count >= EPH_PUB_THR;
+                        }
+                    prev[tmp_obj->PRN].last_eph = tmp_obj;
+                    std::cout << "PRN "<<tmp_obj->PRN<<" dev_last = "<<dev_last<<" dev_val = "<<dev_val<<" count = "<<prev[tmp_obj->PRN].valid_eph_count<<"\n";
+                    if (pub)
+                        {
+                            this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
+                            LOG(INFO) << "BEIDOU DNAV Ephemeris have been received in channel" << d_channel << " from satellite " << d_satellite;
+                            std::cout << "New BEIDOU B1I DNAV message received in channel " << d_channel << ": ephemeris from satellite " << d_satellite << '\n';
+                        }
+                }
+            else
+                {
+                    std::cout << "PRN "<<tmp_obj->PRN<<"!="<<d_satellite.get_PRN()<<"\n";
+                }
         }
     if (d_nav.have_new_utc_model() == true && crc_ok)
         {
