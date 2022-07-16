@@ -631,7 +631,6 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
         default:
             break;
         }  // switch subframeID ...
-    std::cout << "\n";
     return subframe_ID;
 }
 
@@ -1251,7 +1250,7 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
                 (flag_sf1_p10 == true))
                 {
                     // if all ephemeris pages have the same IOD, then they belong to the same block
-                    if (d_previous_aode != d_AODE)
+                    if (/*d_previous_aode != d_AODE*/ 1)
                         {
                             // Clear flags for all received pages
                             clear_d2_ephemeris_page_flags();
@@ -1270,7 +1269,7 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
                 d1_ephemeris_sow_is_consistent() == true)
                 {
                     // if all ephemeris pages have the same IOD, then they belong to the same block
-                    if (d_previous_aode != d_AODE)
+                    if (/*d_previous_aode != d_AODE*/ 1)
                         {
                             // Clear flags for all received subframes
                             flag_d1_sf1 = false;
@@ -1282,7 +1281,7 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
                             d_previous_aode = d_AODE;
 
                             return true;
-                        }
+                         }
                 }
         }
     return false;
