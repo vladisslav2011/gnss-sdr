@@ -763,26 +763,26 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
                 (flag_sf1_p10 == true))
                 {
                     // if all ephemeris pages have the same IOD, then they belong to the same block
-                    if (d_previous_aode != d_AODE)
-                        {
-                            // Clear flags for all received pages
-                            flag_sf1_p1 = false;
-                            flag_sf1_p2 = false;
-                            flag_sf1_p3 = false;
-                            flag_sf1_p4 = false;
-                            flag_sf1_p5 = false;
-                            flag_sf1_p6 = false;
-                            flag_sf1_p7 = false;
-                            flag_sf1_p8 = false;
-                            flag_sf1_p9 = false;
-                            flag_sf1_p10 = false;
+                    /*                    if (d_previous_aode != d_AODE)
+                        {*/
+                    // Clear flags for all received pages
+                    flag_sf1_p1 = false;
+                    flag_sf1_p2 = false;
+                    flag_sf1_p3 = false;
+                    flag_sf1_p4 = false;
+                    flag_sf1_p5 = false;
+                    flag_sf1_p6 = false;
+                    flag_sf1_p7 = false;
+                    flag_sf1_p8 = false;
+                    flag_sf1_p9 = false;
+                    flag_sf1_p10 = false;
 
-                            flag_eph_valid = true;
-                            // Update the time of ephemeris information
-                            d_previous_aode = d_AODE;
+                    flag_eph_valid = true;
+                    // Update the time of ephemeris information
+                    d_previous_aode = d_AODE;
 
-                            return true;
-                        }
+                    return true;
+                    //                         }
                 }
         }
     else
@@ -790,19 +790,19 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
             if ((flag_d1_sf1 == true) and (flag_d1_sf2 == true) and (flag_d1_sf3 == true))
                 {
                     // if all ephemeris pages have the same IOD, then they belong to the same block
-                    if (d_previous_aode != d_AODE)
-                        {
-                            // Clear flags for all received subframes
-                            flag_d1_sf1 = false;
-                            flag_d1_sf2 = false;
-                            flag_d1_sf3 = false;
+                    /*                    if (d_previous_aode != d_AODE)
+                        {*/
+                    // Clear flags for all received subframes
+                    flag_d1_sf1 = false;
+                    flag_d1_sf2 = false;
+                    flag_d1_sf3 = false;
 
-                            flag_eph_valid = true;
-                            // Update the time of ephemeris information
-                            d_previous_aode = d_AODE;
+                    flag_eph_valid = true;
+                    // Update the time of ephemeris information
+                    d_previous_aode = d_AODE;
 
-                            return true;
-                        }
+                    return true;
+                    //                         }
                 }
         }
     return false;
