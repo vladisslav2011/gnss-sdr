@@ -314,7 +314,6 @@ void beidou_b1i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
     if (d_nav.have_new_ephemeris() == true && crc_ok)
         {
             // get object for this SV (mandatory)
-            std::cerr<<"@\n";
             const std::shared_ptr<Beidou_Dnav_Ephemeris> tmp_obj = std::make_shared<Beidou_Dnav_Ephemeris>(d_nav.get_ephemeris());
             static std::array<Prev_Ephemeris, 63> prev;
             double dev_last = -1.0;
