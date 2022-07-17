@@ -35,6 +35,15 @@
 #include <iostream>         // for cout
 #include <memory>           // for shared_ptr, make_shared
 
+#define EPH_PUB_THR 1
+
+struct Prev_Ephemeris
+{
+    std::shared_ptr<Beidou_Dnav_Ephemeris> valid_eph;
+    std::shared_ptr<Beidou_Dnav_Ephemeris> last_eph;
+    int valid_eph_count;
+    int valid_eph_thr;
+};
 
 beidou_b3i_telemetry_decoder_gs_sptr
 beidou_b3i_make_telemetry_decoder_gs(const Gnss_Satellite &satellite,
@@ -77,7 +86,8 @@ beidou_b3i_telemetry_decoder_gs::beidou_b3i_telemetry_decoder_gs(
       d_ecc_errors_resync(conf.ecc_errors_resync),
       d_prev_valid_eph(),
       d_prev_valid_eph_count(0),
-      d_last_eph()
+      d_last_eph(),
+      d_dev_thr(0.00000001)
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -195,7 +205,7 @@ void beidou_b3i_telemetry_decoder_gs::decode_bch15_11_01(const int32_t *bits,
     if (err > 0 && err < 16)
         {
             decbits[errind[err - 1]] *= -1;
-            d_CRC_error_counter++;
+            d_CRC_error_counter ++;
         }
 }
 
@@ -311,58 +321,56 @@ void beidou_b3i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
             // get object for this SV (mandatory)
             const std::shared_ptr<Beidou_Dnav_Ephemeris> tmp_obj =
                 std::make_shared<Beidou_Dnav_Ephemeris>(d_nav.get_ephemeris());
+            static std::array<Prev_Ephemeris, 63> prev;
             double dev_last = -1.0;
             double dev_val = -1.0;
             bool pub = false;
-            if (d_last_eph.get())
+            if (tmp_obj->PRN == d_satellite.get_PRN())
                 {
-                    dev_last = d_last_eph->max_deviation(*tmp_obj.get());
-                }
-            if (d_prev_valid_eph.get())
-                {
-                    dev_val = d_prev_valid_eph->max_deviation(*tmp_obj.get());
-                    if (d_prev_valid_eph_count > 1)
+                    if (prev[tmp_obj->PRN].last_eph.get())
                         {
-                            if (dev_last <= dev_val)
+                            dev_last = prev[tmp_obj->PRN].last_eph->max_deviation(*tmp_obj.get());
+                        }
+                    if (prev[tmp_obj->PRN].valid_eph.get())
+                        {
+                            dev_val = prev[tmp_obj->PRN].valid_eph->max_deviation(*tmp_obj.get());
+                            if (dev_last < dev_val)
                                 {
-                                    //if (dev_last < dev_thr)
-                                    d_prev_valid_eph = tmp_obj;
-                                    d_prev_valid_eph_count = 2;
-                                    pub = true;
+                                    if (dev_last < d_dev_thr)
+                                        {
+                                            prev[tmp_obj->PRN].valid_eph = tmp_obj;
+                                            prev[tmp_obj->PRN].valid_eph_count = 2;
+                                            pub = prev[tmp_obj->PRN].valid_eph_count >= prev[tmp_obj->PRN].valid_eph_thr;
+                                            prev[tmp_obj->PRN].valid_eph_thr = (EPH_PUB_THR > 2) ? EPH_PUB_THR : 2;
+                                        }
                                 }
                             else
                                 {
-                                    //if (dev_val < dev_thr)
-                                    d_prev_valid_eph_count ++;
-                                    pub = true;
+                                    if (dev_val < d_dev_thr)
+                                        {
+                                            prev[tmp_obj->PRN].valid_eph_count ++;
+                                            prev[tmp_obj->PRN].valid_eph_thr = (EPH_PUB_THR > 2) ? EPH_PUB_THR : 2;
+                                            pub = prev[tmp_obj->PRN].valid_eph_count >= prev[tmp_obj->PRN].valid_eph_thr;
+                                        }
                                 }
                         }
                     else
                         {
-                            if (dev_last <= dev_val)
-                                {
-                                    //if (dev_last < dev_thr)
-                                    d_prev_valid_eph = tmp_obj;
-                                    d_prev_valid_eph_count = 2;
-                                    pub = true;
-                                }
+                            prev[tmp_obj->PRN].valid_eph = tmp_obj;
+                            prev[tmp_obj->PRN].valid_eph_count = 1;
+                            prev[tmp_obj->PRN].valid_eph_thr = EPH_PUB_THR;
+                            pub = prev[tmp_obj->PRN].valid_eph_count >= prev[tmp_obj->PRN].valid_eph_thr;
                         }
-                }
-            else
-                {
-                    d_prev_valid_eph = tmp_obj;
-                    d_prev_valid_eph_count = 1;
-                    pub = true;
-                }
-            d_last_eph = tmp_obj;
-            std::cout << "dev_last = "<<dev_last<<" dev_val = "<<dev_val<<"\n";
-            if (pub)
-                {
-                    this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
-                    LOG(INFO) << "BEIDOU DNAV Ephemeris have been received in channel"
-                            << d_channel << " from satellite " << d_satellite;
-                    std::cout << TEXT_YELLOW << "New BEIDOU B3I DNAV message received in channel " << d_channel
-                            << ": ephemeris from satellite " << d_satellite << TEXT_RESET << '\n';
+                    prev[tmp_obj->PRN].last_eph = tmp_obj;
+                    std::cout << "PRN "<<tmp_obj->PRN<<" dev_last = "<<dev_last<<" dev_val = "<<dev_val<<" count = "<<prev[tmp_obj->PRN].valid_eph_count<<"\n";
+                    if (pub)
+                        {
+                            this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
+                            LOG(INFO) << "BEIDOU DNAV Ephemeris have been received in channel"
+                                    << d_channel << " from satellite " << d_satellite;
+                            std::cout << TEXT_YELLOW << "New BEIDOU B3I DNAV message received in channel " << d_channel
+                                    << ": ephemeris from satellite " << d_satellite << TEXT_RESET << '\n';
+                        }
                 }
         }
     if (d_nav.have_new_utc_model() == true && crc_ok)
@@ -634,7 +642,6 @@ int beidou_b3i_telemetry_decoder_gs::general_work(
                             d_flag_frame_sync = false;
                             d_stat = 0;
                             d_flag_SOW_set = false;
-                            DLOG(INFO) << "BeiDou DNAV preamble sync lost for SAT " << this->d_satellite << "\n";
                         }
                 }
         }

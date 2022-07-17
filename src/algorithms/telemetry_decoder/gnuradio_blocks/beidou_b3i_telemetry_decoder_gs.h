@@ -127,6 +127,7 @@ private:
     std::shared_ptr<Beidou_Dnav_Ephemeris> d_prev_valid_eph;
     int d_prev_valid_eph_count;
     std::shared_ptr<Beidou_Dnav_Ephemeris> d_last_eph;
+    double d_dev_thr;
 };
 
 
