@@ -52,6 +52,7 @@ struct Prev_Ephemeris
     std::shared_ptr<Beidou_Dnav_Ephemeris> valid_eph;
     std::shared_ptr<Beidou_Dnav_Ephemeris> last_eph;
     int valid_eph_count;
+    int valid_eph_thr;
 };
 
 
@@ -342,7 +343,8 @@ void beidou_b1i_telemetry_decoder_gs::decode_subframe(float *frame_symbols, doub
                                         {
                                             prev[tmp_obj->PRN].valid_eph = tmp_obj;
                                             prev[tmp_obj->PRN].valid_eph_count = 2;
-                                            pub = prev[tmp_obj->PRN].valid_eph_count >= EPH_PUB_THR;
+                                            pub = prev[tmp_obj->PRN].valid_eph_count >= prev[tmp_obj->PRN].valid_eph_thr;
+                                            prev[tmp_obj->PRN].valid_eph_thr = (EPH_PUB_THR > 2) ? EPH_PUB_THR : 2;
                                         }
                                 }
                             else
@@ -350,7 +352,8 @@ void beidou_b1i_telemetry_decoder_gs::decode_subframe(float *frame_symbols, doub
                                     if (dev_val < d_dev_thr)
                                         {
                                             prev[tmp_obj->PRN].valid_eph_count++;
-                                            pub = prev[tmp_obj->PRN].valid_eph_count >= EPH_PUB_THR;
+                                            prev[tmp_obj->PRN].valid_eph_thr = (EPH_PUB_THR > 2) ? EPH_PUB_THR : 2;
+                                            pub = prev[tmp_obj->PRN].valid_eph_count >= prev[tmp_obj->PRN].valid_eph_thr;
                                         }
                                 }
                         }
@@ -358,7 +361,8 @@ void beidou_b1i_telemetry_decoder_gs::decode_subframe(float *frame_symbols, doub
                         {
                             prev[tmp_obj->PRN].valid_eph = tmp_obj;
                             prev[tmp_obj->PRN].valid_eph_count = 1;
-                            pub = prev[tmp_obj->PRN].valid_eph_count >= EPH_PUB_THR;
+                            prev[tmp_obj->PRN].valid_eph_thr = EPH_PUB_THR;
+                            pub = prev[tmp_obj->PRN].valid_eph_count >= prev[tmp_obj->PRN].valid_eph_thr;
                         }
                     prev[tmp_obj->PRN].last_eph = tmp_obj;
                     std::cout << "PRN " << tmp_obj->PRN << " dev_last = " << dev_last << " dev_val = " << dev_val << " count = " << prev[tmp_obj->PRN].valid_eph_count << "\n";
