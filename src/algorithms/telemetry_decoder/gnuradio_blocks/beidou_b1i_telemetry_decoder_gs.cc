@@ -456,7 +456,6 @@ int beidou_b1i_telemetry_decoder_gs::general_work(int noutput_items __attribute_
 {
     int32_t corr_value0 = 0;
     int32_t corr_value1 = 0;
-    int32_t preamble_diff = 0;
 
     auto **out = reinterpret_cast<Gnss_Synchro **>(&output_items[0]);            // Get the output buffer pointer
     const auto **in = reinterpret_cast<const Gnss_Synchro **>(&input_items[0]);  // Get the input buffer pointer
