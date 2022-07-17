@@ -18,12 +18,14 @@
 
 #include "beidou_dnav_navigation_message.h"
 #include "gnss_satellite.h"
+#include "display.h"
 #include <cmath>     // for cos, sin, fmod, sqrt, atan2, fabs, floor
 #include <iostream>  // for string, operator<<, cout, ostream
 #include <limits>    // for std::numeric_limits
 
 
-Beidou_Dnav_Navigation_Message::Beidou_Dnav_Navigation_Message()
+Beidou_Dnav_Navigation_Message::Beidou_Dnav_Navigation_Message() :
+    d_prev_SOW(0.0)
 {
     auto gnss_sat = Gnss_Satellite();
     const std::string _system("Beidou");
@@ -123,14 +125,22 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
 
     // Perform crc computation (tbd)
     flag_crc_test = true;
+    double SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
+    if (static_cast<int>(std::fabs(d_prev_SOW - SOW)) % 3 == 0)
+        {
+            flag_new_SOW_available = true;
+        }
+
+    d_prev_SOW = d_SOW;
+    d_SOW = SOW;
     std::cout << "++++++++++++++++++++++++++++++New BDS "<<i_satellite_PRN <<" D1 subframe "<< subframe_ID;
+    d_prev_SOW = d_SOW;
 
     // Decode all 5 sub-frames
     switch (subframe_ID)
         {
         case 1:  // --- It is subframe 1 ---
             d_SOW_SF1 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
-            d_SOW = d_SOW_SF1;  // Set transmission time
 
             i_SV_health = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_SAT_H1));
 
@@ -178,13 +188,11 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
             // Set system flags for message reception
             flag_d1_sf1 = true;
             flag_iono_valid = true;
-            flag_new_SOW_available = true;
 
             break;
 
         case 2:  // --- It is subframe 2 ---
             d_SOW_SF2 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
-            d_SOW = d_SOW_SF2;  // Set transmission time
 
             d_Delta_n = static_cast<double>(read_navigation_signed(subframe_bits, D1_DELTA_N));
             d_Delta_n = d_Delta_n * D1_DELTA_N_LSB;
@@ -215,13 +223,11 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
 
             // Set system flags for message reception
             flag_d1_sf2 = true;
-            flag_new_SOW_available = true;
 
             break;
 
         case 3:  // --- It is subframe 3 ---
             d_SOW_SF3 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
-            d_SOW = d_SOW_SF3;  // Set transmission time
 
             d_Toe_sf3 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_TOE_SF3));
 
@@ -248,13 +254,11 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
 
             // Set system flags for message reception
             flag_d1_sf3 = true;
-            flag_new_SOW_available = true;
 
             break;
 
         case 4:  // --- It is subframe 4 ---
             d_SOW_SF4 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
-            d_SOW = d_SOW_SF4;  // Set transmission time
 
             d_SQRT_A_ALMANAC = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SQRT_A_ALMANAC));
             d_SQRT_A_ALMANAC = d_SQRT_A_ALMANAC * D1_SQRT_A_ALMANAC_LSB;
@@ -288,16 +292,14 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
 
             // Set system flags for message reception
             flag_d1_sf4 = true;
-            flag_new_SOW_available = true;
 
             break;
 
         case 5:  // --- It is subframe 5 ---
             int32_t SV_page_5;
             d_SOW_SF5 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
-            d_SOW = d_SOW_SF5;  // Set transmission time
             SV_page_5 = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_PNUM));
-            
+
             std::cout << " page " << SV_page_5;
 
             if (SV_page_5 < 7)
@@ -399,7 +401,6 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
 
             // Set system flags for message reception
             flag_d1_sf5 = true;
-            flag_new_SOW_available = true;
 
             break;
 
@@ -420,18 +421,25 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
     // Perform crc computation (tbd)
     flag_crc_test = true;
+    double SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
+    if (static_cast<int>(std::fabs(d_prev_SOW - SOW)) % 3 == 0)
+        {
+            flag_new_SOW_available = true;
+        }
 
-    std::cout << "++++++++++++++++++++++++++++++New BDS "<<i_satellite_PRN <<" D2 subframe "<< subframe_ID <<"\n";
+    d_prev_SOW = d_SOW;
+    d_SOW = SOW;
+    std::cout << "++++++++++++++++++++++++++++++New BDS "<<i_satellite_PRN <<" D2 subframe "<< subframe_ID;
     // Decode all 5 sub-frames
     switch (subframe_ID)
         {
         // -- Decode the sub-frame id ------------------------------------------
         case 1:
 
+            std::cout<<" page "<<page_ID<<"\n";
             switch (page_ID)
                 {
                 case 1:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     i_SV_health = static_cast<int>(read_navigation_unsigned(subframe_bits, D2_SAT_H1));
                     d_AODC = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_AODC));
                     i_SV_accuracy = static_cast<int>(read_navigation_unsigned(subframe_bits, D2_URAI));  // (20.3.3.3.1.3)
@@ -441,11 +449,9 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
                     // Set system flags for message reception
                     flag_sf1_p1 = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 case 2:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     d_alpha0 = static_cast<double>(read_navigation_signed(subframe_bits, D2_ALPHA0)) * D1_ALPHA0_LSB;
                     d_alpha1 = static_cast<double>(read_navigation_signed(subframe_bits, D2_ALPHA1)) * D1_ALPHA1_LSB;
                     d_alpha2 = static_cast<double>(read_navigation_signed(subframe_bits, D2_ALPHA2)) * D1_ALPHA2_LSB;
@@ -458,11 +464,9 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
                     // Set system flags for message reception
                     flag_sf1_p2 = true;
                     flag_iono_valid = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 case 3:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     d_A_f0 = static_cast<double>(read_navigation_signed(subframe_bits, D2_A0)) * D1_A0_LSB;
                     d_A_f1_msb_bits = (read_navigation_unsigned(subframe_bits, D2_A1_MSB));
                     // Adjust for lsb in next page
@@ -470,11 +474,9 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
                     // Set system flags for message reception
                     flag_sf1_p3 = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 case 4:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     d_A_f1_lsb_bits = (read_navigation_unsigned(subframe_bits, D2_A1_LSB));
                     d_A_f2 = static_cast<double>(read_navigation_signed(subframe_bits, D1_A2)) * D1_A2_LSB;
                     d_AODE = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_AODE));
@@ -485,11 +487,9 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
                     // Set system flags for message reception
                     flag_sf1_p4 = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 case 5:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     d_Cuc_lsb_bits = (read_navigation_unsigned(subframe_bits, D2_CUC_LSB));
                     d_M_0 = static_cast<double>(read_navigation_signed(subframe_bits, D2_M0)) * D1_M0_LSB;
                     d_Cus = static_cast<double>(read_navigation_signed(subframe_bits, D2_CUS)) * D1_CUS_LSB;
@@ -501,11 +501,9 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
                     // Set system flags for message reception
                     flag_sf1_p5 = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 case 6:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     d_eccentricity_lsb = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_E_LSB));
                     d_eccentricity_lsb_bits = (read_navigation_unsigned(subframe_bits, D2_E_LSB));
                     d_sqrt_A = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SQRT_A)) * D1_SQRT_A_LSB;
@@ -515,11 +513,9 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
                     // Set system flags for message reception
                     flag_sf1_p6 = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 case 7:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     d_Cic_lsb_bits = (read_navigation_unsigned(subframe_bits, D2_CIC_LSB));
                     d_Cis = static_cast<double>(read_navigation_signed(subframe_bits, D2_CIS)) * D1_CIS_LSB;
                     d_Toe = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_TOE)) * D1_TOE_LSB;
@@ -529,11 +525,9 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
                     // Set system flags for message reception
                     flag_sf1_p7 = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 case 8:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     d_i_0_lsb_bits = (read_navigation_unsigned(subframe_bits, D2_I0_LSB));
                     d_Crc = static_cast<double>(read_navigation_signed(subframe_bits, D2_CRC)) * D1_CRC_LSB;
                     d_Crs = static_cast<double>(read_navigation_signed(subframe_bits, D2_CRS)) * D1_CRS_LSB;
@@ -543,11 +537,9 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
                     // Set system flags for message reception
                     flag_sf1_p8 = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 case 9:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     d_OMEGA_DOT_lsb_bits = (read_navigation_unsigned(subframe_bits, D2_OMEGA_DOT_LSB));
                     d_OMEGA0 = static_cast<double>(read_navigation_signed(subframe_bits, D2_OMEGA0)) * D1_OMEGA0_LSB;
                     d_OMEGA_msb_bits = (read_navigation_unsigned(subframe_bits, D2_OMEGA_MSB));
@@ -556,17 +548,14 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
                     // Set system flags for message reception
                     flag_sf1_p9 = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 case 10:
-                    d_SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
                     d_OMEGA_lsb_bits = (read_navigation_unsigned(subframe_bits, D2_OMEGA_LSB));
                     d_IDOT = static_cast<double>(read_navigation_signed(subframe_bits, D2_IDOT)) * D1_IDOT_LSB;
 
                     // Set system flags for message reception
                     flag_sf1_p10 = true;
-                    flag_new_SOW_available = true;
 
                     break;
                 default:
@@ -589,6 +578,7 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
         case 5:  // -- It is subframe 5 -----------------almanac health (PRN: 1-24) and Almanac reference week number and time.
 
+            std::cout<<" page "<<page_ID<<"\n";
             break;
 
         default:
@@ -797,8 +787,9 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
                 (flag_sf1_p10 == true))
                 {
                     // if all ephemeris pages have the same IOD, then they belong to the same block
-/*                    if (d_previous_aode != d_AODE)
-                        {*/
+                    std::cerr<<TEXT_CYAN<<"SOW diff="<<std::fabs(d_prev_SOW - d_SOW)<<TEXT_RESET<<"\n";
+                    if (static_cast<int>(std::fabs(d_prev_SOW - d_SOW)) % 3 == 0)
+                        {
                             // Clear flags for all received pages
                             flag_sf1_p1 = false;
                             flag_sf1_p2 = false;
@@ -816,7 +807,7 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
                             d_previous_aode = d_AODE;
 
                             return true;
-//                         }
+                         }
                 }
         }
     else
@@ -824,19 +815,20 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
             if ((flag_d1_sf1 == true) and (flag_d1_sf2 == true) and (flag_d1_sf3 == true))
                 {
                     // if all ephemeris pages have the same IOD, then they belong to the same block
-/*                    if (d_previous_aode != d_AODE)
-                        {*/
+                    if (static_cast<int>(std::fabs(d_prev_SOW - d_SOW)) % 6 == 0)
+                        {
                             // Clear flags for all received subframes
                             flag_d1_sf1 = false;
                             flag_d1_sf2 = false;
                             flag_d1_sf3 = false;
+                    std::cout << TEXT_CYAN<<"d_SOW_SF1="<<d_SOW_SF1<<" d_SOW_SF2="<<d_SOW_SF2<<" d_SOW_SF3="<<d_SOW_SF3<<TEXT_RESET<<"\n";
 
                             flag_eph_valid = true;
                             // Update the time of ephemeris information
                             d_previous_aode = d_AODE;
 
                             return true;
-//                         }
+                         }
                 }
         }
     return false;
