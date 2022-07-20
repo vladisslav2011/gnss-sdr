@@ -55,6 +55,10 @@ public:
         return this->System;
     }
 
+    virtual ~Gps_Ephemeris()
+    {
+    }
+
     int32_t code_on_L2{};   //!< If 1, P code ON in L2;  if 2, C/A code ON in L2;
     bool L2_P_data_flag{};  //!< When true, indicates that the NAV data stream was commanded OFF on the P-code of the L2 channel
     int32_t SV_accuracy{};  //!< User Range Accuracy (URA) index of the SV (reference paragraph 6.2.1) for the standard positioning service user (Ref 20.3.3.3.1.3 IS-GPS-200M)

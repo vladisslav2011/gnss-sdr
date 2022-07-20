@@ -46,6 +46,10 @@ public:
         this->System = 'G';
     }
 
+    virtual ~Gps_CNAV_Ephemeris()
+    {
+    }
+
     double delta_A{};         //!< Semi-major axis difference at reference time
     double delta_OMEGAdot{};  //!< Rate of Right Ascension  difference [semi-circles/s]
     int32_t toe1{};           //!< Ephemeris data reference time of week (Ref. 20.3.3.4.3 IS-GPS-200M) [s]
