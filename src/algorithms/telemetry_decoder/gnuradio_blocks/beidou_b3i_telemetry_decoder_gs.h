@@ -122,10 +122,6 @@ private:
     bool d_remove_dat;
     bool d_enable_navdata_monitor;
     bool d_dump_crc_stats;
-    std::shared_ptr<Beidou_Dnav_Ephemeris> d_prev_valid_eph;
-    int d_prev_valid_eph_count;
-    std::shared_ptr<Beidou_Dnav_Ephemeris> d_last_eph;
-    double d_dev_thr;
 };
 
 

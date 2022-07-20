@@ -39,15 +39,6 @@
 #define CRC_ERROR_LIMIT2 5
 #define EPH_PUB_THR 1
 
-struct Prev_Ephemeris
-{
-    std::shared_ptr<Beidou_Dnav_Ephemeris> valid_eph;
-    std::shared_ptr<Beidou_Dnav_Ephemeris> last_eph;
-    int valid_eph_count;
-    int valid_eph_thr;
-};
-
-
 beidou_b3i_telemetry_decoder_gs_sptr
 beidou_b3i_make_telemetry_decoder_gs(const Gnss_Satellite &satellite,
     const Tlm_Conf &conf)
@@ -84,11 +75,7 @@ beidou_b3i_telemetry_decoder_gs::beidou_b3i_telemetry_decoder_gs(
       d_dump_mat(conf.dump_mat),
       d_remove_dat(conf.remove_dat),
       d_enable_navdata_monitor(conf.enable_navdata_monitor),
-      d_dump_crc_stats(conf.dump_crc_stats),
-      d_prev_valid_eph(),
-      d_prev_valid_eph_count(0),
-      d_last_eph(),
-      d_dev_thr(0.00000001)
+      d_dump_crc_stats(conf.dump_crc_stats)
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -322,49 +309,10 @@ void beidou_b3i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
             // get object for this SV (mandatory)
             const std::shared_ptr<Beidou_Dnav_Ephemeris> tmp_obj =
                 std::make_shared<Beidou_Dnav_Ephemeris>(d_nav.get_ephemeris());
-            static std::array<Prev_Ephemeris, 63> prev;
-            double dev_last = -1.0;
-            double dev_val = -1.0;
-            bool pub = false;
+            static Gnss_Ephemeris::history_set prev(63);
             if (tmp_obj->PRN == d_satellite.get_PRN())
                 {
-                    if (prev[tmp_obj->PRN].last_eph.get())
-                        {
-                            dev_last = prev[tmp_obj->PRN].last_eph->max_deviation(*tmp_obj.get());
-                        }
-                    if (prev[tmp_obj->PRN].valid_eph.get())
-                        {
-                            dev_val = prev[tmp_obj->PRN].valid_eph->max_deviation(*tmp_obj.get());
-                            if (dev_last < dev_val)
-                                {
-                                    if (dev_last < d_dev_thr)
-                                        {
-                                            prev[tmp_obj->PRN].valid_eph = tmp_obj;
-                                            prev[tmp_obj->PRN].valid_eph_count = 2;
-                                            pub = prev[tmp_obj->PRN].valid_eph_count >= prev[tmp_obj->PRN].valid_eph_thr;
-                                            prev[tmp_obj->PRN].valid_eph_thr = (EPH_PUB_THR > 2) ? EPH_PUB_THR : 2;
-                                        }
-                                }
-                            else
-                                {
-                                    if (dev_val < d_dev_thr)
-                                        {
-                                            prev[tmp_obj->PRN].valid_eph_count ++;
-                                            prev[tmp_obj->PRN].valid_eph_thr = (EPH_PUB_THR > 2) ? EPH_PUB_THR : 2;
-                                            pub = prev[tmp_obj->PRN].valid_eph_count >= prev[tmp_obj->PRN].valid_eph_thr;
-                                        }
-                                }
-                        }
-                    else
-                        {
-                            prev[tmp_obj->PRN].valid_eph = tmp_obj;
-                            prev[tmp_obj->PRN].valid_eph_count = 1;
-                            prev[tmp_obj->PRN].valid_eph_thr = EPH_PUB_THR;
-                            pub = prev[tmp_obj->PRN].valid_eph_count >= prev[tmp_obj->PRN].valid_eph_thr;
-                        }
-                    prev[tmp_obj->PRN].last_eph = tmp_obj;
-                    std::cout << "PRN "<<tmp_obj->PRN<<" dev_last = "<<dev_last<<" dev_val = "<<dev_val<<" count = "<<prev[tmp_obj->PRN].valid_eph_count<<"\n";
-                    if (pub)
+                    if (Gnss_Ephemeris::validate(prev, tmp_obj, EPH_PUB_THR))
                         {
                             this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
                             LOG(INFO) << "BEIDOU DNAV Ephemeris have been received in channel"
@@ -426,9 +374,6 @@ void beidou_b3i_telemetry_decoder_gs::set_satellite(
     sat_prn = d_satellite.get_PRN();
     d_nav.set_satellite_PRN(sat_prn);
     d_nav.set_signal_type(5);  // BDS: data source (0:unknown,1:B1I,2:B1Q,3:B2I,4:B2Q,5:B3I,6:B3Q)
-    d_prev_valid_eph.reset();
-    d_last_eph.reset();
-    d_prev_valid_eph_count = 0;
 
     // Update tel dec parameters for D2 NAV Messages
     if ((sat_prn > 0 && sat_prn < 6) || sat_prn > 58)
