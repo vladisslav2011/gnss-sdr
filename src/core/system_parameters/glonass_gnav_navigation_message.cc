@@ -21,10 +21,11 @@
 #include "gnss_satellite.h"
 #include <glog/logging.h>
 #include <cstddef>  // for size_t
-#include <ostream>  // for operator<<
+#include <iostream>  // for operator<<
 
 
-Glonass_Gnav_Navigation_Message::Glonass_Gnav_Navigation_Message()
+Glonass_Gnav_Navigation_Message::Glonass_Gnav_Navigation_Message():
+    d_prev_TOW(-1.0)
 {
     auto gnss_sat = Gnss_Satellite();
     std::string _system("GLONASS");
@@ -361,8 +362,26 @@ int32_t Glonass_Gnav_Navigation_Message::string_decoder(const std::string& frame
                     if (flag_ephemeris_str_1 == true)
                         {
                             gnav_ephemeris.glot_to_gpst(gnav_ephemeris.d_t_k + 10, gnav_utc_model.d_tau_c, gnav_utc_model.d_tau_gps, &gnav_ephemeris.d_WN, &gnav_ephemeris.d_TOW);
-                            flag_TOW_set = true;
-                            flag_TOW_new = true;
+                            if (d_prev_TOW == -1.0)
+                                {
+                                    flag_TOW_set = true;
+                                    flag_TOW_new = true;
+                                }
+                            else
+                                {
+                                    if (static_cast<int>(std::round(gnav_ephemeris.d_TOW-d_prev_TOW)) % 30 == 0)
+                                        {
+                                            flag_TOW_set = true;
+                                            flag_TOW_new = true;
+                                        }
+                                    else
+                                        {
+                                            flag_TOW_set = false;
+                                            flag_TOW_new = false;
+                                        }
+                                }
+                            std::cout<<"-----------------------------------TOW diff="<<(gnav_ephemeris.d_TOW-d_prev_TOW)<<"\n";
+                            d_prev_TOW = gnav_ephemeris.d_TOW;
                         }
 
                     // 4) Set time of day (tod) when ephemeris data is complety decoded
@@ -630,7 +649,7 @@ bool Glonass_Gnav_Navigation_Message::have_new_ephemeris()  // Check if we have 
         (flag_ephemeris_str_3 == true) and (flag_ephemeris_str_4 == true) and
         (flag_utc_model_str_5 == true))
         {
-            if (d_previous_tb != gnav_ephemeris.d_t_b)
+//            if (d_previous_tb != gnav_ephemeris.d_t_b)
                 {
                     flag_ephemeris_str_1 = false;  // clear the flag
                     flag_ephemeris_str_2 = false;  // clear the flag
