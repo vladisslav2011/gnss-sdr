@@ -21,11 +21,35 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
+#include <vector>
+
+class Common_Ephemeris
+{
+private:
+    using last_valid = struct
+    {
+        std::shared_ptr<Common_Ephemeris> last_eph;
+        std::shared_ptr<Common_Ephemeris> valid_eph;
+        int valid_eph_count;
+        int valid_eph_thr;
+    };
+
+protected:
+    static constexpr double DEVIATION_THRESHOLD = 0.00001;
+
+public:
+    using history_set = std::vector<last_valid>;
+    Common_Ephemeris() = default;
+    virtual double max_deviation(Common_Ephemeris &from) = 0;  //!< Compare a set of ephemeris to another one
+    static bool validate(history_set &hist, std::shared_ptr<Common_Ephemeris> eph, const int thr);
+    uint32_t PRN{};  //!< SV ID
+};
 
 /*!
  * \brief Base class for GNSS ephemeris storage
  */
-class Gnss_Ephemeris
+class Gnss_Ephemeris : public Common_Ephemeris
 {
 public:
     Gnss_Ephemeris() = default;
@@ -65,10 +89,9 @@ public:
      */
     double predicted_doppler(double rx_time_s, double lat, double lon, double h, double ve, double vn, double vu, int band) const;
 
-    void satellitePosition(double transmitTime);  //!< Computes the ECEF SV coordinates and ECEF velocity
-    double max_deviation(Gnss_Ephemeris& from);   //!< Compare a set of ephemeris to another one
+    void satellitePosition(double transmitTime);            //!< Computes the ECEF SV coordinates and ECEF velocity
+    double max_deviation(Common_Ephemeris &from) override;  //!< Compare a set of ephemeris to another one
 
-    uint32_t PRN{};       //!< SV ID
     double M_0{};         //!< Mean anomaly at reference time [rad]
     double Adot{};        //!< Change rate in semi-major axis (CNAV)
     double delta_ndot{};  //!< Rate of mean motion difference from computed value (CNAV)
@@ -115,7 +138,7 @@ protected:
     char System{};  //!< Character ID of the GNSS system. 'G': GPS.  'E': Galileo.  'C': BeiDou
 
 private:
-    void satellitePosVelComputation(double transmitTime, std::array<double, 7>& pos_vel_dtr) const;
+    void satellitePosVelComputation(double transmitTime, std::array<double, 7> &pos_vel_dtr) const;
     double check_t(double time) const;
     double sv_clock_relativistic_term(double transmitTime) const;
 };
