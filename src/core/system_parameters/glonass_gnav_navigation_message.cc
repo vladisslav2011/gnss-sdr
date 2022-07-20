@@ -53,6 +53,9 @@ void print_kp_leap_second_message(const std::string& message)
 }
 }  // namespace
 
+Glonass_Gnav_Navigation_Message::Glonass_Gnav_Navigation_Message() : d_prev_TOW(-1.0)
+{
+}
 
 bool Glonass_Gnav_Navigation_Message::CRC_test(std::bitset<GLONASS_GNAV_STRING_BITS>& bits) const
 {
@@ -488,8 +491,26 @@ int32_t Glonass_Gnav_Navigation_Message::string_decoder(const std::string& frame
                             // Apply a leap second announced by the KP word if its epoch has been reached
                             check_kp_leap_event();
                             gnav_ephemeris.glot_to_gpst(gnav_ephemeris.d_t_k + 10, gnav_utc_model.d_tau_c, gnav_utc_model.d_tau_gps, &gnav_ephemeris.d_WN, &gnav_ephemeris.d_TOW);
-                            flag_TOW_set = true;
-                            flag_TOW_new = true;
+                            if (d_prev_TOW == -1.0)
+                                {
+                                    flag_TOW_set = true;
+                                    flag_TOW_new = true;
+                                }
+                            else
+                                {
+                                    if (static_cast<int>(std::round(gnav_ephemeris.d_TOW - d_prev_TOW)) % 30 == 0)
+                                        {
+                                            flag_TOW_set = true;
+                                            flag_TOW_new = true;
+                                        }
+                                    else
+                                        {
+                                            flag_TOW_set = false;
+                                            flag_TOW_new = false;
+                                        }
+                                }
+                            std::cout << "-----------------------------------TOW diff=" << (gnav_ephemeris.d_TOW - d_prev_TOW) << "\n";
+                            d_prev_TOW = gnav_ephemeris.d_TOW;
                         }
 
                     // 4) Set time of day (tod) when ephemeris data is completely decoded
@@ -739,18 +760,18 @@ bool Glonass_Gnav_Navigation_Message::have_new_ephemeris()  // Check if we have 
         (flag_ephemeris_str_3 == true) && (flag_ephemeris_str_4 == true) &&
         (flag_utc_model_str_5 == true))
         {
-            if (d_previous_tb != gnav_ephemeris.d_t_b)
-                {
-                    flag_ephemeris_str_1 = false;  // clear the flag
-                    flag_ephemeris_str_2 = false;  // clear the flag
-                    flag_ephemeris_str_3 = false;  // clear the flag
-                    flag_ephemeris_str_4 = false;  // clear the flag
-                    flag_all_ephemeris = true;
-                    // Update the time of ephemeris information
-                    d_previous_tb = gnav_ephemeris.d_t_b;
-                    DLOG(INFO) << "GLONASS GNAV Ephemeris (1, 2, 3, 4) have been received and belong to the same batch";
-                    new_eph = true;
-                }
+            //            if (d_previous_tb != gnav_ephemeris.d_t_b)
+            {
+                flag_ephemeris_str_1 = false;  // clear the flag
+                flag_ephemeris_str_2 = false;  // clear the flag
+                flag_ephemeris_str_3 = false;  // clear the flag
+                flag_ephemeris_str_4 = false;  // clear the flag
+                flag_all_ephemeris = true;
+                // Update the time of ephemeris information
+                d_previous_tb = gnav_ephemeris.d_t_b;
+                DLOG(INFO) << "GLONASS GNAV Ephemeris (1, 2, 3, 4) have been received and belong to the same batch";
+                new_eph = true;
+            }
         }
 
     return new_eph;

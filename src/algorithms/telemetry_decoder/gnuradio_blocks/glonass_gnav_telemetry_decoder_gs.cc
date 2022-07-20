@@ -45,6 +45,7 @@
 #endif
 
 #define CRC_ERROR_LIMIT 6
+#define EPH_PUB_THR 1
 
 
 glonass_gnav_telemetry_decoder_gs_sptr glonass_gnav_make_telemetry_decoder_gs(const Tlm_Conf &conf, int32_t frequency_band)
@@ -169,13 +170,24 @@ void glonass_gnav_telemetry_decoder_gs::decode_string(const double *frame_symbol
             // get object for this SV (mandatory)
             d_nav.set_rf_link(d_satellite.get_rf_link());
             const std::shared_ptr<Glonass_Gnav_Ephemeris> tmp_obj = std::make_shared<Glonass_Gnav_Ephemeris>(d_nav.get_ephemeris());
-            this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
-            LOG(INFO) << "GLONASS GNAV Ephemeris have been received in channel" << d_channel << " from satellite " << d_satellite;
-            const auto default_precision = std::cout.precision();
-            std::cout << text_color << "New GLONASS L" << d_band << " GNAV message received in channel " << d_channel
-                      << ": ephemeris from satellite " << d_satellite
-                      << " with CN0=" << std::setprecision(2) << cn0 << std::setprecision(default_precision)
-                      << " dB-Hz" << text_reset << std::endl;
+            static Gnss_Ephemeris::history_set prev(27);
+            if (tmp_obj->PRN == d_satellite.get_PRN())
+                {
+                    if (Gnss_Ephemeris::validate(prev, tmp_obj, EPH_PUB_THR))
+                        {
+                            this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
+                            LOG(INFO) << "GLONASS GNAV Ephemeris have been received in channel" << d_channel << " from satellite " << d_satellite;
+                            const auto default_precision = std::cout.precision();
+                            std::cout << text_color << "New GLONASS L" << d_band << " GNAV message received in channel " << d_channel
+                                    << ": ephemeris from satellite " << d_satellite
+                                    << " with CN0=" << std::setprecision(2) << cn0 << std::setprecision(default_precision)
+                                    << " dB-Hz" << text_reset << std::endl;
+                        }
+                }
+            else
+                {
+                    std::cout << "PRN " << tmp_obj->PRN << "!=" << d_satellite.get_PRN() << "\n";
+                }
         }
     if (d_nav.have_new_utc_model() == true)
         {
@@ -304,7 +316,7 @@ int glonass_gnav_telemetry_decoder_gs::general_work(int noutput_items __attribut
         {
             if (abs(corr_value) >= GLONASS_GNAV_PREAMBLE_LENGTH_BITS)
                 {
-                    // check preamble separation
+                    // check preamble sepanration
                     preamble_diff = static_cast<int32_t>(d_sample_counter - d_preamble_index);
                     if (abs(preamble_diff - GLONASS_GNAV_PREAMBLE_PERIOD_BITS) == 0)
                         {
@@ -369,7 +381,9 @@ int glonass_gnav_telemetry_decoder_gs::general_work(int noutput_items __attribut
                                 {
                                     LOG(INFO) << "Lost of frame sync SAT " << this->d_satellite;
                                     d_flag_frame_sync = false;
+                                    d_flag_preamble = false;
                                     d_stat = 0;
+                                    d_nav = Glonass_Gnav_Navigation_Message();
                                 }
                         }
                 }
