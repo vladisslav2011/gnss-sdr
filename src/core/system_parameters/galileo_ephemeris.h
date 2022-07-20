@@ -53,6 +53,10 @@ public:
         this->System = 'E';
     }
 
+    virtual ~Galileo_Ephemeris()
+    {
+    }
+
     double Galileo_System_Time(double week_number, double TOW);  //!< Galileo System Time (GST), ICD paragraph 5.1.2
 
     int32_t IOD_ephemeris{};
