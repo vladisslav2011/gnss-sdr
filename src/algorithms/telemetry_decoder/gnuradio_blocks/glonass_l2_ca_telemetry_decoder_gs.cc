@@ -34,6 +34,7 @@
 #include <memory>           // for shared_ptr, make_shared
 
 #define CRC_ERROR_LIMIT 6
+#define EPH_PUB_THR 1
 
 
 glonass_l2_ca_telemetry_decoder_gs_sptr
@@ -236,9 +237,20 @@ void glonass_l2_ca_telemetry_decoder_gs::decode_string(const double *frame_symbo
             // get object for this SV (mandatory)
             d_nav.set_rf_link(d_satellite.get_rf_link());
             const std::shared_ptr<Glonass_Gnav_Ephemeris> tmp_obj = std::make_shared<Glonass_Gnav_Ephemeris>(d_nav.get_ephemeris());
-            this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
-            LOG(INFO) << "GLONASS GNAV Ephemeris have been received in channel" << d_channel << " from satellite " << d_satellite;
-            std::cout << TEXT_CYAN << "New GLONASS L2 GNAV message received in channel " << d_channel << ": ephemeris from satellite " << d_satellite << TEXT_RESET << '\n';
+            static Gnss_Ephemeris::history_set prev(27);
+            if (tmp_obj->PRN == d_satellite.get_PRN())
+                {
+                    if (Gnss_Ephemeris::validate(prev, tmp_obj, EPH_PUB_THR))
+                        {
+                            this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
+                            LOG(INFO) << "GLONASS GNAV Ephemeris have been received in channel" << d_channel << " from satellite " << d_satellite;
+                            std::cout << TEXT_CYAN << "New GLONASS L2 GNAV message received in channel " << d_channel << ": ephemeris from satellite " << d_satellite << TEXT_RESET << '\n';
+                        }
+                }
+            else
+                {
+                    std::cout << "PRN "<<tmp_obj->PRN<<"!="<<d_satellite.get_PRN()<<"\n";
+                }
         }
     if (d_nav.have_new_utc_model() == true)
         {

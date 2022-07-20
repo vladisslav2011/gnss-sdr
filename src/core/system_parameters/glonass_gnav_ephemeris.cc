@@ -24,6 +24,61 @@
 #include <string>
 
 
+#define upd_dev(NN)\
+{\
+    if (std::fabs(NN - tmp.NN) > dev )\
+        {\
+            dev = std::fabs(NN - tmp.NN);\
+            std::cout<<"Gnss_Ephemeris::max_deviation " #NN << ": "<<NN<<"-"<<tmp.NN<<"="<<std::fabs(NN - tmp.NN)<<"\n";\
+        }\
+}
+
+double Glonass_Gnav_Ephemeris::max_deviation(Common_Ephemeris &from)
+{
+    const Glonass_Gnav_Ephemeris &tmp = dynamic_cast<Glonass_Gnav_Ephemeris &>(from);
+    double dev = 0.0;
+    upd_dev(PRN);
+    // TODO: compare to previous value?
+    //upd_dev(d_t_k);
+    upd_dev(d_t_b);
+    upd_dev(d_gamma_n);
+    upd_dev(d_tau_n);
+    upd_dev(d_Xn);
+    upd_dev(d_Yn);
+    upd_dev(d_Zn);
+    upd_dev(d_VXn);
+    upd_dev(d_VYn);
+    upd_dev(d_VZn);
+    upd_dev(d_AXn);
+    upd_dev(d_AYn);
+    upd_dev(d_AZn);
+    upd_dev(d_B_n);
+    upd_dev(d_P);
+    upd_dev(d_N_T);
+    upd_dev(d_F_T);
+    upd_dev(d_n);
+    upd_dev(d_Delta_tau_n);
+    upd_dev(d_E_n);
+    upd_dev(d_P_1);
+    upd_dev(d_yr);
+    upd_dev(d_satClkDrift);
+    upd_dev(d_dtr);
+    upd_dev(d_iode);
+    upd_dev(d_tau_c);
+//    upd_dev(d_TOW);
+//    upd_dev(d_tod);
+
+    upd_dev(i_satellite_freq_channel);
+    upd_dev(i_satellite_slot_number);
+    upd_dev(d_WN);
+    //d_P_2
+    //d_P_3
+    //d_P_4
+    //d_l3rd_n
+    //d_l5th_n
+    return dev;
+}
+
 boost::posix_time::ptime Glonass_Gnav_Ephemeris::compute_GLONASS_time(double offset_time) const
 {
     int J = 0;
