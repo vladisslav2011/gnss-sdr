@@ -49,7 +49,7 @@ public:
     /*!
      * Default constructor
      */
-    Glonass_Gnav_Navigation_Message() = default;
+    Glonass_Gnav_Navigation_Message();
 
     /*!
      * \brief Compute CRC for GLONASS GNAV strings
@@ -225,6 +225,7 @@ private:
 
     bool flag_TOW_set{};  // Flag indicating when the TOW has been set
     bool flag_TOW_new{};  // Flag indicating when a new TOW has been computed
+    double d_prev_TOW{};
 };
 
 
