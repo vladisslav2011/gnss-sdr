@@ -44,6 +44,10 @@ public:
      */
     Beidou_Dnav_Ephemeris();
 
+    virtual ~Beidou_Dnav_Ephemeris()
+    {
+    }
+
     int SV_accuracy{};  //!< User Range Accuracy (URA) index of the SV (reference paragraph 5.2.4.5) for the standard positioning service user
     int SV_health{};
     double TGD1{};  //!< Estimated Group Delay Differential on B1I [s]
