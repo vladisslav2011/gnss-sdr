@@ -128,7 +128,6 @@ private:
     bool d_dump_crc_stats;
     int32_t d_ecc_errors_reject;
     int32_t d_ecc_errors_resync;
-    double d_dev_thr;
 };
 
 
