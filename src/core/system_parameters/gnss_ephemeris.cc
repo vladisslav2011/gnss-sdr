@@ -25,7 +25,6 @@
 #include <vector>
 #include <iostream>
 
-
 double Gnss_Ephemeris::sv_clock_drift(double transmitTime)
 {
     const double dt = check_t(transmitTime - this->toc);
@@ -168,15 +167,16 @@ void Gnss_Ephemeris::satellitePosition(double transmitTime)
 
 #define upd_dev(NN)\
 {\
-    if (std::fabs(NN - from.NN) > dev )\
+    if (std::fabs(NN - tmp.NN) > dev )\
         {\
-            dev = std::fabs(NN - from.NN);\
-            std::cout<<"Gnss_Ephemeris::max_deviation " #NN << ": "<<NN<<"-"<<from.NN<<"="<<std::fabs(NN - from.NN)<<"\n";\
+            dev = std::fabs(NN - tmp.NN);\
+            std::cout<<"Gnss_Ephemeris::max_deviation " #NN << ": "<<NN<<"-"<<tmp.NN<<"="<<std::fabs(NN - tmp.NN)<<"\n";\
         }\
 }
 
-double Gnss_Ephemeris::max_deviation(Gnss_Ephemeris &from)
+double Gnss_Ephemeris::max_deviation(Common_Ephemeris &from)
 {
+    const Gnss_Ephemeris &tmp = dynamic_cast<Gnss_Ephemeris &>(from);
     double dev = 0.0;
     upd_dev(PRN);
     upd_dev(M_0);
@@ -204,6 +204,58 @@ double Gnss_Ephemeris::max_deviation(Gnss_Ephemeris &from)
     return dev;
 }
 
+bool Common_Ephemeris::validate(history_set & hist, std::shared_ptr<Common_Ephemeris> eph, const int thr)
+{
+    double dev_last = -1.0;
+    double dev_val = -1.0;
+    const int prn = eph->PRN - 1;
+    bool ret = false;
+    if (hist[prn].last_eph.get())
+        {
+            dev_last = hist[prn].last_eph->max_deviation(*eph.get());
+            if (hist[prn].last_eph.get() == eph.get())
+                {
+                    std::cout<<"\nhist[prn].last_eph.get() == eph.get()\n\n";
+                }
+        }
+    if (hist[prn].valid_eph.get())
+        {
+            dev_val = hist[prn].valid_eph->max_deviation(*eph.get());
+            if (hist[prn].valid_eph.get() == eph.get())
+                {
+                    std::cout<<"\nhist[prn].last_eph.get() == eph.get()\n\n";
+                }
+            if (dev_last < dev_val)
+                {
+                    if (dev_last < DEVIATION_THRESHOLD)
+                        {
+                            hist[prn].valid_eph = eph;
+                            hist[prn].valid_eph_count = 2;
+                            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
+                            hist[prn].valid_eph_thr = (thr > 2) ? thr : 2;
+                        }
+                }
+            else
+                {
+                    if (dev_val < DEVIATION_THRESHOLD)
+                        {
+                            hist[prn].valid_eph_count ++;
+                            hist[prn].valid_eph_thr = (thr > 2) ? thr : 2;
+                            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
+                        }
+                }
+        }
+    else
+        {
+            hist[prn].valid_eph = eph;
+            hist[prn].valid_eph_count = 1;
+            hist[prn].valid_eph_thr = thr;
+            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
+        }
+    hist[prn].last_eph = eph;
+    std::cout << "PRN "<<eph->PRN<<" dev_last = "<<dev_last<<" dev_val = "<<dev_val<<" count = "<<hist[prn].valid_eph_count<<"\n";
+    return ret;
+}
 
 void Gnss_Ephemeris::satellitePosVelComputation(double transmitTime, std::array<double, 7>& pos_vel_dtr) const
 {

@@ -20,12 +20,35 @@
 #define GNSS_SDR_GNSS_EPHEMERIS_H
 
 #include <array>
+#include <vector>
 #include <cstdint>
+#include <memory>
+
+class Common_Ephemeris
+{
+private:
+    using last_valid = struct {
+        std::shared_ptr<Common_Ephemeris> last_eph;
+        std::shared_ptr<Common_Ephemeris> valid_eph;
+        int valid_eph_count;
+        int valid_eph_thr;
+    };
+
+protected:
+    static constexpr double DEVIATION_THRESHOLD = 0.00001;
+
+public:
+    using history_set = std::vector<last_valid>;
+    Common_Ephemeris() = default;
+    virtual double max_deviation(Common_Ephemeris &from) = 0;  //!< Compare a set of ephemeris to another one
+    static bool validate(history_set & hist, std::shared_ptr<Common_Ephemeris> eph, const int thr);
+    uint32_t PRN{};     //!< SV ID
+};
 
 /*!
  * \brief Base class for GNSS ephemeris storage
  */
-class Gnss_Ephemeris
+class Gnss_Ephemeris: public Common_Ephemeris
 {
 public:
     Gnss_Ephemeris() = default;
@@ -66,9 +89,8 @@ public:
     double predicted_doppler(double rx_time_s, double lat, double lon, double h, double ve, double vn, double vu, int band) const;
 
     void satellitePosition(double transmitTime);  //!< Computes the ECEF SV coordinates and ECEF velocity
-    double max_deviation(Gnss_Ephemeris &from);  //!< Compare a set of ephemeris to another one
+    double max_deviation(Common_Ephemeris &from) override;  //!< Compare a set of ephemeris to another one
 
-    uint32_t PRN{};     //!< SV ID
     double M_0{};       //!< Mean anomaly at reference time [rad]
     double delta_n{};   //!< Mean motion difference from computed value [rad/sec]
     double ecc{};       //!< Eccentricity
