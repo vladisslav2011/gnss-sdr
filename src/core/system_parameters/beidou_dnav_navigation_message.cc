@@ -126,15 +126,14 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
     // Perform crc computation (tbd)
     flag_crc_test = true;
     double SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
-    if (static_cast<int>(std::fabs(d_prev_SOW - SOW)) % 3 == 0)
+    if (static_cast<int>(std::fabs(d_prev_SOW - SOW) * 1000) % BEIDOU_DNAV_SUBFRAME_PERIOD_MS == 0)
         {
             flag_new_SOW_available = true;
         }
 
+    std::cout << "++++++++++++++++++++++++++++++New BDS "<<i_satellite_PRN <<" D1 subframe "<< subframe_ID<<" SOW "<<d_SOW<<"=>"<<SOW;
     d_prev_SOW = d_SOW;
     d_SOW = SOW;
-    std::cout << "++++++++++++++++++++++++++++++New BDS "<<i_satellite_PRN <<" D1 subframe "<< subframe_ID;
-    d_prev_SOW = d_SOW;
 
     // Decode all 5 sub-frames
     switch (subframe_ID)
@@ -421,15 +420,15 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
 
     // Perform crc computation (tbd)
     flag_crc_test = true;
-    double SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
-    if (static_cast<int>(std::fabs(d_prev_SOW - SOW)) % 3 == 0)
+    double SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW)) + (subframe_ID - 1) * BEIDOU_DNAV_GEO_SUBFRAME_PERIOD_MS / 1000.0;
+
+    std::cout << "++++++++++++++++++++++++++++++New BDS "<<i_satellite_PRN <<" D2 subframe "<< subframe_ID<<" SOW "<<d_SOW<<"=>"<<SOW;
+    d_prev_SOW = d_SOW;
+    d_SOW = SOW;
+    if (static_cast<int>(std::fabs(d_prev_SOW - SOW) * 1000) % BEIDOU_DNAV_GEO_SUBFRAME_PERIOD_MS == 0)
         {
             flag_new_SOW_available = true;
         }
-
-    d_prev_SOW = d_SOW;
-    d_SOW = SOW;
-    std::cout << "++++++++++++++++++++++++++++++New BDS "<<i_satellite_PRN <<" D2 subframe "<< subframe_ID;
     // Decode all 5 sub-frames
     switch (subframe_ID)
         {
@@ -788,7 +787,7 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
                 {
                     // if all ephemeris pages have the same IOD, then they belong to the same block
                     std::cerr<<TEXT_CYAN<<"SOW diff="<<std::fabs(d_prev_SOW - d_SOW)<<TEXT_RESET<<"\n";
-                    if (static_cast<int>(std::fabs(d_prev_SOW - d_SOW)) % 3 == 0)
+                    if (static_cast<int>(std::fabs(d_prev_SOW - d_SOW) * 1000) % BEIDOU_DNAV_GEO_SUBFRAME_PERIOD_MS == 0)
                         {
                             // Clear flags for all received pages
                             flag_sf1_p1 = false;
@@ -815,7 +814,7 @@ bool Beidou_Dnav_Navigation_Message::have_new_ephemeris()  // Check if we have a
             if ((flag_d1_sf1 == true) and (flag_d1_sf2 == true) and (flag_d1_sf3 == true))
                 {
                     // if all ephemeris pages have the same IOD, then they belong to the same block
-                    if (static_cast<int>(std::fabs(d_prev_SOW - d_SOW)) % 6 == 0)
+                    if (static_cast<int>(std::fabs(d_prev_SOW - d_SOW) * 1000) % BEIDOU_DNAV_SUBFRAME_PERIOD_MS == 0)
                         {
                             // Clear flags for all received subframes
                             flag_d1_sf1 = false;
