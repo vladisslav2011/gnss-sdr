@@ -226,6 +226,10 @@ bool Common_Ephemeris::validate(history_set &hist, const std::shared_ptr<Common_
     double dev_val = -1.0;
     const int prn = eph->PRN - 1;
     bool ret = false;
+    if (thr == 0)
+        {
+            return true;
+        }
     if (hist[prn].last_eph.get())
         {
             dev_last = hist[prn].last_eph->max_deviation(*eph.get());
