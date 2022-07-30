@@ -398,62 +398,51 @@ int glonass_l1_ca_telemetry_decoder_gs::general_work(int noutput_items __attribu
             // FIXME: The preamble index marks the first symbol of the string count. Here I just wait for another full string to be received before processing
             if (d_sample_counter == d_preamble_index + static_cast<uint64_t>(GLONASS_GNAV_STRING_SYMBOLS))
                 {
-                    if (abs(corr_value) >= d_symbols_per_preamble)
+                    // NEW GLONASS string received
+                    // 0. fetch the symbols into an array
+                    const int32_t string_length = GLONASS_GNAV_STRING_SYMBOLS - d_symbols_per_preamble;
+                    std::array<double, GLONASS_GNAV_DATA_SYMBOLS> string_symbols{};
+
+                    // ******* SYMBOL TO BIT *******
+                    for (int32_t i = 0; i < string_length; i++)
                         {
-                            // NEW GLONASS string received
-                            // 0. fetch the symbols into an array
-                            const int32_t string_length = GLONASS_GNAV_STRING_SYMBOLS - d_symbols_per_preamble;
-                            std::array<double, GLONASS_GNAV_DATA_SYMBOLS> string_symbols{};
-
-                            // ******* SYMBOL TO BIT *******
-                            for (int32_t i = 0; i < string_length; i++)
+                            if (corr_value > 0)
                                 {
-                                    if (corr_value > 0)
-                                        {
-                                            string_symbols[i] = d_symbol_history[i + d_symbols_per_preamble].Prompt_I;  // because last symbol of the preamble is just received now!
-                                        }
-                                    else
-                                        {
-                                            string_symbols[i] = -d_symbol_history[i + d_symbols_per_preamble].Prompt_I;  // because last symbol of the preamble is just received now!
-                                        }
-                                }
-
-                            // call the decoder
-                            decode_string(string_symbols.data(), string_length);
-                            bool crc_ok = d_nav.get_flag_CRC_test();
-                            if (crc_ok == true)
-                                {
-                                    d_CRC_error_counter = 0;
-                                    d_flag_preamble = true;               // valid preamble indicator (initialized to false every work())
-                                    d_preamble_index = d_sample_counter;  // record the preamble sample stamp (t_P)
-                                    if (!d_flag_frame_sync)
-                                        {
-                                            d_flag_frame_sync = true;
-                                            DLOG(INFO) << " Frame sync SAT " << this->d_satellite << " with preamble start at "
-                                                    << d_symbol_history[0].Tracking_sample_counter << " [samples]";
-                                        }
+                                    string_symbols[i] = d_symbol_history[i + d_symbols_per_preamble].Prompt_I;  // because last symbol of the preamble is just received now!
                                 }
                             else
                                 {
-                                    d_CRC_error_counter++;
-                                    d_preamble_index = d_sample_counter;  // record the preamble sample stamp
-                                    if (d_CRC_error_counter > CRC_ERROR_LIMIT)
-                                        {
-                                            LOG(INFO) << "Lost of frame sync SAT " << this->d_satellite;
-                                            d_flag_frame_sync = false;
-                                            d_flag_preamble = false;
-                                            d_stat = 0;
-                                            d_nav = Glonass_Gnav_Navigation_Message();
-                                        }
+                                    string_symbols[i] = -d_symbol_history[i + d_symbols_per_preamble].Prompt_I;  // because last symbol of the preamble is just received now!
+                                }
+                        }
+
+                    // call the decoder
+                    decode_string(string_symbols.data(), string_length);
+                    bool crc_ok = d_nav.get_flag_CRC_test();
+                    if ((crc_ok == true) && (abs(corr_value) >= d_symbols_per_preamble * 2 / 3))
+                        {
+                            d_CRC_error_counter = 0;
+                            d_flag_preamble = true;               // valid preamble indicator (initialized to false every work())
+                            d_preamble_index = d_sample_counter;  // record the preamble sample stamp (t_P)
+                            if (!d_flag_frame_sync)
+                                {
+                                    d_flag_frame_sync = true;
+                                    DLOG(INFO) << " Frame sync SAT " << this->d_satellite << " with preamble start at "
+                                            << d_symbol_history[0].Tracking_sample_counter << " [samples]";
                                 }
                         }
                     else
                         {
-                            LOG(INFO) << "Lost of frame sync SAT " << this->d_satellite;
-                            d_flag_frame_sync = false;
-                            d_flag_preamble = false;
-                            d_stat = 0;
-                            d_nav = Glonass_Gnav_Navigation_Message();
+                            d_CRC_error_counter++;
+                            d_preamble_index = d_sample_counter;  // record the preamble sample stamp
+                            if (d_CRC_error_counter > CRC_ERROR_LIMIT)
+                                {
+                                    LOG(INFO) << "Lost of frame sync SAT " << this->d_satellite;
+                                    d_flag_frame_sync = false;
+                                    d_flag_preamble = false;
+                                    d_stat = 0;
+                                    d_nav = Glonass_Gnav_Navigation_Message();
+                                }
                         }
                 }
         }
