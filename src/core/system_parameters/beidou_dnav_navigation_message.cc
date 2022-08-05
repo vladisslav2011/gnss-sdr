@@ -24,8 +24,8 @@
 #include <limits>    // for std::numeric_limits
 
 
-Beidou_Dnav_Navigation_Message::Beidou_Dnav_Navigation_Message() :
-    d_prev_SOW(0.0)
+Beidou_Dnav_Navigation_Message::Beidou_Dnav_Navigation_Message() 
+    
 {
     auto gnss_sat = Gnss_Satellite();
     const std::string _system("Beidou");
@@ -125,7 +125,7 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
 
     // Perform crc computation (tbd)
     flag_crc_test = true;
-    double SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
+    auto SOW = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
     if (static_cast<int>(std::fabs(d_prev_SOW - SOW) * 1000) % BEIDOU_DNAV_SUBFRAME_PERIOD_MS == 0)
         {
             flag_new_SOW_available = true;
