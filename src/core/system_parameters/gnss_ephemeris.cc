@@ -165,13 +165,13 @@ void Gnss_Ephemeris::satellitePosition(double transmitTime)
     this->dtr = pos_vel_dtr[6];
 }
 
-#define upd_dev(NN)                                                                                                                        \
-    {                                                                                                                                      \
-        if (std::fabs(NN - tmp.NN) > dev)                                                                                                  \
-            {                                                                                                                              \
-                dev = std::fabs(NN - tmp.NN);                                                                                              \
-                std::cout << "Gnss_Ephemeris::max_deviation " #NN << ": " << NN << "-" << tmp.NN << "=" << std::fabs(NN - tmp.NN) << "\n"; \
-            }                                                                                                                              \
+#define upd_dev(NN)                                                                                                                          \
+    {                                                                                                                                        \
+        if (std::fabs((NN)-tmp.NN) > dev)                                                                                                    \
+            {                                                                                                                                \
+                dev = std::fabs((NN)-tmp.NN);                                                                                                \
+                std::cout << "Gnss_Ephemeris::max_deviation " #NN << ": " << (NN) << "-" << tmp.NN << "=" << std::fabs((NN)-tmp.NN) << "\n"; \
+            }                                                                                                                                \
     }
 
 double Gnss_Ephemeris::max_deviation(Common_Ephemeris &from)
@@ -204,7 +204,7 @@ double Gnss_Ephemeris::max_deviation(Common_Ephemeris &from)
     return dev;
 }
 
-bool Common_Ephemeris::validate(history_set &hist, std::shared_ptr<Common_Ephemeris> eph, const int thr)
+bool Common_Ephemeris::validate(history_set &hist, const std::shared_ptr<Common_Ephemeris> &eph, const int thr)
 {
     double dev_last = -1.0;
     double dev_val = -1.0;
