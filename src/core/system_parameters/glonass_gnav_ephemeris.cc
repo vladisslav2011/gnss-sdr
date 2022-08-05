@@ -24,13 +24,13 @@
 #include <string>
 
 
-#define upd_dev(NN)                                                                                                                        \
-    {                                                                                                                                      \
-        if (std::fabs(NN - tmp.NN) > dev)                                                                                                  \
-            {                                                                                                                              \
-                dev = std::fabs(NN - tmp.NN);                                                                                              \
-                std::cout << "Gnss_Ephemeris::max_deviation " #NN << ": " << NN << "-" << tmp.NN << "=" << std::fabs(NN - tmp.NN) << "\n"; \
-            }                                                                                                                              \
+#define upd_dev(NN)                                                                                                                          \
+    {                                                                                                                                        \
+        if (std::fabs((NN)-tmp.NN) > dev)                                                                                                    \
+            {                                                                                                                                \
+                dev = std::fabs((NN)-tmp.NN);                                                                                                \
+                std::cout << "Gnss_Ephemeris::max_deviation " #NN << ": " << (NN) << "-" << tmp.NN << "=" << std::fabs((NN)-tmp.NN) << "\n"; \
+            }                                                                                                                                \
     }
 
 double Glonass_Gnav_Ephemeris::max_deviation(Common_Ephemeris &from)

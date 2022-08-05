@@ -42,8 +42,8 @@ public:
     using history_set = std::vector<last_valid>;
     Common_Ephemeris() = default;
     virtual ~Common_Ephemeris() = default;
-    virtual double max_deviation(Common_Ephemeris &from) = 0;  //!< Compare a set of ephemeris to another one
-    static bool validate(history_set &hist, std::shared_ptr<Common_Ephemeris> eph, const int thr);
+    virtual double max_deviation(Common_Ephemeris& from) = 0;  //!< Compare a set of ephemeris to another one
+    static bool validate(history_set& hist, const std::shared_ptr<Common_Ephemeris>& eph, const int thr);
     uint32_t PRN{};  //!< SV ID
 };
 
@@ -91,7 +91,7 @@ public:
     double predicted_doppler(double rx_time_s, double lat, double lon, double h, double ve, double vn, double vu, int band) const;
 
     void satellitePosition(double transmitTime);            //!< Computes the ECEF SV coordinates and ECEF velocity
-    double max_deviation(Common_Ephemeris &from) override;  //!< Compare a set of ephemeris to another one
+    double max_deviation(Common_Ephemeris& from) override;  //!< Compare a set of ephemeris to another one
 
     double M_0{};         //!< Mean anomaly at reference time [rad]
     double Adot{};        //!< Change rate in semi-major axis (CNAV)
