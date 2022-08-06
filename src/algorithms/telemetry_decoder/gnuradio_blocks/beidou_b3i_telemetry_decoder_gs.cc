@@ -312,7 +312,7 @@ void beidou_b3i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
             d_Tlm_CRC_Stats->update_CRC_stats(crc_ok);
         }
     // 4. Push the new navigation data to the queues
-    if (d_nav.have_new_ephemeris() == true)
+    if (d_nav.have_new_ephemeris() == true && crc_ok)
         {
             // get object for this SV (mandatory)
             const std::shared_ptr<Beidou_Dnav_Ephemeris> tmp_obj =
@@ -323,7 +323,7 @@ void beidou_b3i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
             std::cout << TEXT_YELLOW << "New BEIDOU B3I DNAV message received in channel " << d_channel
                       << ": ephemeris from satellite " << d_satellite << TEXT_RESET << '\n';
         }
-    if (d_nav.have_new_utc_model() == true)
+    if (d_nav.have_new_utc_model() == true && crc_ok)
         {
             // get object for this SV (mandatory)
             const std::shared_ptr<Beidou_Dnav_Utc_Model> tmp_obj =
@@ -335,7 +335,7 @@ void beidou_b3i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
                       << d_channel << ": UTC model parameters from satellite "
                       << d_satellite << TEXT_RESET << '\n';
         }
-    if (d_nav.have_new_iono() == true)
+    if (d_nav.have_new_iono() == true && crc_ok)
         {
             // get object for this SV (mandatory)
             const std::shared_ptr<Beidou_Dnav_Iono> tmp_obj =
@@ -372,6 +372,9 @@ void beidou_b3i_telemetry_decoder_gs::set_satellite(
     DLOG(INFO) << "Navigation Satellite set to " << d_satellite;
 
     // Update satellite information for DNAV decoder
+    d_nav = Beidou_Dnav_Navigation_Message();
+    d_symbol_history.clear();
+    d_stat = 0;
     sat_prn = d_satellite.get_PRN();
     d_nav.set_satellite_PRN(sat_prn);
     d_nav.set_signal_type(5);  // BDS: data source (0:unknown,1:B1I,2:B1Q,3:B2I,4:B2Q,5:B3I,6:B3Q)
@@ -530,7 +533,7 @@ int beidou_b3i_telemetry_decoder_gs::general_work(
             if (abs(corr_value0) >= d_samples_per_preamble && abs(corr_value1) >= d_samples_per_preamble)
                 {
                     // Record the preamble sample stamp
-                    d_preamble_index = d_sample_counter;
+                    d_preamble_index = d_sample_counter - BEIDOU_DNAV_PREAMBLE_PERIOD_SYMBOLS;
                     DLOG(INFO) << "Preamble detection for BEIDOU B3I SAT " << this->d_satellite;
                     // Enter into frame pre-detection status
                     d_stat = 1;
