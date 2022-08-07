@@ -125,6 +125,8 @@ private:
     bool d_dump_crc_stats;
     const bool d_tow_to_trk;
     Gnss_Ephemeris::history_set prev;
+    int32_t d_ecc_errors_reject;
+    int32_t d_ecc_errors_resync;
 };
 
 
