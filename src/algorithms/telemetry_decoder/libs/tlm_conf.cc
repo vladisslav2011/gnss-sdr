@@ -41,4 +41,8 @@ void Tlm_Conf::SetFromConfiguration(const ConfigurationInterface *configuration,
             there_are_e6_channels = true;
         }
     tow_to_trk = configuration->property("GNSS-SDR.tow_to_trk", false);
+    ecc_errors_reject = configuration->property(role + ".ecc_reject", 1);
+    ecc_errors_reject = (ecc_errors_reject < 1) ? 1 : ecc_errors_reject;
+    ecc_errors_resync = configuration->property(role + ".ecc_resync", 6);
+    ecc_errors_resync = (ecc_errors_resync < 1) ? 1 : ecc_errors_resync;
 }
