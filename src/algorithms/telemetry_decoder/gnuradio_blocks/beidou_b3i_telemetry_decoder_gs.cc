@@ -35,17 +35,6 @@
 #include <iostream>         // for cout
 #include <memory>           // for shared_ptr, make_shared
 
-#define CRC_ERROR_LIMIT 1
-#define CRC_ERROR_LIMIT2 5
-
-struct Prev_Ephemeris
-{
-    std::shared_ptr<Beidou_Dnav_Ephemeris> valid_eph;
-    std::shared_ptr<Beidou_Dnav_Ephemeris> last_eph;
-    int valid_eph_count;
-    int valid_eph_thr;
-};
-
 
 beidou_b3i_telemetry_decoder_gs_sptr
 beidou_b3i_make_telemetry_decoder_gs(const Gnss_Satellite &satellite,
@@ -83,7 +72,9 @@ beidou_b3i_telemetry_decoder_gs::beidou_b3i_telemetry_decoder_gs(
       d_dump_mat(conf.dump_mat),
       d_remove_dat(conf.remove_dat),
       d_enable_navdata_monitor(conf.enable_navdata_monitor),
-      d_dump_crc_stats(conf.dump_crc_stats)
+      d_dump_crc_stats(conf.dump_crc_stats),
+      d_ecc_errors_reject(conf.ecc_errors_reject),
+      d_ecc_errors_resync(conf.ecc_errors_resync)
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -230,7 +221,7 @@ void beidou_b3i_telemetry_decoder_gs::decode_word(
                 {
                     dec_word_symbols[j + 15] = first_branch[j];
                 }
-            d_CRC_error_counter *= CRC_ERROR_LIMIT;
+            d_CRC_error_counter *= d_ecc_errors_reject;
         }
     else
         {
@@ -295,7 +286,7 @@ void beidou_b3i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
         }
 
     // 3. Check operation executed correctly
-    bool crc_ok = d_CRC_error_counter < CRC_ERROR_LIMIT;
+    bool crc_ok = d_CRC_error_counter < d_ecc_errors_reject;
     if (crc_ok)
         {
             DLOG(INFO) << "BeiDou DNAV CRC correct in channel " << d_channel
@@ -565,7 +556,7 @@ int beidou_b3i_telemetry_decoder_gs::general_work(
                             d_CRC_error_counter = 0;
                             decode_subframe(d_subframe_symbols.data());
 
-                            if (d_CRC_error_counter < CRC_ERROR_LIMIT2)
+                            if (d_CRC_error_counter < d_ecc_errors_resync)
                                 {
                                     d_flag_preamble = true;               // valid preamble indicator (initialized to false every work())
                                     d_preamble_index = d_sample_counter;  // record the preamble sample stamp (t_P)
@@ -595,7 +586,7 @@ int beidou_b3i_telemetry_decoder_gs::general_work(
         }
     // UPDATE GNSS SYNCHRO DATA
     // 2. Add the telemetry decoder information
-    if (this->d_flag_preamble == true && d_nav.get_flag_new_SOW_available() == true && d_CRC_error_counter < CRC_ERROR_LIMIT)
+    if (this->d_flag_preamble == true && d_nav.get_flag_new_SOW_available() == true && d_CRC_error_counter < d_ecc_errors_reject)
         // update TOW at the preamble instant
         {
             // Reporting sow as gps time of week
