@@ -403,7 +403,6 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
         default:
             break;
         }  // switch subframeID ...
-
     return subframe_ID;
 }
 
