@@ -201,7 +201,7 @@ void beidou_b3i_telemetry_decoder_gs::decode_bch15_11_01(const int32_t *bits,
     if (err > 0 && err < 16)
         {
             decbits[errind[err - 1]] *= -1;
-            d_CRC_error_counter ++;
+            d_CRC_error_counter++;
         }
 }
 
@@ -578,18 +578,18 @@ int beidou_b3i_telemetry_decoder_gs::general_work(
                             else
                                 {
                                     d_preamble_index = d_sample_counter;  // record the preamble sample stamp
-                                    std::cout << TEXT_RED<<"------------------------BeiDou DNAV frame sync lost for SAT " << this->d_satellite<<". Too many CRC errors\n"<<TEXT_RESET;
                                     d_flag_frame_sync = false;
                                     d_stat = 0;
                                     d_flag_SOW_set = false;
+                                    DLOG(INFO) << "BeiDou DNAV frame sync lost for SAT " << this->d_satellite << ". Too many CRC errors\n";
                                 }
                         }
                     else
                         {
-                            std::cout << TEXT_RED<<"------------------------BeiDou DNAV preamble sync lost for SAT " << this->d_satellite<<"\n"<<TEXT_RESET;
                             d_flag_frame_sync = false;
                             d_stat = 0;
                             d_flag_SOW_set = false;
+                            DLOG(INFO) << "BeiDou DNAV preamble sync lost for SAT " << this->d_satellite << "\n";
                         }
                 }
         }

@@ -192,7 +192,7 @@ void beidou_b1i_telemetry_decoder_gs::decode_bch15_11_01(const int32_t *bits, st
     if (err > 0 && err < 16)
         {
             decbits[errind[err - 1]] *= -1;
-            d_CRC_error_counter ++;
+            d_CRC_error_counter++;
         }
 }
 
@@ -295,7 +295,7 @@ void beidou_b1i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
     else
         {
             DLOG(INFO) << "BeiDou DNAV CRC error in channel " << d_channel
-                       << " from satellite " << d_satellite<<"\n";
+                       << " from satellite " << d_satellite << "\n";
         }
     if (d_dump_crc_stats)
         {
@@ -548,6 +548,7 @@ int beidou_b1i_telemetry_decoder_gs::general_work(int noutput_items __attribute_
                                     d_flag_frame_sync = false;
                                     d_stat = 0;
                                     d_flag_SOW_set = false;
+                                    DLOG(INFO) << "BeiDou DNAV frame sync lost for SAT " << this->d_satellite << ". Too many CRC errors\n";
                                 }
                         }
                     else
@@ -555,6 +556,7 @@ int beidou_b1i_telemetry_decoder_gs::general_work(int noutput_items __attribute_
                             d_flag_frame_sync = false;
                             d_stat = 0;
                             d_flag_SOW_set = false;
+                            DLOG(INFO) << "BeiDou DNAV preamble sync lost for SAT " << this->d_satellite << "\n";
                         }
                 }
         }
@@ -575,7 +577,7 @@ int beidou_b1i_telemetry_decoder_gs::general_work(int noutput_items __attribute_
             if (last_d_TOW_at_current_symbol_ms != 0 && abs(static_cast<int64_t>(d_TOW_at_current_symbol_ms) - int64_t(last_d_TOW_at_current_symbol_ms)) > static_cast<int64_t>(d_symbol_duration_ms))
                 {
                     DLOG(INFO) << "Warning: BEIDOU B1I TOW update in ch " << d_channel
-                              << " does not match the TLM TOW counter " << static_cast<int64_t>(d_TOW_at_current_symbol_ms) - int64_t(last_d_TOW_at_current_symbol_ms) << " ms \n";
+                               << " does not match the TLM TOW counter " << static_cast<int64_t>(d_TOW_at_current_symbol_ms) - int64_t(last_d_TOW_at_current_symbol_ms) << " ms \n";
 
                     d_TOW_at_current_symbol_ms = 0;
                     d_flag_valid_word = false;
