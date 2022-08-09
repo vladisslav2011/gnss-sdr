@@ -38,4 +38,6 @@ void Tlm_Conf::SetFromConfiguration(const ConfigurationInterface *configuration,
     ecc_errors_reject = (ecc_errors_reject < 1) ? 1 : ecc_errors_reject;
     ecc_errors_resync = configuration->property(role + ".ecc_resync", 6);
     ecc_errors_resync = (ecc_errors_resync < 1) ? 1 : ecc_errors_resync;
+    validator_min = configuration->property(role + ".validator_min", 2);
+    validator_first_pass = configuration->property(role + ".validator_first_pass", true);
 }

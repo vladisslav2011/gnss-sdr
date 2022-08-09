@@ -87,7 +87,7 @@ public:
     Common_Ephemeris() = default;
     virtual ~Common_Ephemeris() = default;
     virtual double max_deviation(Common_Ephemeris &from) = 0;  //!< Compare a set of ephemeris to another one
-    static bool validate(history_set & hist, std::shared_ptr<Common_Ephemeris> eph, const int thr);
+    static bool validate(history_set & hist, std::shared_ptr<Common_Ephemeris> eph, const int thr, const bool first_pass);
     uint32_t PRN{};     //!< SV ID
 };
 

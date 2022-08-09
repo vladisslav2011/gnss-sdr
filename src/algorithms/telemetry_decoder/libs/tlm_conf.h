@@ -45,6 +45,8 @@ public:
     bool there_are_e6_channels{false};
     int32_t ecc_errors_reject{1};
     int32_t ecc_errors_resync{6};
+    uint32_t validator_min{2};
+    bool validator_first_pass{true};
 };
 
 

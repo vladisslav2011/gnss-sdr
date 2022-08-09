@@ -37,8 +37,6 @@
 #include <memory>           // for shared_ptr, make_shared
 
 
-#define EPH_PUB_THR 1
-
 beidou_b1i_telemetry_decoder_gs_sptr
 beidou_b1i_make_telemetry_decoder_gs(const Gnss_Satellite &satellite, const Tlm_Conf &conf)
 {
@@ -76,7 +74,9 @@ beidou_b1i_telemetry_decoder_gs::beidou_b1i_telemetry_decoder_gs(
                             d_enable_navdata_monitor(conf.enable_navdata_monitor),
                             d_dump_crc_stats(conf.dump_crc_stats),
                             d_ecc_errors_reject(conf.ecc_errors_reject),
-                            d_ecc_errors_resync(conf.ecc_errors_resync)
+                            d_ecc_errors_resync(conf.ecc_errors_resync),
+                            d_validator_min(conf.validator_min),
+                            d_validator_first_pass(conf.validator_first_pass)
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -311,7 +311,7 @@ void beidou_b1i_telemetry_decoder_gs::decode_subframe(float *frame_symbols)
             static Gnss_Ephemeris::history_set prev(63);
             if (tmp_obj->PRN == d_satellite.get_PRN())
                 {
-                    if (Gnss_Ephemeris::validate(prev, tmp_obj, EPH_PUB_THR))
+                    if (Gnss_Ephemeris::validate(prev, tmp_obj, d_validator_min, d_validator_first_pass))
                         {
                             this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
                             LOG(INFO) << "BEIDOU DNAV Ephemeris have been received in channel" << d_channel << " from satellite " << d_satellite;

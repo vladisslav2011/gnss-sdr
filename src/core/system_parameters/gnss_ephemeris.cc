@@ -25,7 +25,7 @@
 #include <vector>
 #include <iostream>
 
-bool Common_Ephemeris::validate(history_set & hist, std::shared_ptr<Common_Ephemeris> eph, const int thr)
+bool Common_Ephemeris::validate(history_set & hist, std::shared_ptr<Common_Ephemeris> eph, const int thr, const bool first_pass)
 {
     double dev_last = -1.0;
     double dev_val = -1.0;
@@ -75,7 +75,7 @@ bool Common_Ephemeris::validate(history_set & hist, std::shared_ptr<Common_Ephem
             hist[prn].valid_eph = eph;
             hist[prn].valid_eph_count = 1;
             hist[prn].valid_eph_thr = thr;
-            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
+            ret = first_pass || (hist[prn].valid_eph_count >= hist[prn].valid_eph_thr);
         }
     hist[prn].last_eph = eph;
     std::cout << "PRN "<<eph->PRN<<" dev_last = "<<dev_last<<" dev_val = "<<dev_val<<" count = "<<hist[prn].valid_eph_count<<"\n";
