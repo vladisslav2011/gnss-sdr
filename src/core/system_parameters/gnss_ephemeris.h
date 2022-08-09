@@ -35,6 +35,51 @@ private:
     };
 
 protected:
+template<typename T> struct comparator
+    {
+        T &a;
+        T &b;
+        double deviation;
+        comparator(double initial, T &ref_a, T &ref_b):
+            a(ref_a),
+            b(ref_b),
+            deviation(initial)
+        {
+        }
+        ~comparator() = default;
+        void compare(double T::*what)
+        {
+            double diff = std::abs(a.*what - b.*what);
+            if (diff > deviation)
+                {
+                    deviation = diff;
+                }
+        }
+        void compare(int32_t T::*what)
+        {
+            int32_t diff = std::abs(a.*what - b.*what);
+            if (diff > deviation)
+                {
+                    deviation = diff;
+                }
+        }
+        void compare(uint32_t T::*what)
+        {
+            uint32_t diff = (a.*what > b.*what) ? a.*what - b.*what : b.*what - a.*what;
+            if (diff > deviation)
+                {
+                    deviation = diff;
+                }
+        }
+        void compare(bool T::*what)
+        {
+            double diff = (a.*what == b.*what) ? 0.0 : 1.0;
+            if (diff > deviation)
+                {
+                    deviation = diff;
+                }
+        }
+    };
     static constexpr double DEVIATION_THRESHOLD = 0.00001;
 
 public:

@@ -25,6 +25,63 @@
 #include <vector>
 #include <iostream>
 
+bool Common_Ephemeris::validate(history_set & hist, std::shared_ptr<Common_Ephemeris> eph, const int thr)
+{
+    double dev_last = -1.0;
+    double dev_val = -1.0;
+    const int prn = eph->PRN - 1;
+    bool ret = false;
+    if (thr == 0)
+        {
+            return true;
+        }
+    if (hist[prn].last_eph.get())
+        {
+            dev_last = hist[prn].last_eph->max_deviation(*eph.get());
+            if (hist[prn].last_eph.get() == eph.get())
+                {
+                    std::cout<<"\nhist[prn].last_eph.get() == eph.get()\n\n";
+                }
+        }
+    if (hist[prn].valid_eph.get())
+        {
+            dev_val = hist[prn].valid_eph->max_deviation(*eph.get());
+            if (hist[prn].valid_eph.get() == eph.get())
+                {
+                    std::cout<<"\nhist[prn].last_eph.get() == eph.get()\n\n";
+                }
+            if (dev_last < dev_val)
+                {
+                    if (dev_last < DEVIATION_THRESHOLD)
+                        {
+                            hist[prn].valid_eph = eph;
+                            hist[prn].valid_eph_count = 2;
+                            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
+                            hist[prn].valid_eph_thr = (thr > 2) ? thr : 2;
+                        }
+                }
+            else
+                {
+                    if (dev_val < DEVIATION_THRESHOLD)
+                        {
+                            hist[prn].valid_eph_count ++;
+                            hist[prn].valid_eph_thr = (thr > 2) ? thr : 2;
+                            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
+                        }
+                }
+        }
+    else
+        {
+            hist[prn].valid_eph = eph;
+            hist[prn].valid_eph_count = 1;
+            hist[prn].valid_eph_thr = thr;
+            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
+        }
+    hist[prn].last_eph = eph;
+    std::cout << "PRN "<<eph->PRN<<" dev_last = "<<dev_last<<" dev_val = "<<dev_val<<" count = "<<hist[prn].valid_eph_count<<"\n";
+    return ret;
+}
+
 double Gnss_Ephemeris::sv_clock_drift(double transmitTime)
 {
     const double dt = check_t(transmitTime - this->toc);
@@ -165,100 +222,34 @@ void Gnss_Ephemeris::satellitePosition(double transmitTime)
     this->dtr = pos_vel_dtr[6];
 }
 
-#define upd_dev(NN)\
-{\
-    if (std::fabs(NN - tmp.NN) > dev )\
-        {\
-            dev = std::fabs(NN - tmp.NN);\
-            std::cout<<"Gnss_Ephemeris::max_deviation " #NN << ": "<<NN<<"-"<<tmp.NN<<"="<<std::fabs(NN - tmp.NN)<<"\n";\
-        }\
-}
-
 double Gnss_Ephemeris::max_deviation(Common_Ephemeris &from)
 {
-    const Gnss_Ephemeris &tmp = dynamic_cast<Gnss_Ephemeris &>(from);
-    double dev = 0.0;
-    upd_dev(PRN);
-    upd_dev(M_0);
-    upd_dev(delta_n);
-    upd_dev(ecc);
-    upd_dev(sqrtA);
-    upd_dev(OMEGA_0);
-    upd_dev(i_0);
-    upd_dev(omega);
-    upd_dev(OMEGAdot);
-    upd_dev(idot);
-    upd_dev(Cuc);
-    upd_dev(Cus);
-    upd_dev(Crc);
-    upd_dev(Crs);
-    upd_dev(Cic);
-    upd_dev(Cis);
-    //upd_dev(toe);
-    //upd_dev(toc);
-    upd_dev(af0);
-    upd_dev(af1);
-    upd_dev(af2);
-    upd_dev(satClkDrift);
-    upd_dev(dtr);
-    return dev;
-}
-
-bool Common_Ephemeris::validate(history_set & hist, std::shared_ptr<Common_Ephemeris> eph, const int thr)
-{
-    double dev_last = -1.0;
-    double dev_val = -1.0;
-    const int prn = eph->PRN - 1;
-    bool ret = false;
-    if (thr == 0)
-        {
-            return true;
-        }
-    if (hist[prn].last_eph.get())
-        {
-            dev_last = hist[prn].last_eph->max_deviation(*eph.get());
-            if (hist[prn].last_eph.get() == eph.get())
-                {
-                    std::cout<<"\nhist[prn].last_eph.get() == eph.get()\n\n";
-                }
-        }
-    if (hist[prn].valid_eph.get())
-        {
-            dev_val = hist[prn].valid_eph->max_deviation(*eph.get());
-            if (hist[prn].valid_eph.get() == eph.get())
-                {
-                    std::cout<<"\nhist[prn].last_eph.get() == eph.get()\n\n";
-                }
-            if (dev_last < dev_val)
-                {
-                    if (dev_last < DEVIATION_THRESHOLD)
-                        {
-                            hist[prn].valid_eph = eph;
-                            hist[prn].valid_eph_count = 2;
-                            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
-                            hist[prn].valid_eph_thr = (thr > 2) ? thr : 2;
-                        }
-                }
-            else
-                {
-                    if (dev_val < DEVIATION_THRESHOLD)
-                        {
-                            hist[prn].valid_eph_count ++;
-                            hist[prn].valid_eph_thr = (thr > 2) ? thr : 2;
-                            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
-                        }
-                }
-        }
-    else
-        {
-            hist[prn].valid_eph = eph;
-            hist[prn].valid_eph_count = 1;
-            hist[prn].valid_eph_thr = thr;
-            ret = hist[prn].valid_eph_count >= hist[prn].valid_eph_thr;
-        }
-    hist[prn].last_eph = eph;
-    std::cout << "PRN "<<eph->PRN<<" dev_last = "<<dev_last<<" dev_val = "<<dev_val<<" count = "<<hist[prn].valid_eph_count<<"\n";
-    return ret;
+    Gnss_Ephemeris &tmp = dynamic_cast<Gnss_Ephemeris &>(from);
+    Common_Ephemeris::comparator<Gnss_Ephemeris> dev(0.0, *this, tmp);
+    dev.compare(&Gnss_Ephemeris::PRN);
+    dev.compare(&Gnss_Ephemeris::M_0);
+    dev.compare(&Gnss_Ephemeris::delta_n);
+    dev.compare(&Gnss_Ephemeris::ecc);
+    dev.compare(&Gnss_Ephemeris::sqrtA);
+    dev.compare(&Gnss_Ephemeris::OMEGA_0);
+    dev.compare(&Gnss_Ephemeris::i_0);
+    dev.compare(&Gnss_Ephemeris::omega);
+    dev.compare(&Gnss_Ephemeris::OMEGAdot);
+    dev.compare(&Gnss_Ephemeris::idot);
+    dev.compare(&Gnss_Ephemeris::Cuc);
+    dev.compare(&Gnss_Ephemeris::Cus);
+    dev.compare(&Gnss_Ephemeris::Crc);
+    dev.compare(&Gnss_Ephemeris::Crs);
+    dev.compare(&Gnss_Ephemeris::Cic);
+    dev.compare(&Gnss_Ephemeris::Cis);
+    //dev.compare(&Gnss_Ephemeris::toe);
+    //dev.compare(&Gnss_Ephemeris::toc);
+    dev.compare(&Gnss_Ephemeris::af0);
+    dev.compare(&Gnss_Ephemeris::af1);
+    dev.compare(&Gnss_Ephemeris::af2);
+    dev.compare(&Gnss_Ephemeris::satClkDrift);
+    dev.compare(&Gnss_Ephemeris::dtr);
+    return dev.deviation;
 }
 
 void Gnss_Ephemeris::satellitePosVelComputation(double transmitTime, std::array<double, 7>& pos_vel_dtr) const
