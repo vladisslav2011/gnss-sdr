@@ -2137,6 +2137,12 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                                << " [deg], Height= " << this->get_height() << " [m]"
                                << " RX time offset= " << this->get_time_offset_s() << " [s]";
 
+                    this->set_rx_vel({enuv[0], enuv[1], enuv[2]});
+
+                    const double clock_drift_ppm = pvt_sol.dtr[5] / SPEED_OF_LIGHT_M_S * 1e6;
+
+                    this->set_clock_drift_ppm(clock_drift_ppm);
+
                     // ######## PVT MONITOR #########
                     // TOW
                     d_monitor_pvt.TOW_at_current_symbol_ms = gnss_observables_map.cbegin()->second.TOW_at_current_symbol_ms;
@@ -2187,8 +2193,6 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                     d_monitor_pvt.hdop = d_dop[2];
                     d_monitor_pvt.vdop = d_dop[3];
 
-                    this->set_rx_vel({enuv[0], enuv[1], enuv[2]});
-
                     // ENU vel [m/s]
                     d_monitor_pvt.vel_e = enuv[0];
                     d_monitor_pvt.vel_n = enuv[1];
@@ -2207,9 +2211,6 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                             d_monitor_pvt.galhas_status = 1;
                         }
 
-                    const double clock_drift_ppm = pvt_sol.dtr[5] / SPEED_OF_LIGHT_M_S * 1e6;
-
-                    this->set_clock_drift_ppm(clock_drift_ppm);
                     // User clock drift [ppm]
                     d_monitor_pvt.user_clk_drift_ppm = clock_drift_ppm;
 
