@@ -348,6 +348,7 @@ private:
     int d_last_fixed_base_status;
     uint64_t d_ntrip_snapshot_generation = 0;
     int d_last_solution_status;
+    uint32_t d_averaging_depth;
 
     bool d_dump;
     const bool d_dump_mat;
