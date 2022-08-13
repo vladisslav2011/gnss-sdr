@@ -1232,5 +1232,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                         }
                 }
         }
-    return this->is_valid_position();
+    if (is_valid_position())
+        perform_pos_averaging();
+    return is_valid_position();
 }
