@@ -2726,6 +2726,7 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                             rx_position_and_time[3] = pvt_sol.dtr[2] + pvt_sol.dtr[0] / SPEED_OF_LIGHT_M_S;
                         }
                     this->set_rx_pos({rx_position_and_time[0], rx_position_and_time[1], rx_position_and_time[2]});  // save ECEF position for the next iteration
+                    perform_pos_averaging();
 
                     /* RTKLIB stamps SOLQ_PPP whenever the PPP filter runs, even on
                        broadcast orbits and clocks; only claim PPP when precise
@@ -3020,5 +3021,5 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                         }
                 }
         }
-    return this->is_valid_position();
+    return is_valid_position();
 }

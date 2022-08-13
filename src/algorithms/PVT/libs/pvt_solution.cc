@@ -73,6 +73,53 @@ int Pvt_Solution::cart2geo(double X, double Y, double Z, int elipsoid_selection)
 }
 
 
+void Pvt_Solution::set_averaging_depth(int depth)
+{
+    d_averaging_depth = depth;
+}
+
+
+void Pvt_Solution::perform_pos_averaging()
+{
+    // MOVING AVERAGE PVT
+    if (d_averaging_depth > 1)
+        {
+            if (d_hist_longitude_d.size() == d_averaging_depth)
+                {
+                    // Pop oldest value
+                    d_hist_longitude_d.pop_back();
+                    d_hist_latitude_d.pop_back();
+                    d_hist_height_m.pop_back();
+                }
+            // Push new values
+            d_hist_longitude_d.push_front(d_longitude_d);
+            d_hist_latitude_d.push_front(d_latitude_d);
+            d_hist_height_m.push_front(d_height_m);
+
+            d_avg_latitude_d = 0.0;
+            d_avg_longitude_d = 0.0;
+            d_avg_height_m = 0.0;
+            for (size_t i = 0; i < d_hist_longitude_d.size(); i++)
+                {
+                    d_avg_latitude_d = d_avg_latitude_d + d_hist_latitude_d.at(i);
+                    d_avg_longitude_d = d_avg_longitude_d + d_hist_longitude_d.at(i);
+                    d_avg_height_m = d_avg_height_m + d_hist_height_m.at(i);
+                }
+            d_avg_latitude_d = d_avg_latitude_d / static_cast<double>(d_hist_longitude_d.size());
+            d_avg_longitude_d = d_avg_longitude_d / static_cast<double>(d_hist_longitude_d.size());
+            d_avg_height_m = d_avg_height_m / static_cast<double>(d_hist_longitude_d.size());
+            d_valid_position = true;
+        }
+    else
+        {
+            d_avg_latitude_d = d_latitude_d;
+            d_avg_longitude_d = d_longitude_d;
+            d_avg_height_m = d_height_m;
+            d_valid_position = true;
+        }
+}
+
+
 double Pvt_Solution::get_time_offset_s() const
 {
     return d_rx_dt_s;
@@ -99,19 +146,19 @@ void Pvt_Solution::set_clock_drift_ppm(double clock_drift_ppm)
 
 double Pvt_Solution::get_latitude() const
 {
-    return d_latitude_d;
+    return d_avg_latitude_d;
 }
 
 
 double Pvt_Solution::get_longitude() const
 {
-    return d_longitude_d;
+    return d_avg_longitude_d;
 }
 
 
 double Pvt_Solution::get_height() const
 {
-    return d_height_m;
+    return d_avg_height_m;
 }
 
 

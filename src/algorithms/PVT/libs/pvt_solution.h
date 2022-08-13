@@ -67,6 +67,9 @@ public:
     void set_valid_position(bool is_valid);
     void set_num_valid_observations(int num);  //!< Set the number of valid pseudorange observations (valid satellites)
     void set_ref_gps_week(int32_t ref_week);   //!< Set the reference GPS week (e.g., derived from the date of signal capture) used to resolve the mod-1024 week rollover in post-processing mode
+    // averaging
+    void set_averaging_depth(int depth);  //!< Set length of averaging window
+    void perform_pos_averaging();
 
 private:
     /*
@@ -90,6 +93,10 @@ private:
     std::array<double, 3> d_rx_vel{};
     boost::posix_time::ptime d_position_UTC_time;
 
+    std::deque<double> d_hist_latitude_d;
+    std::deque<double> d_hist_longitude_d;
+    std::deque<double> d_hist_height_m;
+
     double d_latitude_d{0.0};             // RX position Latitude WGS84 [deg]
     double d_longitude_d{0.0};            // RX position Longitude WGS84 [deg]
     double d_height_m{0.0};               // RX position height WGS84 [m]
@@ -98,7 +105,12 @@ private:
     double d_speed_over_ground_m_s{0.0};  // RX speed over ground [m/s]
     double d_course_over_ground_d{0.0};   // RX course over ground [deg]
 
-    int d_valid_observations{0};  // Number of valid observations in this epoch
+    double d_avg_latitude_d{0.0};   // Averaged latitude in degrees
+    double d_avg_longitude_d{0.0};  // Averaged longitude in degrees
+    double d_avg_height_m{0.0};     // Averaged height [m]
+
+    unsigned d_averaging_depth{0};  // Length of averaging window
+    int d_valid_observations{0};    // Number of valid observations in this epoch
 
     int32_t d_ref_gps_week{0};  // Reference GPS week to correct the mod-1024 week rollover in post-processing mode (0: use system clock)
 
