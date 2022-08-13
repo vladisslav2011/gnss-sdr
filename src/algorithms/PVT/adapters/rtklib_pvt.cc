@@ -84,6 +84,9 @@ Rtklib_Pvt::Rtklib_Pvt(const ConfigurationInterface* configuration,
     pvt_output_parameters.measures_ecef_vel_sd_ms = configuration->property(role + ".kf_measures_ecef_vel_sd_ms", 0.1);
     pvt_output_parameters.system_ecef_pos_sd_m = configuration->property(role + ".kf_system_ecef_pos_sd_m", 2.0);
     pvt_output_parameters.system_ecef_vel_sd_ms = configuration->property(role + ".kf_system_ecef_vel_sd_ms", 0.5);
+    //averaging
+    pvt_output_parameters.averaging_depth = configuration->property(role + ".averaging", 1);
+    pvt_output_parameters.averaging_depth = pvt_output_parameters.averaging_depth ? pvt_output_parameters.averaging_depth : 1;
 
     // NMEA Printer settings
     pvt_output_parameters.flag_nmea_tty_port = configuration->property(role + ".flag_nmea_tty_port", false);
