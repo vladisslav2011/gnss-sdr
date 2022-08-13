@@ -335,6 +335,7 @@ private:
     const int32_t d_geojson_rate_ms;
     const int32_t d_nmea_rate_ms;
     const int32_t d_an_rate_ms;
+    const int32_t d_compute_rate_ms;
     const int32_t d_output_rate_ms;
     const int32_t d_display_rate_ms;
     const int32_t d_report_rate_ms;
