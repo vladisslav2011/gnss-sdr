@@ -270,6 +270,7 @@ private:
     const uint32_t d_signal_enabled_flags;
     const uint32_t d_observable_interval_ms;
     uint32_t d_pvt_errors_counter;
+    uint32_t d_averaging_depth;
 
     bool d_dump;
     const bool d_dump_mat;
