@@ -587,12 +587,16 @@ rtklib_pvt_gs::rtklib_pvt_gs(uint32_t nchannels,
             d_local_time_str = std::string(" ") + time_zone_abrv + " (UTC " + utc_diff_str.substr(0, 3) + ":" + utc_diff_str.substr(3, 2) + ")";
         }
 
+    // averaging
+    d_averaging_depth = conf_.averaging_depth;
+
     if (d_enable_rx_clock_correction == true)
         {
             // setup two PVT solvers: internal solver for rx clock and user solver
             // user PVT solver
             d_user_pvt_solver = std::make_shared<Rtklib_Solver>(rtk, conf_, dump_ls_pvt_filename, d_signal_enabled_flags, d_dump, d_dump_mat);
             d_user_pvt_solver->set_ref_gps_week(conf_.ref_gps_week);
+            d_user_pvt_solver->set_averaging_depth(d_averaging_depth);
 
             // internal PVT solver, mainly used to estimate the receiver clock
             rtk_t internal_rtk = rtk;
@@ -605,6 +609,7 @@ rtklib_pvt_gs::rtklib_pvt_gs(uint32_t nchannels,
             // only one solver, customized by the user options
             d_internal_pvt_solver = std::make_shared<Rtklib_Solver>(rtk, conf_, dump_ls_pvt_filename, d_signal_enabled_flags, d_dump, d_dump_mat);
             d_internal_pvt_solver->set_ref_gps_week(conf_.ref_gps_week);
+            d_internal_pvt_solver->set_averaging_depth(d_averaging_depth);
             d_user_pvt_solver = d_internal_pvt_solver;
         }
 
@@ -2056,35 +2061,17 @@ bool rtklib_pvt_gs::get_latest_PVT(double* longitude_deg,
     double* course_over_ground_deg,
     time_t* UTC_time) const
 {
-    if (d_enable_rx_clock_correction == true)
+    if (d_user_pvt_solver->is_valid_position())
         {
-            if (d_user_pvt_solver->is_valid_position())
-                {
-                    *latitude_deg = d_user_pvt_solver->get_latitude();
-                    *longitude_deg = d_user_pvt_solver->get_longitude();
-                    *height_m = d_user_pvt_solver->get_height();
-                    *ground_speed_kmh = d_user_pvt_solver->get_speed_over_ground() * 3600.0 / 1000.0;
-                    *course_over_ground_deg = d_user_pvt_solver->get_course_over_ground();
-                    *UTC_time = convert_to_time_t(d_user_pvt_solver->get_position_UTC_time());
+            *latitude_deg = d_user_pvt_solver->get_latitude();
+            *longitude_deg = d_user_pvt_solver->get_longitude();
+            *height_m = d_user_pvt_solver->get_height();
+            *ground_speed_kmh = d_user_pvt_solver->get_speed_over_ground() * 3600.0 / 1000.0;
+            *course_over_ground_deg = d_user_pvt_solver->get_course_over_ground();
+            *UTC_time = convert_to_time_t(d_user_pvt_solver->get_position_UTC_time());
 
-                    return true;
-                }
+            return true;
         }
-    else
-        {
-            if (d_internal_pvt_solver->is_valid_position())
-                {
-                    *latitude_deg = d_internal_pvt_solver->get_latitude();
-                    *longitude_deg = d_internal_pvt_solver->get_longitude();
-                    *height_m = d_internal_pvt_solver->get_height();
-                    *ground_speed_kmh = d_internal_pvt_solver->get_speed_over_ground() * 3600.0 / 1000.0;
-                    *course_over_ground_deg = d_internal_pvt_solver->get_course_over_ground();
-                    *UTC_time = convert_to_time_t(d_internal_pvt_solver->get_position_UTC_time());
-
-                    return true;
-                }
-        }
-
     return false;
 }
 
