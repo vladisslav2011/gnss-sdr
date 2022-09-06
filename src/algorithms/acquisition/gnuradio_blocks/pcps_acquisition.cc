@@ -89,6 +89,7 @@ pcps_acquisition::pcps_acquisition(const Acq_Conf& conf_)
         {
             d_fft_size = d_consumed_samples * 2;
         }
+    set_history(d_consumed_samples);
     // d_fft_size = next power of two?  ////
 
     // COD:
@@ -937,7 +938,6 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                 d_gnss_synchro->Acq_doppler_step = 0U;
                 d_mag = 0.0;
                 d_state = 1;
-                d_buffer_count = 0U;
                 if (!d_acq_parameters.blocking_on_standby)
                     {
                         d_sample_counter += static_cast<uint64_t>(ninput_items[0]);  // sample counter
@@ -947,59 +947,39 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
             }
         case 1:
             {
-                uint32_t buff_increment;
-                if (d_cshort)
+                if (d_buffer_count + ninput_items[0] >= d_consumed_samples)
                     {
-                        const auto* in = reinterpret_cast<const lv_16sc_t*>(input_items[0]);  // Get the input samples pointer
-                        if ((ninput_items[0] + d_buffer_count) <= d_consumed_samples)
+                        uint32_t buff_increment = d_consumed_samples - d_buffer_count;
+                        d_buffer_count += buff_increment;
+                        consume_each(buff_increment);
+                        if (d_cshort)
                             {
-                                buff_increment = ninput_items[0];
+                                const auto* in = reinterpret_cast<const lv_16sc_t*>(input_items[0]);  // Get the input samples pointer
+                                std::copy(in, in + d_consumed_samples, d_data_buffer_sc.begin());
                             }
                         else
                             {
-                                buff_increment = d_consumed_samples - d_buffer_count;
+                                const auto* in = reinterpret_cast<const gr_complex*>(input_items[0]);  // Get the input samples pointer
+                                std::copy(in, in + d_consumed_samples, d_data_buffer.begin());
                             }
-                        std::copy(in, in + buff_increment, d_data_buffer_sc.begin() + d_buffer_count);
-                    }
-                else
-                    {
-                        const auto* in = reinterpret_cast<const gr_complex*>(input_items[0]);  // Get the input samples pointer
-                        if ((ninput_items[0] + d_buffer_count) <= d_consumed_samples)
+                        d_buffer_count -= d_consumed_samples;
+                        d_sample_counter += d_consumed_samples;
+                        if (d_acq_parameters.blocking)
                             {
-                                buff_increment = ninput_items[0];
+                                lk.unlock();
+                                acquisition_core(d_sample_counter);
                             }
                         else
                             {
-                                buff_increment = d_consumed_samples - d_buffer_count;
+                                gr::thread::thread d_worker(&pcps_acquisition::acquisition_core, this, d_sample_counter);
+                                d_worker_active = true;
                             }
-                        std::copy(in, in + buff_increment, d_data_buffer.begin() + d_buffer_count);
-                    }
-
-                // If buffer will be full in next iteration
-                if (d_buffer_count >= d_consumed_samples)
-                    {
-                        d_state = 2;
-                    }
-                d_buffer_count += buff_increment;
-                d_sample_counter += static_cast<uint64_t>(buff_increment);
-                consume_each(buff_increment);
-                break;
-            }
-        case 2:
-            {
-                // Copy the data to the core and let it know that new data is available
-                if (d_acq_parameters.blocking)
-                    {
-                        lk.unlock();
-                        acquisition_core(d_sample_counter);
                     }
                 else
                     {
-                        gr::thread::thread d_worker(&pcps_acquisition::acquisition_core, this, d_sample_counter);
-                        d_worker_active = true;
+                        d_buffer_count += ninput_items[0];
+                        consume_each(ninput_items[0]);
                     }
-                consume_each(0);
-                d_buffer_count = 0U;
                 break;
             }
         }
