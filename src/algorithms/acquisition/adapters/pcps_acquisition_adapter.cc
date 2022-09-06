@@ -265,6 +265,13 @@ PcpsAcquisitionAdapter::PcpsAcquisitionAdapter(
         {
             LOG(ERROR) << "This implementation does not provide an output stream";
         }
+    if (sig_flag == BDS_B3)
+        {
+            // set history to d_consumed_samples
+            int history_size = acq_parameters_.sampled_ms * acq_parameters_.samples_per_ms * (acq_parameters_.bit_transition_flag ? 2.0 : 1.0);
+            acquisition_->set_history(history_size);
+        }
+
 }
 
 

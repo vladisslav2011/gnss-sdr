@@ -884,6 +884,9 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                 {
                     d_sample_count += static_cast<uint64_t>(ninput_items[0]);
                     consume_each(ninput_items[0]);
+                    /*                    d_buffer_count += ninput_items[0];
+                    while(d_buffer_count > d_consumed_samples)
+                        d_buffer_count-=d_consumed_samples;*/
                 }
             return 0;
         }
@@ -943,8 +946,6 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                         d_worker = std::make_unique<gr::thread::thread>(&pcps_acquisition::acquisition_core, this, d_sample_count);
                         d_worker_active = true;
                     }
-                consume_each(0);
-                d_buffer_count = 0U;
                 break;
             }
         }
