@@ -1775,7 +1775,7 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                 d_cn0_smoother.reset();
                 d_carrier_lock_test_smoother.reset();
 
-                LOG(INFO) << "Number of samples between Acquisition and Tracking = " << acq_trk_diff_samples << " ( " << acq_trk_diff_seconds << " s)";
+                std::cerr << "Number of samples between Acquisition and Tracking = " << acq_trk_diff_samples << " ( " << acq_trk_diff_seconds << " s)";
                 DLOG(INFO) << "PULL-IN Doppler [Hz] = " << d_carrier_doppler_hz
                            << ". PULL-IN Code Phase [samples] = " << d_acq_code_phase_samples;
 

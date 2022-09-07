@@ -341,7 +341,7 @@ void pcps_acquisition::send_positive_acquisition()
 {
     // Declare positive acquisition using a message port
     // 0=STOP_CHANNEL 1=ACQ_SUCCEES 2=ACQ_FAIL
-    std::cerr << "positive acquisition"
+    DLOG(INFO) << "positive acquisition"
                << ", satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN
                << ", sample_stamp " << d_gnss_synchro->Acq_samplestamp_samples
                << ", test statistics value " << d_test_statistics
@@ -952,23 +952,25 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                     {
                         uint32_t buff_increment = d_consumed_samples - d_buffer_count;
                         d_buffer_count += buff_increment;
-                        consume_each(buff_increment);
                         if (d_cshort)
                             {
                                 const auto* in = reinterpret_cast<const lv_16sc_t*>(input_items[0]);  // Get the input samples pointer
-                                std::copy(in, in + d_consumed_samples, d_data_buffer_sc.begin());
+                                std::copy(in + history() + buff_increment - d_consumed_samples, in + history() + buff_increment, d_data_buffer_sc.data());
                             }
                         else
                             {
                                 const auto* in = reinterpret_cast<const gr_complex*>(input_items[0]);  // Get the input samples pointer
-                                std::copy(in, in + d_consumed_samples, d_data_buffer.begin());
+                                //std::copy(in + history() + buff_increment - d_consumed_samples, in + history() + buff_increment, d_data_buffer.data());
+                                std::copy(in, in + d_consumed_samples, d_data_buffer.data());
+                                //std::cerr<<"history="<<history()<<" buff_increment="<<buff_increment<<" d_consumed_samples="<<d_consumed_samples<<" d_sample_counter="<<d_sample_counter<<"\n";
                             }
                         d_buffer_count -= d_consumed_samples;
                         d_sample_counter += buff_increment;
+                        consume_each(buff_increment);
                         if (d_acq_parameters.blocking)
                             {
                                 lk.unlock();
-                                acquisition_core(d_sample_counter);
+                                acquisition_core(d_sample_counter-buff_increment-history());
                             }
                         else
                             {
