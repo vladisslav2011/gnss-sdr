@@ -341,12 +341,13 @@ void pcps_acquisition::send_positive_acquisition()
 {
     // Declare positive acquisition using a message port
     // 0=STOP_CHANNEL 1=ACQ_SUCCEES 2=ACQ_FAIL
-    DLOG(INFO) << "positive acquisition"
+    std::cerr << "positive acquisition"
                << ", satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN
-               << ", sample_stamp " << d_sample_counter
+               << ", sample_stamp " << d_gnss_synchro->Acq_samplestamp_samples
                << ", test statistics value " << d_test_statistics
                << ", test statistics threshold " << d_threshold
                << ", code phase " << d_gnss_synchro->Acq_delay_samples
+               << ", code phase " << (d_gnss_synchro->Acq_samplestamp_samples%int(d_acq_parameters.samples_per_code)-d_gnss_synchro->Acq_delay_samples)
                << ", doppler " << d_gnss_synchro->Acq_doppler_hz
                << ", magnitude " << d_mag
                << ", input signal power " << d_input_power
@@ -379,7 +380,7 @@ void pcps_acquisition::send_negative_acquisition()
     // 0=STOP_CHANNEL 1=ACQ_SUCCEES 2=ACQ_FAIL
     DLOG(INFO) << "negative acquisition"
                << ", satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN
-               << ", sample_stamp " << d_sample_counter
+               << ", sample_stamp " << d_gnss_synchro->Acq_samplestamp_samples
                << ", test statistics value " << d_test_statistics
                << ", test statistics threshold " << d_threshold
                << ", code phase " << d_gnss_synchro->Acq_delay_samples
@@ -963,7 +964,7 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                                 std::copy(in, in + d_consumed_samples, d_data_buffer.begin());
                             }
                         d_buffer_count -= d_consumed_samples;
-                        d_sample_counter += d_consumed_samples;
+                        d_sample_counter += buff_increment;
                         if (d_acq_parameters.blocking)
                             {
                                 lk.unlock();
