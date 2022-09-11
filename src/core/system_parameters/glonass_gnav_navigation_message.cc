@@ -23,6 +23,42 @@
 #include <cstddef>   // for size_t
 #include <iostream>  // for operator<<
 
+int Glonass_Gnav_Navigation_Message::d_strings_decoded = 0;
+int Glonass_Gnav_Navigation_Message::d_strings_corrected = 0;
+int Glonass_Gnav_Navigation_Message::d_strings_dropped = 0;
+int Glonass_Gnav_Navigation_Message::d_ephemeris_with_ecc = 0;
+int Glonass_Gnav_Navigation_Message::d_ephemeris_total = 0;
+int Glonass_Gnav_Navigation_Message::d_strings_dropped_csigma = 0;
+int Glonass_Gnav_Navigation_Message::d_ephemeris_dropped = 0;
+int Glonass_Gnav_Navigation_Message::d_ephemeris_dropped_ecc = 0;
+
+struct ecc_stats_printer
+{
+    ecc_stats_printer() = default;
+    ~ecc_stats_printer()
+    {
+        int strings_decoded = 0;
+        int strings_corrected = 0;
+        int strings_dropped = 0;
+        int strings_dropped_csigma = 0;
+        int ephemeris_with_ecc = 0;
+        int ephemeris_total = 0;
+        int ephemeris_dropped = 0;
+        int ephemeris_dropped_ecc = 0;
+        Glonass_Gnav_Navigation_Message::get_ecc_stats(strings_decoded, strings_corrected, strings_dropped, strings_dropped_csigma, ephemeris_total, ephemeris_with_ecc, ephemeris_dropped, ephemeris_dropped_ecc);
+        printf("Glonass_Gnav_Navigation_Message:strings_decoded=%d\n", strings_decoded);
+        printf("Glonass_Gnav_Navigation_Message:strings_corrected=%d (%3.3f%%)\n", strings_corrected, float(strings_corrected) * 100.0F / float(strings_decoded + strings_corrected + strings_dropped));
+        printf("Glonass_Gnav_Navigation_Message:strings_dropped=%d (%3.3f%%)\n", strings_dropped, float(strings_dropped) * 100.0F / float(strings_decoded + strings_corrected + strings_dropped));
+        printf("Glonass_Gnav_Navigation_Message:strings_dropped_csigma=%d (%3.3f%%)\n", strings_dropped_csigma, float(strings_dropped_csigma) * 100.0F / float(strings_decoded + strings_corrected + strings_dropped));
+        printf("Glonass_Gnav_Navigation_Message:ephemeris_total=%d\n", ephemeris_total);
+        printf("Glonass_Gnav_Navigation_Message:ephemeris_with_ecc=%d (%3.3f%%)\n", ephemeris_with_ecc, float(ephemeris_with_ecc) * 100.0F / float(ephemeris_total));
+        printf("Glonass_Gnav_Navigation_Message:ephemeris_dropped=%d (%3.3f%%)\n", ephemeris_dropped, float(ephemeris_dropped) * 100.0F / float(ephemeris_total));
+        printf("Glonass_Gnav_Navigation_Message:ephemeris_dropped_ecc=%d (%3.3f%%)\n", ephemeris_dropped_ecc, float(ephemeris_dropped_ecc) * 100.0F / float(ephemeris_total));
+    }
+};
+
+static struct ecc_stats_printer stats_printer;
+
 
 Glonass_Gnav_Navigation_Message::Glonass_Gnav_Navigation_Message() : d_prev_TOW(-1.0)
 {
@@ -36,7 +72,7 @@ Glonass_Gnav_Navigation_Message::Glonass_Gnav_Navigation_Message() : d_prev_TOW(
 }
 
 
-bool Glonass_Gnav_Navigation_Message::CRC_test(std::bitset<GLONASS_GNAV_STRING_BITS>& bits) const
+bool Glonass_Gnav_Navigation_Message::CRC_test(std::bitset<GLONASS_GNAV_STRING_BITS>& bits)
 {
     uint32_t sum_bits = 0;
     int32_t sum_hamming = 0;
@@ -120,12 +156,20 @@ bool Glonass_Gnav_Navigation_Message::CRC_test(std::bitset<GLONASS_GNAV_STRING_B
     // (a-i) All checksums (C1,...,C7 and C_Sigma) are equal to zero
     if ((C1 + C2 + C3 + C4 + C5 + C6 + C7 + C_Sigma) == 0)
         {
+            d_strings_decoded++;
             return true;
         }
     // (a-ii) Only one of the checksums (C1,...,C7) is equal to 1 and C_Sigma = 1
     if (C_Sigma == 1 && C1 + C2 + C3 + C4 + C5 + C6 + C7 == 1)
         {
+            d_strings_decoded++;
             return true;
+        }
+
+    if (C_Sigma == 1 && C1 + C2 + C3 + C4 + C5 + C6 + C7 == 0)
+        {
+            d_strings_dropped_csigma++;
+            return false;
         }
 
     if (C_Sigma && (sum_bits & 1))
@@ -141,15 +185,19 @@ bool Glonass_Gnav_Navigation_Message::CRC_test(std::bitset<GLONASS_GNAV_STRING_B
                 {
                     const int32_t locator = GLONASS_GNAV_ECC_LOCATOR[syndrome];
                     bits[locator] = !bits[locator];
+                    d_strings_corrected++;
+                    d_ecc = true;
                     return true;
                 }
             else
                 {
+                    d_strings_dropped++;
                     return false;
                 }
         }
 
     // All other conditions are assumed errors.
+    d_strings_dropped++;
     return false;
 }
 
@@ -262,9 +310,11 @@ int32_t Glonass_Gnav_Navigation_Message::string_decoder(const std::string& frame
     std::bitset<GLONASS_GNAV_STRING_BITS> string_bits(frame_string);
 
     // Perform data verification and exit code if error in bit sequence
+    d_ecc = false;
     flag_CRC_test = CRC_test(string_bits);
     if (flag_CRC_test == false)
         {
+            d_strings_corrected_l = 0;
             return 0;
         }
 
@@ -284,6 +334,10 @@ int32_t Glonass_Gnav_Navigation_Message::string_decoder(const std::string& frame
             gnav_ephemeris.d_Xn = static_cast<double>(read_navigation_signed(string_bits, X_N)) * TWO_N11;
 
             flag_ephemeris_str_1 = true;
+            if (d_ecc)
+                {
+                    d_strings_corrected_l++;
+                }
 
             break;
 
@@ -300,6 +354,10 @@ int32_t Glonass_Gnav_Navigation_Message::string_decoder(const std::string& frame
 
                     gnav_ephemeris.d_iode = read_navigation_unsigned(string_bits, T_B);
                     flag_ephemeris_str_2 = true;
+                    if (d_ecc)
+                        {
+                            d_strings_corrected_l++;
+                        }
                 }
 
             break;
@@ -317,6 +375,10 @@ int32_t Glonass_Gnav_Navigation_Message::string_decoder(const std::string& frame
                     gnav_ephemeris.d_Zn = static_cast<double>(read_navigation_signed(string_bits, Z_N)) * TWO_N11;
 
                     flag_ephemeris_str_3 = true;
+                    if (d_ecc)
+                        {
+                            d_strings_corrected_l++;
+                        }
                 }
 
             break;
@@ -340,6 +402,10 @@ int32_t Glonass_Gnav_Navigation_Message::string_decoder(const std::string& frame
                     gnav_ephemeris.PRN = static_cast<uint32_t>(gnav_ephemeris.d_n);
 
                     flag_ephemeris_str_4 = true;
+                    if (d_ecc)
+                        {
+                            d_strings_corrected_l++;
+                        }
                 }
 
             break;
@@ -677,6 +743,13 @@ bool Glonass_Gnav_Navigation_Message::have_new_ephemeris()  // Check if we have 
             // Update the time of ephemeris information
             d_previous_tb = gnav_ephemeris.d_t_b;
             DLOG(INFO) << "GLONASS GNAV Ephemeris (1, 2, 3, 4) have been received and belong to the same batch";
+            if (d_strings_corrected_l)
+                {
+                    d_ephemeris_with_ecc++;
+                    d_strings_corrected_l = 0;
+                    d_eph_ecc = true;
+                }
+            d_ephemeris_total++;
             new_eph = true;
         }
 

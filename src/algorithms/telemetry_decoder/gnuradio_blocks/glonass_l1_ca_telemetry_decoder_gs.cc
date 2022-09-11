@@ -234,6 +234,7 @@ void glonass_l1_ca_telemetry_decoder_gs::decode_string(const double *frame_symbo
     if (d_nav.have_new_ephemeris() == true)
         {
             // get object for this SV (mandatory)
+            bool is_ecc = d_nav.get_eph_ecc();
             d_nav.set_rf_link(d_satellite.get_rf_link());
             const std::shared_ptr<Glonass_Gnav_Ephemeris> tmp_obj = std::make_shared<Glonass_Gnav_Ephemeris>(d_nav.get_ephemeris());
             static Gnss_Ephemeris::history_set prev(27);
@@ -242,8 +243,13 @@ void glonass_l1_ca_telemetry_decoder_gs::decode_string(const double *frame_symbo
                     if (Gnss_Ephemeris::validate(prev, tmp_obj, d_validator_thr, d_validator_accept_first))
                         {
                             this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
+                            d_nav.reg_eph_pass(true, is_ecc);
                             LOG(INFO) << "GLONASS GNAV Ephemeris have been received in channel" << d_channel << " from satellite " << d_satellite;
                             std::cout << "New GLONASS L1 GNAV message received in channel " << d_channel << ": ephemeris from satellite " << d_satellite << '\n';
+                        }
+                    else
+                        {
+                            d_nav.reg_eph_pass(false, is_ecc);
                         }
                 }
             else

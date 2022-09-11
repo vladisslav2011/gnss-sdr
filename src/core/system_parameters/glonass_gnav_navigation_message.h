@@ -55,7 +55,7 @@ public:
      * \brief Compute CRC for GLONASS GNAV strings
      * \param bits Bits of the string message where to compute CRC
      */
-    bool CRC_test(std::bitset<GLONASS_GNAV_STRING_BITS>& bits) const;
+    bool CRC_test(std::bitset<GLONASS_GNAV_STRING_BITS>& bits);
 
     /*!
      * \brief Computes the frame number being decoded given the satellite slot number
@@ -169,6 +169,40 @@ public:
         flag_ephemeris_str_4 = ephemeris_str_4;
     }
 
+    inline bool get_eph_ecc()
+    {
+        bool tmp = d_eph_ecc;
+        d_eph_ecc = false;
+        return tmp;
+    }
+
+    inline void reg_eph_pass(bool passed, bool ecc)
+    {
+        if (!passed)
+            {
+                if (ecc)
+                    {
+                        d_ephemeris_dropped_ecc++;
+                    }
+                else
+                    {
+                        d_ephemeris_dropped++;
+                    }
+            }
+    }
+
+    static inline void get_ecc_stats(int& strings_decoded, int& strings_corrected, int& strings_dropped, int& strings_dropped_csigma, int& ephemeris_total, int& ephemeris_with_ecc, int& ephemeris_dropped, int& ephemeris_dropped_ecc)
+    {
+        strings_decoded = d_strings_decoded;
+        strings_corrected = d_strings_corrected;
+        strings_dropped = d_strings_dropped;
+        strings_dropped_csigma = d_strings_dropped_csigma;
+        ephemeris_total = d_ephemeris_total;
+        ephemeris_with_ecc = d_ephemeris_with_ecc;
+        ephemeris_dropped = d_ephemeris_dropped;
+        ephemeris_dropped_ecc = d_ephemeris_dropped_ecc;
+    }
+
 private:
     uint64_t read_navigation_unsigned(const std::bitset<GLONASS_GNAV_STRING_BITS>& bits, const std::vector<std::pair<int32_t, int32_t>>& parameter) const;
     int64_t read_navigation_signed(const std::bitset<GLONASS_GNAV_STRING_BITS>& bits, const std::vector<std::pair<int32_t, int32_t>>& parameter) const;
@@ -215,6 +249,17 @@ private:
     bool flag_TOW_set{};  // Flag indicating when the TOW has been set
     bool flag_TOW_new{};  // Flag indicating when a new TOW has been computed
     double d_prev_TOW{};
+    static int d_strings_decoded;
+    static int d_strings_corrected;
+    static int d_strings_dropped;
+    static int d_strings_dropped_csigma;
+    static int d_ephemeris_with_ecc;
+    static int d_ephemeris_total;
+    static int d_ephemeris_dropped;
+    static int d_ephemeris_dropped_ecc;
+    bool d_ecc{false};
+    bool d_eph_ecc{false};
+    int d_strings_corrected_l{0};
 };
 
 
