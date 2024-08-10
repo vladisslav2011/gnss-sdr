@@ -219,6 +219,10 @@ private:
     bool d_Flag_PLL_180_deg_phase_locked;
     bool d_use_histogram_bit_sync;
     bool d_wait_for_bit_edge{false};
+    float d_dll_bw_hz;
+    float d_pll_bw_hz;
+    float d_dll_tgt_bw_hz;
+    float d_pll_tgt_bw_hz;
 };
 
 
