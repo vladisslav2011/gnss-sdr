@@ -204,6 +204,10 @@ private:
     bool d_acc_carrier_phase_initialized;
     bool d_enable_extended_integration;
     bool d_Flag_PLL_180_deg_phase_locked;
+    float d_dll_bw_hz;
+    float d_pll_bw_hz;
+    float d_dll_tgt_bw_hz;
+    float d_pll_tgt_bw_hz;
 };
 
 

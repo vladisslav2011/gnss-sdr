@@ -124,7 +124,11 @@ dll_pll_veml_tracking::dll_pll_veml_tracking(const Dll_Pll_Conf &conf_)
       d_dump(d_trk_parameters.dump),
       d_dump_mat(d_trk_parameters.dump_mat && d_dump),
       d_acc_carrier_phase_initialized(false),
-      d_Flag_PLL_180_deg_phase_locked(false)
+      d_Flag_PLL_180_deg_phase_locked(false),
+      d_dll_bw_hz(0.0),
+      d_pll_bw_hz(0.0),
+      d_dll_tgt_bw_hz(0.0),
+      d_pll_tgt_bw_hz(0.0)
 {
 #if GNURADIO_GREATER_THAN_38
     this->set_relative_rate(1, static_cast<uint64_t>(d_trk_parameters.vector_length));
@@ -862,8 +866,10 @@ void dll_pll_veml_tracking::start_tracking()
     d_current_correlation_time_s = d_code_period;
 
     // Initialize tracking  ==========================================
-    d_carrier_loop_filter.set_params(d_trk_parameters.fll_bw_hz, d_trk_parameters.pll_bw_hz, d_trk_parameters.pll_filter_order);
-    d_code_loop_filter.set_noise_bandwidth(d_trk_parameters.dll_bw_hz);
+    d_pll_bw_hz = d_pll_tgt_bw_hz = d_trk_parameters.pll_bw_hz;
+    d_dll_bw_hz = d_dll_tgt_bw_hz = d_trk_parameters.dll_bw_hz;
+    d_carrier_loop_filter.set_params(d_trk_parameters.fll_bw_hz, d_pll_bw_hz, d_trk_parameters.pll_filter_order);
+    d_code_loop_filter.set_noise_bandwidth(d_dll_bw_hz);
     d_code_loop_filter.set_update_interval(static_cast<float>(d_code_period));
     // DLL/PLL filter initialization
     d_carrier_loop_filter.initialize(static_cast<float>(d_acq_carrier_doppler_hz));  // initialize the carrier filter
@@ -1900,8 +1906,9 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                                   << " for satellite " << Gnss_Satellite(d_systemName, d_acquisition_gnss_synchro->PRN) << '\n';
                                         // Set narrow taps delay values [chips]
                                         d_code_loop_filter.set_update_interval(static_cast<float>(d_current_correlation_time_s));
-                                        d_code_loop_filter.set_noise_bandwidth(d_trk_parameters.dll_bw_narrow_hz);
-                                        d_carrier_loop_filter.set_params(d_trk_parameters.fll_bw_hz, d_trk_parameters.pll_bw_narrow_hz, d_trk_parameters.pll_filter_order);
+                                        d_dll_tgt_bw_hz = d_trk_parameters.dll_bw_narrow_hz;
+                                        d_pll_tgt_bw_hz = d_trk_parameters.pll_bw_narrow_hz;
+                                        d_carrier_loop_filter.set_params(d_trk_parameters.fll_bw_hz, d_pll_bw_hz, d_trk_parameters.pll_filter_order);
                                         if (d_veml)
                                             {
                                                 d_local_code_shift_chips[0] = -d_trk_parameters.very_early_late_space_narrow_chips * static_cast<float>(d_code_samples_per_chip);
@@ -2011,6 +2018,40 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                 current_synchro_data.correlation_length_ms = d_correlation_length_ms;
                                 current_synchro_data.Flag_valid_symbol_output = true;
                                 d_P_data_accu = gr_complex(0.0, 0.0);
+                               if (d_dll_bw_hz > d_dll_tgt_bw_hz)
+                                {
+                                        if (d_trk_parameters.dll_bw_step == 0.f)
+                                            {
+                                                d_dll_bw_hz = d_dll_tgt_bw_hz;
+                                            }
+                                        else
+                                            {
+                                                d_dll_bw_hz *= (1.f - d_trk_parameters.dll_bw_step);
+                                            }
+                                        if (d_dll_bw_hz <= d_dll_tgt_bw_hz)
+                                        {
+                                            d_dll_bw_hz = d_dll_tgt_bw_hz;
+                                            LOG(INFO) << "Reached narrow dll bw in channel " << d_channel << "\n";
+                                        }
+                                        d_code_loop_filter.set_noise_bandwidth(d_dll_bw_hz);
+                                }
+                               if (d_pll_bw_hz > d_pll_tgt_bw_hz)
+                                {
+                                        if (d_trk_parameters.pll_bw_step == 0.f)
+                                            {
+                                                d_pll_bw_hz = d_pll_tgt_bw_hz;
+                                            }
+                                        else
+                                            {
+                                                d_pll_bw_hz *= (1.f - d_trk_parameters.pll_bw_step);
+                                            }
+                                        if (d_pll_bw_hz <= d_pll_tgt_bw_hz)
+                                        {
+                                            d_pll_bw_hz = d_pll_tgt_bw_hz;
+                                            LOG(INFO) << "Reached narrow pll bw in channel " << d_channel << "\n";
+                                        }
+                                        d_carrier_loop_filter.set_params(d_trk_parameters.fll_bw_hz, d_pll_bw_hz, d_trk_parameters.pll_filter_order);
+                                }
                             }
 
                         // reset extended correlator

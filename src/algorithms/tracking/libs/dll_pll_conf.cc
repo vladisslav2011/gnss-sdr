@@ -46,6 +46,7 @@ void Dll_Pll_Conf::SetFromConfiguration(const ConfigurationInterface *configurat
     double fs_in_deprecated = configuration->property("GNSS-SDR.internal_fs_hz", fs_in);
     fs_in = configuration->property("GNSS-SDR.internal_fs_sps", fs_in_deprecated);
     high_dyn = configuration->property(role + ".high_dyn", high_dyn);
+    enable_doppler_correction = configuration->property(role + ".enable_doppler_correction", high_dyn);
     dump = configuration->property(role + ".dump", dump);
     dump_filename = configuration->property(role + ".dump_filename", dump_filename);
     dump_mat = configuration->property(role + ".dump_mat", dump_mat);
@@ -56,6 +57,8 @@ void Dll_Pll_Conf::SetFromConfiguration(const ConfigurationInterface *configurat
         }
     pll_bw_narrow_hz = configuration->property(role + ".pll_bw_narrow_hz", pll_bw_narrow_hz);
     dll_bw_narrow_hz = configuration->property(role + ".dll_bw_narrow_hz", dll_bw_narrow_hz);
+    pll_bw_step = configuration->property(role + ".pll_bw_step", pll_bw_step);
+    dll_bw_step = configuration->property(role + ".dll_bw_step", dll_bw_step);
     dll_bw_hz = configuration->property(role + ".dll_bw_hz", dll_bw_hz);
     if (FLAGS_dll_bw_hz != 0.0)
         {
