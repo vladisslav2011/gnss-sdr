@@ -69,6 +69,7 @@ public:
     // averaging
     void set_averaging_depth(int depth);  //!< Set length of averaging window
     void perform_pos_averaging();
+
 private:
     /*
      * Conversion of Cartesian coordinates (X,Y,Z) to geographical
