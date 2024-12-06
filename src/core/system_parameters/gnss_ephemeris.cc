@@ -195,8 +195,8 @@ double Gnss_Ephemeris::max_deviation(Common_Ephemeris &from)
     upd_dev(Crs);
     upd_dev(Cic);
     upd_dev(Cis);
-    //upd_dev(toe);
-    //upd_dev(toc);
+    //  upd_dev(toe);
+    //  upd_dev(toc);
     upd_dev(af0);
     upd_dev(af1);
     upd_dev(af2);
