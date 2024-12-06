@@ -39,7 +39,7 @@ double Glonass_Gnav_Ephemeris::max_deviation(Common_Ephemeris &from)
     double dev = 0.0;
     upd_dev(PRN);
     // TODO: compare to previous value?
-    //upd_dev(d_t_k);
+    //    upd_dev(d_t_k);
     upd_dev(d_t_b);
     upd_dev(d_gamma_n);
     upd_dev(d_tau_n);
@@ -71,11 +71,11 @@ double Glonass_Gnav_Ephemeris::max_deviation(Common_Ephemeris &from)
     upd_dev(i_satellite_freq_channel);
     upd_dev(i_satellite_slot_number);
     upd_dev(d_WN);
-    //d_P_2
-    //d_P_3
-    //d_P_4
-    //d_l3rd_n
-    //d_l5th_n
+    //    d_P_2
+    //    d_P_3
+    //    d_P_4
+    //    d_l3rd_n
+    //    d_l5th_n
     return dev;
 }
 
