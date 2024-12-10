@@ -1896,6 +1896,8 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                 d_Prompt_circular_buffer.clear();
                                 d_current_symbol = 0;
                                 d_current_data_symbol = 0;
+                                d_dll_tgt_bw_hz = d_trk_parameters.dll_bw_narrow_hz;
+                                d_pll_tgt_bw_hz = d_trk_parameters.pll_bw_narrow_hz;
 
                                 if (d_enable_extended_integration)
                                     {
@@ -1911,8 +1913,6 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                                   << " for satellite " << Gnss_Satellite(d_systemName, d_acquisition_gnss_synchro->PRN) << '\n';
                                         // Set narrow taps delay values [chips]
                                         d_code_loop_filter.set_update_interval(static_cast<float>(d_current_correlation_time_s));
-                                        d_dll_tgt_bw_hz = d_trk_parameters.dll_bw_narrow_hz;
-                                        d_pll_tgt_bw_hz = d_trk_parameters.pll_bw_narrow_hz;
                                         d_carrier_loop_filter.set_params(d_trk_parameters.fll_bw_hz, d_pll_bw_hz, d_trk_parameters.pll_filter_order);
                                         if (d_veml)
                                             {
