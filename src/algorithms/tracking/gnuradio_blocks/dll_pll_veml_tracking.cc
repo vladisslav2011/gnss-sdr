@@ -2148,6 +2148,8 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                 d_Prompt_circular_buffer.clear();
                                 d_current_symbol = 0;
                                 d_current_data_symbol = 0;
+                                d_dll_tgt_bw_hz = d_trk_parameters.dll_bw_narrow_hz;
+                                d_pll_tgt_bw_hz = d_trk_parameters.pll_bw_narrow_hz;
 
                                 if (d_enable_extended_integration)
                                     {
