@@ -2241,13 +2241,13 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                 d_P_data_accu = gr_complex(0.0, 0.0);
                                 if (d_dll_bw_hz > d_dll_tgt_bw_hz)
                                     {
-                                        if (d_trk_parameters.dll_bw_step == 0.f)
+                                        if (d_trk_parameters.dll_bw_step == 0.F)
                                             {
                                                 d_dll_bw_hz = d_dll_tgt_bw_hz;
                                             }
                                         else
                                             {
-                                                d_dll_bw_hz *= (1.f - d_trk_parameters.dll_bw_step);
+                                                d_dll_bw_hz *= (1.F - d_trk_parameters.dll_bw_step);
                                             }
                                         if (d_dll_bw_hz <= d_dll_tgt_bw_hz)
                                             {
@@ -2259,13 +2259,13 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                     }
                                 if (d_pll_bw_hz > d_pll_tgt_bw_hz)
                                     {
-                                        if (d_trk_parameters.pll_bw_step == 0.f)
+                                        if (d_trk_parameters.pll_bw_step == 0.F)
                                             {
                                                 d_pll_bw_hz = d_pll_tgt_bw_hz;
                                             }
                                         else
                                             {
-                                                d_pll_bw_hz *= (1.f - d_trk_parameters.pll_bw_step);
+                                                d_pll_bw_hz *= (1.F - d_trk_parameters.pll_bw_step);
                                             }
                                         if (d_pll_bw_hz <= d_pll_tgt_bw_hz)
                                             {
