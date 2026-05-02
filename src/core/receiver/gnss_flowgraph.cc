@@ -1949,8 +1949,10 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                 }
                             else
                                 {
-                                    // set Doppler center to 0 Hz
-                                    channels_[current_channel]->assist_acquisition_doppler(0);
+                                    double drift_correction = get_pvt()->get_clock_drift_ppm() * -1e-6;
+                                    double corrected_center = project_doppler(channels_[current_channel]->get_signal().get_signal_str(), drift_correction * FREQ1);
+                                    // set Doppler center to 0 Hz taking into account detected clock drift
+                                    channels_[current_channel]->assist_acquisition_doppler(corrected_center);
                                 }
 #if ENABLE_FPGA
                             if (enable_fpga_offloading_)

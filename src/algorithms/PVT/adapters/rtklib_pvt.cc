@@ -998,6 +998,12 @@ std::map<int, Galileo_Almanac> Rtklib_Pvt::get_galileo_almanac() const
 }
 
 
+double Rtklib_Pvt::get_clock_drift_ppm() const
+{
+    return pvt_->get_clock_drift_ppm();
+}
+
+
 void Rtklib_Pvt::connect(gr::top_block_sptr top_block)
 {
     if (top_block)
