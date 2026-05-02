@@ -1781,12 +1781,23 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                        << ", Signal " << channels_[current_channel]->get_signal().get_signal_str();
                             if (assistance_available == true && configuration_->property("GNSS-SDR.assist_dual_frequency_acq", multiband_))
                                 {
-                                    channels_[current_channel]->assist_acquisition_doppler(project_doppler(channels_[current_channel]->get_signal().get_signal_str(), estimated_doppler));
+                                    // Estimated doppler is known, narrow doppler range search
+                                    channels_[current_channel]->assist_acquisition_doppler(project_doppler(channels_[current_channel]->get_signal().get_signal_str(), estimated_doppler), 2);
                                 }
                             else
                                 {
-                                    // set Doppler center to 0 Hz
-                                    channels_[current_channel]->assist_acquisition_doppler(0);
+                                    double drift_correction = get_pvt()->get_clock_drift_ppm() * -1e-6;
+                                    if (drift_correction != 0.)
+                                        {
+                                            // Clock drift is known, medium doppler range search
+                                            double corrected_center = project_doppler(channels_[current_channel]->get_signal().get_signal_str(), drift_correction * FREQ1);
+                                            channels_[current_channel]->assist_acquisition_doppler(corrected_center, 1);
+                                        }
+                                    else
+                                        {
+                                            // No assistance, wide doppler range search
+                                            channels_[current_channel]->assist_acquisition_doppler(0, 0);
+                                        }
                                 }
 #if ENABLE_FPGA
                             if (enable_fpga_offloading_)
