@@ -43,4 +43,21 @@ void Tlm_Conf::SetFromConfiguration(const ConfigurationInterface *configuration,
     ecc_errors_reject = (ecc_errors_reject < 1) ? 1 : ecc_errors_reject;
     ecc_errors_resync = configuration->property(role + ".ecc_resync", 6);
     ecc_errors_resync = (ecc_errors_resync < 1) ? 1 : ecc_errors_resync;
+    std::string override_str = configuration->property(role + ".override_health", std::string(""));
+    size_t s=0;
+    size_t e=0;
+    if(override_str.size())
+    {
+        while(true)
+        {
+            e=override_str.find(",",s);
+            if(e==std::string::npos)
+            {
+                override_health[std::stoi(override_str.substr(s,override_str.size()-s))]=true;
+                break;
+            }
+            override_health[std::stoi(override_str.substr(s,e-s))]=true;
+            s=e+1;
+        }
+    }
 }

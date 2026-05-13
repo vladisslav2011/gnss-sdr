@@ -114,7 +114,8 @@ galileo_telemetry_decoder_gs::galileo_telemetry_decoder_gs(
                       d_E6_TOW_set(false),
                       d_there_are_e1_channels(conf.there_are_e1_channels),
                       d_there_are_e6_channels(conf.there_are_e6_channels),
-                      d_use_ced(conf.use_ced)
+                      d_use_ced(conf.use_ced),
+                      d_override_health(conf.override_health)
 {
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
@@ -465,6 +466,12 @@ void galileo_telemetry_decoder_gs::decode_INAV_word(float *page_part_symbols, in
         {
             // get object for this SV (mandatory)
             const std::shared_ptr<Galileo_Ephemeris> tmp_obj = std::make_shared<Galileo_Ephemeris>(d_inav_nav.get_ephemeris());
+            if(d_override_health.find(d_satellite.get_PRN())!=d_override_health.end())
+            {
+                tmp_obj->E5a_HS=0;
+                tmp_obj->E5b_HS=0;
+                tmp_obj->E1B_HS=0;
+            }
             if (d_band == '1')
                 {
 #if __cplusplus == 201103L

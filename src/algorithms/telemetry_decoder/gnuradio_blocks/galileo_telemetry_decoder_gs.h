@@ -38,6 +38,7 @@
 #include <memory>                     // for std::unique_ptr
 #include <string>                     // for std::string
 #include <vector>                     // for std::vector
+#include <map>                     // for std::map
 
 /** \addtogroup Telemetry_Decoder
  * \{ */
@@ -155,6 +156,7 @@ private:
     bool d_there_are_e1_channels;
     bool d_there_are_e6_channels;
     bool d_use_ced;
+    std::map<int,bool> d_override_health;
 };
 
 
