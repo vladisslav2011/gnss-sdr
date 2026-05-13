@@ -20,6 +20,7 @@
 
 #include "configuration_interface.h"
 #include <string>
+#include <map>
 
 /** \addtogroup Telemetry_Decoder
  * \{ */
@@ -48,6 +49,7 @@ public:
     bool tow_to_trk{false};
     int32_t ecc_errors_reject{1};
     int32_t ecc_errors_resync{6};
+    std::map<int,bool> override_health{};
 };
 
 
