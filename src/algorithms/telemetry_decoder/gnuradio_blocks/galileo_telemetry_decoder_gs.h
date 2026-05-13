@@ -28,7 +28,7 @@
 #include "nav_message_packet.h"
 #include "telemetry_impl_interface.h"  // for telemetry_impl_interface
 #include <boost/circular_buffer.hpp>   // for boost::circular_buffer
-
+#include <map>                     // for std::map
 
 /** \addtogroup Telemetry_Decoder
  * \{ */
@@ -165,6 +165,7 @@ private:
     const bool d_there_are_e6_channels;
     const bool d_use_ced;
     const bool d_tow_to_trk;
+    std::map<int,bool> d_override_health;
 };
 
 
