@@ -48,6 +48,7 @@ BeidouB1iPcpsAcquisition::BeidouB1iPcpsAcquisition(
     unsigned int out_streams) : gnss_synchro_(nullptr),
                                 role_(role),
                                 threshold_(0.0),
+                                doppler_center_(0),
                                 channel_(0),
                                 in_streams_(in_streams),
                                 out_streams_(out_streams)
@@ -126,6 +127,14 @@ void BeidouB1iPcpsAcquisition::set_doppler_step(uint32_t doppler_step)
     doppler_step_ = doppler_step;
 
     acquisition_->set_doppler_step(doppler_step_);
+}
+
+
+void BeidouB1iPcpsAcquisition::set_doppler_center(int doppler_center)
+{
+    doppler_center_ = doppler_center;
+
+    acquisition_->set_doppler_center(doppler_center_);
 }
 
 

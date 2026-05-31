@@ -116,6 +116,11 @@ public:
     void set_doppler_step(unsigned int doppler_step) override;
 
     /*!
+     * \brief Set Doppler center for the grid search
+     */
+    void set_doppler_center(int doppler_center) override;
+
+    /*!
      * \brief Initializes acquisition algorithm.
      */
     void init() override;
@@ -164,6 +169,7 @@ private:
     size_t item_size_;
     int64_t fs_in_;
     float threshold_;
+    int doppler_center_;
     unsigned int vector_length_;
     unsigned int code_length_;
     unsigned int channel_;
