@@ -140,6 +140,10 @@ double Gnss_Ephemeris::predicted_doppler(double rx_time_s,
                 {
                     predicted_doppler = predicted_doppler_normalized * FREQ3_BDS;
                 }
+            else if (band == 4)
+                {
+                    predicted_doppler = predicted_doppler_normalized * FREQ1;
+                }
             else
                 {
                     predicted_doppler = 0.0;
