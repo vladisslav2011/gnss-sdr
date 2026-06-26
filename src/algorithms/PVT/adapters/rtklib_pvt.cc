@@ -689,6 +689,23 @@ bool Rtklib_Pvt::get_latest_PVT(double* longitude_deg,
 }
 
 
+bool Rtklib_Pvt::get_latest_PVT(double* longitude_deg,
+    double* latitude_deg,
+    double* height_m,
+    double* ground_speed_east,
+    double* ground_speed_north,
+    double* ground_speed_up,
+    int32_t * TOW)
+{
+    return pvt_->get_latest_PVT(longitude_deg,
+        latitude_deg,
+        height_m,
+        ground_speed_east,
+        ground_speed_north,
+        ground_speed_up,
+        TOW);
+}
+
 void Rtklib_Pvt::clear_ephemeris()
 {
     pvt_->clear_ephemeris();
@@ -716,6 +733,24 @@ std::map<int, Gps_Almanac> Rtklib_Pvt::get_gps_almanac() const
 std::map<int, Galileo_Almanac> Rtklib_Pvt::get_galileo_almanac() const
 {
     return pvt_->get_galileo_almanac_map();
+}
+
+
+std::map<int, Beidou_Dnav_Ephemeris> Rtklib_Pvt::get_beidou_dnav_ephemeris() const
+{
+    return pvt_->get_beidou_dnav_ephemeris_map();
+}
+
+
+std::map<int, Beidou_Dnav_Almanac> Rtklib_Pvt::get_beidou_dnav_almanac() const
+{
+    return pvt_->get_beidou_dnav_almanac_map();
+}
+
+
+std::map<int, Glonass_Gnav_Ephemeris> Rtklib_Pvt::get_glonass_gnav_ephemeris() const
+{
+    return pvt_->get_glonass_gnav_ephemeris_map();
 }
 
 
