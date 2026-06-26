@@ -1700,27 +1700,10 @@ void GNSSFlowgraph::remove_signal(const Gnss_Signal& gs)
 // project Doppler from primary frequency to secondary frequency
 double GNSSFlowgraph::project_doppler(const std::string& searched_signal, double primary_freq_doppler_hz)
 {
-    switch (mapStringValues_[searched_signal])
-        {
-        case evGPS_L5:
-        case evGAL_5X:
-            return (primary_freq_doppler_hz / FREQ1) * FREQ5;
-            break;
-        case evGAL_7X:
-            return (primary_freq_doppler_hz / FREQ1) * FREQ7;
-            break;
-        case evGPS_2S:
-            return (primary_freq_doppler_hz / FREQ1) * FREQ2;
-            break;
-        case evGAL_E6:
-            return (primary_freq_doppler_hz / FREQ1) * FREQ6;
-            break;
-        case evQZS_J5:
-            return (primary_freq_doppler_hz / FREQ1) * FREQ5;
-            break;
-        default:
-            return primary_freq_doppler_hz;
-        }
+    const auto freq = SIGNAL_FREQ_MAP.find(searched_signal);
+    if(freq == SIGNAL_FREQ_MAP.cend())
+        return primary_freq_doppler_hz;
+    return (primary_freq_doppler_hz / FREQ1) * freq->second;
 }
 
 
@@ -1777,9 +1760,89 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                 }
                             else
                                 {
-                                    double drift_correction = get_pvt()->get_clock_drift_ppm() * -1e-6;
-                                    double corrected_center = project_doppler(channels_[current_channel]->get_signal().get_signal_str(), drift_correction * FREQ1);
+                                    double corrected_center = 0.;
                                     // set Doppler center to 0 Hz taking into account detected clock drift
+                                    double longitude_deg;
+                                    double latitude_deg;
+                                    double height_m;
+                                    double ground_speed_north;
+                                    double ground_speed_east;
+                                    double ground_speed_up;
+                                    int32_t TOW;
+                                    bool has_solution = get_pvt()->get_latest_PVT(&longitude_deg, &latitude_deg, &height_m, &ground_speed_north, &ground_speed_east, &ground_speed_up, &TOW);
+                                    if(has_solution)
+                                        {
+                                            double drift_correction = get_pvt()->get_clock_drift_ppm() * -1e-6;
+                                            corrected_center = project_doppler(channels_[current_channel]->get_signal().get_signal_str(), drift_correction * FREQ1);
+                                            const Gnss_Satellite & sat = channels_[current_channel]->get_signal().get_satellite();
+                                            if(sat.get_system() == "GPS")
+                                            {
+                                                const auto& ephemeris_map = get_pvt()->get_gps_ephemeris();
+                                                auto ephemeris_iter = ephemeris_map.find(sat.get_PRN());
+                                                if(ephemeris_iter != ephemeris_map.cend())
+                                                {
+                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
+                                                    TOW /= 1000;
+                                                    double predicted = ephemeris_iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                    ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
+                                                    std::cout<<"[[[[ found valid ephemeris for "<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                    corrected_center+=predicted;
+                                                }else{
+                                                    //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
+                                                }
+                                            }
+                                            if(sat.get_system() == "Galileo")
+                                            {
+                                                const auto& ephemeris_map = get_pvt()->get_galileo_ephemeris();
+                                                auto ephemeris_iter = ephemeris_map.find(sat.get_PRN());
+                                                if(ephemeris_iter != ephemeris_map.cend())
+                                                {
+                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
+                                                    TOW /= 1000;
+                                                    double predicted = ephemeris_iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                    ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
+                                                    std::cout<<"[[[[ found valid ephemeris for "<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                    corrected_center+=predicted;
+                                                }else{
+                                                    //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
+                                                }
+                                            }
+                                            //Not working yet
+                                            #if 0
+                                            if(sat.get_system() == "Glonass")
+                                            {
+                                                const auto& ephemeris_map = get_pvt()->get_glonass_gnav_ephemeris();
+                                                auto ephemeris_iter = ephemeris_map.find(sat.get_PRN());
+                                                if(ephemeris_iter != ephemeris_map.cend())
+                                                {
+                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
+                                                    TOW /= 1000;
+                                                    double predicted = ephemeris_iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                    ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
+                                                    std::cout<<"[[[[ found valid ephemeris for "<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                    corrected_center+=predicted;
+                                                }else{
+                                                    //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
+                                                }
+                                            }
+                                            #endif
+                                            if(sat.get_system() == "Beidou")
+                                            {
+                                                const auto& ephemeris_map = get_pvt()->get_beidou_dnav_ephemeris();
+                                                auto ephemeris_iter = ephemeris_map.find(sat.get_PRN());
+                                                if(ephemeris_iter != ephemeris_map.cend())
+                                                {
+                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
+                                                    TOW /= 1000;
+                                                    double predicted = ephemeris_iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                    ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
+                                                    std::cout<<"[[[[ found valid ephemeris for "<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                    corrected_center+=predicted;
+                                                }else{
+                                                    //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
+                                                }
+                                            }
+                                        }
                                     channels_[current_channel]->assist_acquisition_doppler(corrected_center);
                                 }
 #if ENABLE_FPGA
