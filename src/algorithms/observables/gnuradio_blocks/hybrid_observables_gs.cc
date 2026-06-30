@@ -635,6 +635,8 @@ void hybrid_observables_gs::compute_pranges(std::vector<Gnss_Synchro> &data) con
     std::vector<Gnss_Synchro>::iterator it;
     const auto current_T_rx_TOW_ms = static_cast<double>(d_T_rx_TOW_ms);
     const double current_T_rx_TOW_s = current_T_rx_TOW_ms / 1000.0;
+    double min_abs=1e30;
+    double min_pseudorange=0.;
     for (it = data.begin(); it != data.end(); it++)
         {
             if (it->Flag_valid_word)
@@ -647,6 +649,11 @@ void hybrid_observables_gs::compute_pranges(std::vector<Gnss_Synchro> &data) con
                     it->RX_time = current_T_rx_TOW_s;
                     it->Pseudorange_m = traveltime_ms * SPEED_OF_LIGHT_M_MS;
                     it->Flag_valid_pseudorange = true;
+                    if (std::abs(it->Pseudorange_m) < min_abs)
+                        {
+                            min_pseudorange = it->Pseudorange_m;
+                            min_abs = std::abs(it->Pseudorange_m);
+                        }
                     // debug code
                     // std::cout << "[" << it->Channel_ID << "] interp_TOW_ms: " << it->interp_TOW_ms << '\n';
                     // std::cout << "[" << it->Channel_ID << "] Diff d_T_rx_TOW_ms - interp_TOW_ms: " << static_cast<double>(d_T_rx_TOW_ms) - it->interp_TOW_ms << '\n';
@@ -656,6 +663,11 @@ void hybrid_observables_gs::compute_pranges(std::vector<Gnss_Synchro> &data) con
                     it->RX_time = current_T_rx_TOW_s;
                 }
         }
+    //reject invalid
+    for (it = data.begin(); it != data.end(); it++)
+        if (it->Flag_valid_pseudorange)
+            if (std::abs(it->Pseudorange_m - min_pseudorange) > 1e8)
+                it->Flag_valid_pseudorange = false;
 }
 
 
