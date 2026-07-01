@@ -21,6 +21,7 @@
 #include "gnss_block_interface.h"
 #include <gnuradio/blocks/file_sink.h>
 #include <gnuradio/blocks/interleaved_short_to_complex.h>
+#include <gnuradio/blocks/multiply_const_cc.h>
 #include <cstdint>
 #include <string>
 
@@ -68,6 +69,7 @@ public:
 
 private:
     gr::blocks::interleaved_short_to_complex::sptr gr_interleaved_short_to_complex_;
+    gr::blocks::multiply_const_cc::sptr scale_;
     conjugate_cc_sptr conjugate_cc_;
     gr::blocks::file_sink::sptr file_sink_;
     std::string dump_filename_;
