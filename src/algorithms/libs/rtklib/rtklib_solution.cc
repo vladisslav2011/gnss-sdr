@@ -261,7 +261,7 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
                 {
                     continue;
                 }
-            if (ssat[sat - 1].vs && ssat[sat - 1].azel[1] > 0.0)
+            if (ssat[sat - 1].azel[1] > 0.0)
                 {
                     const int signal_id = nmea_gsv_signal(ssat + sat - 1, sys, fallback_signal_id).signal_id;
                     if (std::find(signal_ids.begin(), signal_ids.end(), signal_id) == signal_ids.end())
