@@ -86,6 +86,7 @@ private:
     unsigned int in_streams_;
     unsigned int out_streams_;
     bool inverted_spectrum;
+    bool chunked;
 };
 
 
