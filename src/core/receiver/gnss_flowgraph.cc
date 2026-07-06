@@ -1786,20 +1786,20 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                             double drift_correction = get_pvt()->get_clock_drift_ppm() * -1e-6;
                                             corrected_center = project_doppler(channels_[current_channel]->get_signal().get_signal_str(), drift_correction * FREQ1);
                                             const Gnss_Satellite & sat = channels_[current_channel]->get_signal().get_satellite();
-                                            if(sat.get_system() == "GPS")
+                                            if((sat.get_system() == "GPS")||(sat.get_system() == "QZSS"))
                                             {
                                                 bool ephemeris_found = false;
                                                 const auto& ephemeris_map = get_pvt()->get_gps_ephemeris();
-                                                auto ephemeris_iter = ephemeris_map.find(sat.get_PRN());
-                                                if(ephemeris_iter != ephemeris_map.cend())
+                                                auto iter = ephemeris_map.find(sat.get_PRN());
+                                                if(iter != ephemeris_map.cend())
                                                 {
                                                     assist_level = 2;
                                                     ephemeris_found = true;
                                                     auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                     TOW /= 1000;
-                                                    double predicted = ephemeris_iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                    double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
                                                     ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
-                                                    std::cout<<"[[[[ found valid ephemeris for "<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                    //std::cout<<"[[[[ found valid ephemeris for J"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
                                                     corrected_center+=predicted;
                                                 }
                                                 if(!ephemeris_found)
@@ -1821,23 +1821,49 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                 if(!ephemeris_found)
                                                 {
                                                     //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
+                                                    const auto& almanac_map = get_pvt()->get_gps_almanac();
+                                                    auto iter = almanac_map.find(sat.get_PRN());
+                                                    if(iter != almanac_map.cend())
+                                                    {
+                                                        auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
+                                                        TOW /= 1000;
+                                                        double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                        ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
+                                                        //std::cout<<"[[[[ found valid almanac for G"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                        corrected_center+=predicted;
+                                                    }else{
+                                                        //std::cout<<"]]]] no valid almanac for G"<<sat.get_PRN()<<"\n";
+                                                    }
                                                 }
                                             }
                                             if(sat.get_system() == "Galileo")
                                             {
                                                 const auto& ephemeris_map = get_pvt()->get_galileo_ephemeris();
-                                                auto ephemeris_iter = ephemeris_map.find(sat.get_PRN());
-                                                if(ephemeris_iter != ephemeris_map.cend())
+                                                auto iter = ephemeris_map.find(sat.get_PRN());
+                                                if(iter != ephemeris_map.cend())
                                                 {
                                                     assist_level = 2;
                                                     auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                     TOW /= 1000;
-                                                    double predicted = ephemeris_iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                    double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
                                                     ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
-                                                    std::cout<<"[[[[ found valid ephemeris for "<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                    //std::cout<<"[[[[ found valid ephemeris for E"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
                                                     corrected_center+=predicted;
                                                 }else{
                                                     //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
+                                                    const auto& almanac_map = get_pvt()->get_galileo_almanac();
+                                                    auto iter = almanac_map.find(sat.get_PRN());
+                                                    if(iter != almanac_map.cend())
+                                                    {
+                                                        auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
+                                                        TOW /= 1000;
+                                                        double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                        ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
+                                                        //std::cout<<"[[[[ found valid almanac for E"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                        corrected_center+=predicted;
+                                                    }else{
+                                                        //std::cout<<"]]]] no valid ephemeris for E"<<sat.get_PRN()<<"\n";
+                                                    }
                                                 }
                                             }
                                             //Not working yet
@@ -1845,18 +1871,18 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                             if(sat.get_system() == "Glonass")
                                             {
                                                 const auto& ephemeris_map = get_pvt()->get_glonass_gnav_ephemeris();
-                                                auto ephemeris_iter = ephemeris_map.find(sat.get_PRN());
-                                                if(ephemeris_iter != ephemeris_map.cend())
+                                                auto iter = ephemeris_map.find(sat.get_PRN());
+                                                if(iter != ephemeris_map.cend())
                                                 {
                                                     assist_level = 2;
                                                     auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                     TOW /= 1000;
-                                                    double predicted = ephemeris_iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                    double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
                                                     ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
-                                                    std::cout<<"[[[[ found valid ephemeris for "<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                    std::cout<<"[[[[ found valid ephemeris for R"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
                                                     corrected_center+=predicted;
                                                 }else{
-                                                    //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
+                                                    //std::cout<<"]]]] no valid ephemeris for R"<<sat.get_PRN()<<"\n";
                                                 }
                                             }
                                             #endif
@@ -1864,16 +1890,16 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                             {
                                                 bool ephemeris_found = false;
                                                 const auto& ephemeris_map = get_pvt()->get_beidou_dnav_ephemeris();
-                                                auto ephemeris_iter = ephemeris_map.find(sat.get_PRN());
-                                                if(ephemeris_iter != ephemeris_map.cend())
+                                                auto iter = ephemeris_map.find(sat.get_PRN());
+                                                if(iter != ephemeris_map.cend())
                                                 {
                                                     ephemeris_found = true;
                                                     assist_level = 2;
                                                     auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                     TOW /= 1000;
-                                                    double predicted = ephemeris_iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                    double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
                                                     ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
-                                                    std::cout<<"[[[[ found valid ephemeris for "<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                    std::cout<<"[[[[ found valid ephemeris for C"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
                                                     corrected_center+=predicted;
                                                 }
                                                 if(!ephemeris_found)
@@ -1895,6 +1921,21 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                 if(!ephemeris_found)
                                                 {
                                                     //std::cout<<"]]]] no valid ephemeris for C"<<sat.get_PRN()<<"\n";
+                                                    //std::cout<<"]]]] no valid ephemeris for C"<<sat.get_PRN()<<"\n";
+                                                    const auto& almanac_map = get_pvt()->get_beidou_dnav_almanac();
+                                                    auto iter = almanac_map.find(sat.get_PRN());
+                                                    if(iter != almanac_map.cend())
+                                                    {
+                                                        auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
+                                                        TOW /= 1000;
+                                                        double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                        ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
+                                                        corrected_center+=predicted;
+                                                        std::cout<<"[[[[ found valid almanac for C"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                        corrected_center+=predicted;
+                                                    }else{
+                                                        //std::cout<<"]]]] no valid almanac for C"<<sat.get_PRN()<<"\n";
+                                                    }
                                                 }
                                             }
                                         }
