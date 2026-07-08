@@ -164,6 +164,8 @@ const std::vector<std::pair<int32_t, int32_t> > D1_TOA({{194, 8}});
 const std::vector<std::pair<int32_t, int32_t> > D1_OMEGA_DOT_ALMANAC({{202, 1}, {211, 16}});
 const std::vector<std::pair<int32_t, int32_t> > D1_OMEGA_ALMANAC({{227, 6}, {241, 18}});
 const std::vector<std::pair<int32_t, int32_t> > D1_M0_ALMANAC({{259, 4}, {271, 20}});
+const std::vector<std::pair<int32_t, int32_t> > D1_AM_EP_ID({{291, 2}});
+const std::vector<std::pair<int32_t, int32_t> > D1_AM_ID({{291, 2}});
 
 // SUBFRAME 5 PAGE 7
 const std::vector<std::pair<int32_t, int32_t> > D1_HEA1({{51, 2}, {61, 7}});
@@ -216,6 +218,9 @@ const std::vector<std::pair<int32_t, int32_t> > D1_WN_LSF({{75, 8}});
 const std::vector<std::pair<int32_t, int32_t> > D1_A0UTC({{91, 22}, {121, 10}});
 const std::vector<std::pair<int32_t, int32_t> > D1_A1UTC({{131, 12}, {151, 12}});
 const std::vector<std::pair<int32_t, int32_t> > D1_DN({{163, 8}});
+
+// SUBFRAME 5 PAGE 24
+const std::vector<std::pair<int32_t, int32_t> > D1_5_24_AM_ID({{216, 2}});
 
 // D2 NAV Message Decoding Information
 const std::vector<std::pair<int32_t, int32_t> > D2_PRE({{1, 11}});
@@ -290,6 +295,9 @@ const std::vector<std::pair<int32_t, int32_t> > D2_OMEGA({{269, 32}});
 
 // D2 NAV, SUBFRAME 1, PAGE 10
 const std::vector<std::pair<int32_t, int32_t> > D2_IDOT({{52, 1}, {61, 13}});
+
+// D2 NAV, SUBFRAME 5
+const std::vector<std::pair<int32_t, int32_t> > D2_PNUM5({{44, 7}});
 
 
 /** \} */

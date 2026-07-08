@@ -1874,8 +1874,9 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                         TOW /= 1000;
                                                         double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
                                                         ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
-                                                        std::cout<<"[[[[ found valid almanac for C"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
-                                                        corrected_center+=predicted;
+                                                        std::cout<<"[[[[ found valid almanac for C"<<sat.get_PRN()<<" predicted="<<(predicted+corrected_center)<<"\n";
+                                                        if(std::isfinite(predicted))
+                                                            corrected_center+=predicted;
                                                     }else{
                                                         //std::cout<<"]]]] no valid almanac for C"<<sat.get_PRN()<<"\n";
                                                     }

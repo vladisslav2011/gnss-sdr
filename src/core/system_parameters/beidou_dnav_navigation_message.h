@@ -63,6 +63,11 @@ public:
     Beidou_Dnav_Iono get_iono();
 
     /*!
+     * \brief Obtain a BDS Almanac class filled with current SV data
+     */
+    Beidou_Dnav_Almanac get_almanac() const;
+
+    /*!
      * \brief Obtain a BDS UTC model parameters class filled with current SV data
      */
     Beidou_Dnav_Utc_Model get_utc_model();
@@ -259,6 +264,9 @@ private:
     double d_A1GLO{};
     double d_A0GLO{};
 
+    uint8_t i_AM_EP_ID{};
+    uint8_t i_AM_ID{};
+    uint32_t i_PRN_ALMANAC{};
     double d_SQRT_A_ALMANAC{};
     double d_A1_ALMANAC{};
     double d_A0_ALMANAC{};
@@ -276,6 +284,7 @@ private:
     bool flag_eph_valid{};
     bool flag_utc_model_valid{};
     bool flag_iono_valid{};
+    bool flag_almanac_valid{};
     bool flag_d1_sf1{};
     bool flag_d1_sf2{};
     bool flag_d1_sf3{};

@@ -333,6 +333,8 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
             break;
 
         case 4:  // --- It is subframe 4 ---
+            i_PRN_ALMANAC = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_PNUM));
+
             d_SOW_SF4 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
             d_SOW = d_SOW_SF4;  // Set transmission time
 
@@ -366,21 +368,26 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
             d_M0_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_M0_ALMANAC));
             d_M0_ALMANAC = d_M0_ALMANAC * D1_M0_ALMANAC_LSB;
 
+            i_AM_EP_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_AM_EP_ID));
+
             // Set system flags for message reception
             flag_d1_sf4 = true;
+            flag_almanac_valid = true;
             flag_new_SOW_available = true;
 
             break;
 
         case 5:  // --- It is subframe 5 ---
             int32_t SV_page_5;
+            bool extended;
             d_SOW_SF5 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
             d_SOW = d_SOW_SF5;  // Set transmission time
             SV_page_5 = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_PNUM));
+            extended = (SV_page_5 > 10) && (SV_page_5 < 24) && (i_AM_EP_ID == 3);
 
             std::cout << " page " << SV_page_5;
 
-            if (SV_page_5 < 7)
+            if ((SV_page_5 < 7) || extended)
                 {
                     d_SQRT_A_ALMANAC = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SQRT_A_ALMANAC));
                     d_SQRT_A_ALMANAC = d_SQRT_A_ALMANAC * D1_SQRT_A_ALMANAC_LSB;
@@ -411,6 +418,19 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
 
                     d_M0_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_M0_ALMANAC));
                     d_M0_ALMANAC = d_M0_ALMANAC * D1_M0_ALMANAC_LSB;
+
+                    i_AM_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_AM_ID));
+                    if (extended)
+                        {
+                            i_PRN_ALMANAC = SV_page_5 + 8 + 12 * i_AM_ID;
+                            i_AM_EP_ID = 0;
+                            flag_almanac_valid = (i_PRN_ALMANAC > 30) && (i_PRN_ALMANAC < 64);
+                        }
+                    else
+                        {
+                            i_PRN_ALMANAC = SV_page_5 + 24;
+                            flag_almanac_valid = true;
+                        }
                 }
 
             if (SV_page_5 == 7)
@@ -475,6 +495,27 @@ int32_t Beidou_Dnav_Navigation_Message::d1_subframe_decoder(std::string const& s
 
                     flag_d1_sf5_p10 = true;
                 }
+            if ((SV_page_5 == 24) && (i_AM_EP_ID == 3))
+                {
+                    i_AM_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_5_24_AM_ID));
+                    int offset = 18 + i_AM_ID * 12;
+                    if ((offset > 30) && (offset < 64))
+                        {
+                            almanacHealth[1 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA1));
+                            almanacHealth[2 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA2));
+                            almanacHealth[3 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA3));
+                            almanacHealth[4 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA4));
+                            almanacHealth[5 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA5));
+                            almanacHealth[6 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA6));
+                            almanacHealth[7 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA7));
+                            almanacHealth[8 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA8));
+                            almanacHealth[9 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA9));
+                            almanacHealth[10 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA10));
+                            almanacHealth[11 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA11));
+                            almanacHealth[12 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA12));
+                            almanacHealth[13 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA13));
+                        }
+                }
 
             // Set system flags for message reception
             flag_d1_sf5 = true;
@@ -500,24 +541,25 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
     const std::bitset<BEIDOU_DNAV_SUBFRAME_DATA_BITS> subframe_bits(subframe);
 
     const auto subframe_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, D2_FRAID));
-    const auto page_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, D2_PNUM));
+    const auto page_ID_1 = static_cast<int>(read_navigation_unsigned(subframe_bits, D2_PNUM));
+    const auto page_ID_5 = static_cast<int>(read_navigation_unsigned(subframe_bits, D2_PNUM5));
     const auto sow = static_cast<double>(read_navigation_unsigned(subframe_bits, D2_SOW));
+    const auto page_ID = (subframe_ID == 1) ? page_ID_1 : ((subframe_ID == 5) ? page_ID_5 : 0);
 
     // D2 ephemeris pages must be collected as one contiguous page 1-10 cycle.
-    if (subframe_ID == 1 && d2_ephemeris_page_is_expected(page_ID, sow) == false)
+    if (subframe_ID == 1 && d2_ephemeris_page_is_expected(page_ID_1, sow) == false)
         {
             flag_crc_test = false;
             return 0;
         }
 
-    std::cout << "++++++++++++++++++++++++++++++New BDS " << i_satellite_PRN << " D2 subframe " << subframe_ID << "\n";
     // Decode all 5 sub-frames
     switch (subframe_ID)
         {
         // -- Decode the sub-frame id ------------------------------------------
         case 1:
 
-            switch (page_ID)
+            switch (page_ID_1)
                 {
                 case 1:
                     d_SOW = sow;
@@ -679,7 +721,154 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
             break;
 
         case 5:  // -- It is subframe 5 -----------------almanac health (PRN: 1-24) and Almanac reference week number and time.
+            bool extended;
+            d_SOW = sow;
+            if (page_ID_5 == 35)
+                {
+                    almanacHealth[1] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA1));
+                    almanacHealth[2] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA2));
+                    almanacHealth[3] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA3));
+                    almanacHealth[4] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA4));
+                    almanacHealth[5] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA5));
+                    almanacHealth[6] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA6));
+                    almanacHealth[7] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA7));
+                    almanacHealth[8] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA8));
+                    almanacHealth[9] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA9));
+                    almanacHealth[10] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA10));
+                    almanacHealth[11] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA11));
+                    almanacHealth[12] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA12));
+                    almanacHealth[13] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA13));
+                    almanacHealth[14] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA14));
+                    almanacHealth[15] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA15));
+                    almanacHealth[16] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA16));
+                    almanacHealth[17] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA17));
+                    almanacHealth[18] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA18));
+                    almanacHealth[19] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA19));
+                }
+            if (page_ID_5 == 36)
+                {
+                    almanacHealth[20] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA20));
+                    almanacHealth[21] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA21));
+                    almanacHealth[22] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA22));
+                    almanacHealth[23] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA23));
+                    almanacHealth[24] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA24));
+                    almanacHealth[25] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA25));
+                    almanacHealth[26] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA26));
+                    almanacHealth[27] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA27));
+                    almanacHealth[28] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA28));
+                    almanacHealth[29] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA29));
+                    almanacHealth[30] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA30));
+                    almanac_WN = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_WNA));
+                    d_toa2 = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_TOA2));
+                }
+            if ((page_ID_5 >= 37) && (page_ID_5 <= 60))
+                {
+                    i_PRN_ALMANAC = page_ID_5 - 36;
 
+                    d_SOW_SF4 = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SOW));
+                    d_SOW = d_SOW_SF4;  // Set transmission time
+
+                    d_SQRT_A_ALMANAC = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SQRT_A_ALMANAC));
+                    d_SQRT_A_ALMANAC = d_SQRT_A_ALMANAC * D1_SQRT_A_ALMANAC_LSB;
+
+                    d_A1_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_A1_ALMANAC));
+                    d_A1_ALMANAC = d_A1_ALMANAC * D1_A1_ALMANAC_LSB;
+
+                    d_A0_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_A0_ALMANAC));
+                    d_A0_ALMANAC = d_A0_ALMANAC * D1_A0_ALMANAC_LSB;
+
+                    d_OMEGA0_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_OMEGA0_ALMANAC));
+                    d_OMEGA0_ALMANAC = d_OMEGA0_ALMANAC * D1_OMEGA0_ALMANAC_LSB;
+
+                    d_E_ALMANAC = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_E_ALMANAC));
+                    d_E_ALMANAC = d_E_ALMANAC * D1_E_ALMANAC_LSB;
+
+                    d_DELTA_I = static_cast<double>(read_navigation_signed(subframe_bits, D1_DELTA_I));
+                    d_DELTA_I = d_DELTA_I * D1_DELTA_I_LSB;
+
+                    d_TOA = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_TOA));
+                    d_TOA = d_TOA * D1_TOA_LSB;
+
+                    d_OMEGA_DOT_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_OMEGA_DOT_ALMANAC));
+                    d_OMEGA_DOT_ALMANAC = d_OMEGA_DOT_ALMANAC * D1_OMEGA_DOT_ALMANAC_LSB;
+
+                    d_OMEGA_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_OMEGA_ALMANAC));
+                    d_OMEGA_ALMANAC = d_OMEGA_ALMANAC * D1_OMEGA_ALMANAC_LSB;
+
+                    d_M0_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_M0_ALMANAC));
+                    d_M0_ALMANAC = d_M0_ALMANAC * D1_M0_ALMANAC_LSB;
+
+                    i_AM_EP_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_AM_EP_ID));
+
+                    // Set system flags for message reception
+                    flag_almanac_valid = true;
+                }
+            extended = (page_ID_5 >= 103) && (page_ID_5 < 115) && (i_AM_EP_ID == 3);
+            if (((page_ID_5 >= 95) && (page_ID_5 <= 100)) || extended)
+                {
+                    d_SQRT_A_ALMANAC = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_SQRT_A_ALMANAC));
+                    d_SQRT_A_ALMANAC = d_SQRT_A_ALMANAC * D1_SQRT_A_ALMANAC_LSB;
+
+                    d_A1_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_A1_ALMANAC));
+                    d_A1_ALMANAC = d_A1_ALMANAC * D1_A1_ALMANAC_LSB;
+
+                    d_A0_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_A0_ALMANAC));
+                    d_A0_ALMANAC = d_A0_ALMANAC * D1_A0_ALMANAC_LSB;
+
+                    d_OMEGA0_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_OMEGA0_ALMANAC));
+                    d_OMEGA0_ALMANAC = d_OMEGA0_ALMANAC * D1_OMEGA0_ALMANAC_LSB;
+
+                    d_E_ALMANAC = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_E_ALMANAC));
+                    d_E_ALMANAC = d_E_ALMANAC * D1_E_ALMANAC_LSB;
+
+                    d_DELTA_I = static_cast<double>(read_navigation_signed(subframe_bits, D1_DELTA_I));
+                    d_DELTA_I = d_DELTA_I * D1_DELTA_I_LSB;
+
+                    d_TOA = static_cast<double>(read_navigation_unsigned(subframe_bits, D1_TOA));
+                    d_TOA = d_TOA * D1_TOA_LSB;
+
+                    d_OMEGA_DOT_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_OMEGA_DOT_ALMANAC));
+                    d_OMEGA_DOT_ALMANAC = d_OMEGA_DOT_ALMANAC * D1_OMEGA_DOT_ALMANAC_LSB;
+
+                    d_OMEGA_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_OMEGA_ALMANAC));
+                    d_OMEGA_ALMANAC = d_OMEGA_ALMANAC * D1_OMEGA_ALMANAC_LSB;
+
+                    d_M0_ALMANAC = static_cast<double>(read_navigation_signed(subframe_bits, D1_M0_ALMANAC));
+                    d_M0_ALMANAC = d_M0_ALMANAC * D1_M0_ALMANAC_LSB;
+
+                    i_AM_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_AM_ID));
+                    if (extended)
+                        {
+                            i_PRN_ALMANAC = page_ID_5 - 84 + 12 * i_AM_ID;
+                            flag_almanac_valid = (i_PRN_ALMANAC > 30) && (i_PRN_ALMANAC < 64);
+                        }
+                    else
+                        {
+                            i_PRN_ALMANAC = page_ID_5 - 70;
+                            flag_almanac_valid = true;
+                        }
+                  }
+            if ((page_ID_5 == 116) && (i_AM_EP_ID == 3))
+                {
+                    i_AM_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_5_24_AM_ID));
+                    int offset = 18 + i_AM_ID * 12;
+                    if ((offset > 30) && (offset < 64))
+                        {
+                            almanacHealth[1 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA1));
+                            almanacHealth[2 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA2));
+                            almanacHealth[3 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA3));
+                            almanacHealth[4 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA4));
+                            almanacHealth[5 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA5));
+                            almanacHealth[6 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA6));
+                            almanacHealth[7 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA7));
+                            almanacHealth[8 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA8));
+                            almanacHealth[9 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA9));
+                            almanacHealth[10 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA10));
+                            almanacHealth[11 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA11));
+                            almanacHealth[12 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA12));
+                            almanacHealth[13 + offset] = static_cast<int>(read_navigation_unsigned(subframe_bits, D1_HEA13));
+                        }
+                }
             break;
 
         default:
@@ -853,6 +1042,35 @@ Beidou_Dnav_Iono Beidou_Dnav_Navigation_Message::get_iono()
 }
 
 
+Beidou_Dnav_Almanac Beidou_Dnav_Navigation_Message::get_almanac() const
+{
+    Beidou_Dnav_Almanac alm;
+
+    alm.PRN = i_PRN_ALMANAC;
+    alm.delta_i = d_DELTA_I;
+    alm.toa = d_TOA;
+    alm.WNa = almanac_WN;
+    alm.M_0 = d_M0_ALMANAC;
+    alm.ecc = d_E_ALMANAC;
+    alm.sqrtA = d_SQRT_A_ALMANAC;
+    alm.OMEGA_0 = d_OMEGA0_ALMANAC;
+    alm.omega = d_OMEGA_ALMANAC;
+    alm.OMEGAdot = d_OMEGA_DOT_ALMANAC;
+    alm.af0 = d_A0_ALMANAC;
+    alm.af1 = d_A1_ALMANAC;
+    auto health_it = almanacHealth.find(i_PRN_ALMANAC);
+    if (health_it != almanacHealth.end())
+        {
+            alm.SV_health = health_it->second;
+        }
+    else
+        {
+            alm.SV_health = 0;
+        }
+
+    return alm;
+}
+
 Beidou_Dnav_Utc_Model Beidou_Dnav_Navigation_Message::get_utc_model()
 {
     Beidou_Dnav_Utc_Model utc_model;
@@ -955,11 +1173,12 @@ bool Beidou_Dnav_Navigation_Message::have_new_utc_model()
 
 bool Beidou_Dnav_Navigation_Message::have_new_almanac()
 {
-    if ((flag_d1_sf4 == true) && (flag_d1_sf5 == true))
+    if (flag_almanac_valid == true)
         {
             // All Almanac data have been received
             flag_d1_sf4 = false;
             flag_d1_sf5 = false;
+            flag_almanac_valid = false;
 
             return true;
         }
