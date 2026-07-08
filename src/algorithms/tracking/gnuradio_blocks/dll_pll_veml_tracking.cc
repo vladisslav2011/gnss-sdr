@@ -1223,7 +1223,7 @@ bool dll_pll_veml_tracking::acquire_secondary()
         {
             const float ratio = std::clamp(d_trk_parameters.b1c_secondary_lock_ratio, 0.5F, 1.0F);
             lock_threshold = std::max(1, static_cast<int32_t>(std::lround(
-                                           ratio * static_cast<float>(d_secondary_code_length))));
+                                             ratio * static_cast<float>(d_secondary_code_length))));
         }
 
     if (abs(corr_value) >= lock_threshold)

@@ -180,8 +180,8 @@ void deinterleave_sf2_sf3(const float* interleaved, float* sf2, float* sf3)
             const int32_t col = in_idx / BEIDOU_CNAV1_INTERLEAVE_ROWS;
             if (row < 33)
                 {
-                    const int32_t group = row / 3;      // 0..10
-                    const int32_t rem = row % 3;        // 0,1 => SF2 rows ; 2 => SF3 row
+                    const int32_t group = row / 3;  // 0..10
+                    const int32_t rem = row % 3;    // 0,1 => SF2 rows ; 2 => SF3 row
                     if (rem < 2)
                         {
                             const int32_t sf2_row = group * 2 + rem;  // 0..21
@@ -219,27 +219,27 @@ int64_t read_signed(const uint8_t* bits, int32_t offset, int32_t length)
 uint32_t crc24q(const uint8_t* bits, int32_t num_bits)
 {
     // 寄存器初始值设为全 0
-    uint32_t crc = 0; 
-    
+    uint32_t crc = 0;
+
     // 生成多项式去除了最高位 x^24 后的低 24 位掩码 (0x1864CFB & 0xFFFFFF)
-    const uint32_t POLY = 0x864CFBU; 
+    const uint32_t POLY = 0x864CFBU;
 
     for (int32_t i = 0; i < num_bits; i++)
-    {
-        // 提取当前最高位（第24位，索引为23）
-        uint32_t msb = (crc >> 23) & 1U; 
-        uint32_t bit = (bits[i] != 0U) ? 1U : 0U;
-        
-        // 寄存器左移，保持 24 位位宽
-        crc = (crc << 1) & 0xFFFFFFU; 
-        
-        // MSB 反馈与输入信息比特异或，决定是否执行多项式除法（异或生成多项式）
-        if (msb ^ bit)
         {
-            crc ^= POLY; 
+            // 提取当前最高位（第24位，索引为23）
+            uint32_t msb = (crc >> 23) & 1U;
+            uint32_t bit = (bits[i] != 0U) ? 1U : 0U;
+
+            // 寄存器左移，保持 24 位位宽
+            crc = (crc << 1) & 0xFFFFFFU;
+
+            // MSB 反馈与输入信息比特异或，决定是否执行多项式除法（异或生成多项式）
+            if (msb ^ bit)
+                {
+                    crc ^= POLY;
+                }
         }
-    }
-    
+
     // 依次输出构成 CRC 校验序列
     return crc;
 }

@@ -7,9 +7,9 @@
 #include "Beidou_CNAV1.h"
 #include "beidou_cnav1_navigation_message.h"
 #include "rtklib_conversions.h"
+#include <gtest/gtest.h>
 #include <array>
 #include <cmath>
-#include <gtest/gtest.h>
 
 namespace
 {

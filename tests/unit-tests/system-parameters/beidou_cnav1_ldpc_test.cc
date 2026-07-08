@@ -6,9 +6,9 @@
 
 #include "Beidou_CNAV1.h"
 #include "beidou_cnav1_ldpc.h"
+#include <gtest/gtest.h>
 #include <array>
 #include <cstring>
-#include <gtest/gtest.h>
 
 namespace
 {

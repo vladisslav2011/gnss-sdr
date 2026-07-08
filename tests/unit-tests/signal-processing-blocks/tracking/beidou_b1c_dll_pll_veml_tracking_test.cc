@@ -4,10 +4,10 @@
  */
 
 #include "beidou_b1c_dll_pll_veml_tracking.h"
-#include "tracking_interface.h"
 #include "gnss_block_factory.h"
 #include "gnss_block_interface.h"
 #include "in_memory_configuration.h"
+#include "tracking_interface.h"
 #include <gtest/gtest.h>
 #include <memory>
 

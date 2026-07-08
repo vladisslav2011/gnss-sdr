@@ -14,8 +14,8 @@
  * -----------------------------------------------------------------------------
  */
 
-#include "beidou_b1c_pcps_ambiguous_acquisition.h"
 #include "acquisition_interface.h"
+#include "beidou_b1c_pcps_ambiguous_acquisition.h"
 #include "gnss_block_factory.h"
 #include "gnss_block_interface.h"
 #include "in_memory_configuration.h"

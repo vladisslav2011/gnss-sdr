@@ -16,10 +16,10 @@
 
 #include "Beidou_B1C.h"
 #include "beidou_b1c_signal_replica.h"
+#include <gtest/gtest.h>
 #include <array>
 #include <cmath>
 #include <complex>
-#include <gtest/gtest.h>
 #include <vector>
 
 TEST(BeidouB1cSignalReplicaTest, SampledCodeLength)

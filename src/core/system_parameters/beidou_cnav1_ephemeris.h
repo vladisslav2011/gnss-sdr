@@ -19,11 +19,11 @@ class Beidou_Cnav1_Ephemeris : public Gnss_Ephemeris
 public:
     Beidou_Cnav1_Ephemeris() = default;
 
-    double TGD_B1Cp{};  //!< §7.6 B1C pilot group delay
-    double TGD_B2ap{};  //!< §7.6 B2a pilot group delay
-    double ISC_B1Cd{};  //!< §7.6 B1C data-to-pilot intra-frequency delay correction
-    double IODC{};      //!< §7.4.2
-    double IODE{};      //!< §7.4.1
+    double TGD_B1Cp{};    //!< §7.6 B1C pilot group delay
+    double TGD_B2ap{};    //!< §7.6 B2a pilot group delay
+    double ISC_B1Cd{};    //!< §7.6 B1C data-to-pilot intra-frequency delay correction
+    double IODC{};        //!< §7.4.2
+    double IODE{};        //!< §7.4.1
     int32_t sig_type{7};  //!< B1C data component identifier for PVT
     int32_t nav_type{1};  //!< 0: GEO, 1: MEO/IGSO
 
