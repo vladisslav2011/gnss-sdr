@@ -256,7 +256,7 @@ bool decode_frame_from_buffer_with_offset(
     const double rms = std::sqrt(rms_acc / static_cast<double>(n)) + 1e-6;
     const double cn0_linear = std::pow(10.0, static_cast<double>(cn0_db_hz) / 10.0);
     const double snr_sym = std::max(cn0_linear * (BEIDOU_B1C_CODE_PERIOD_MS * 1e-3), 1e-4);
-    const double llr_scale = std::clamp(std::sqrt(snr_sym) / rms, 0.05, 50.0);
+    const double llr_scale = std::min(std::max(std::sqrt(snr_sym) / rms, 0.05), 50.0);
     for (auto& v : frame)
         {
             v = static_cast<float>(static_cast<double>(v) * llr_scale);
@@ -439,7 +439,7 @@ bool decode_frame_from_iq_buffers_with_offset(
     const double rms = std::sqrt(rms_acc / static_cast<double>(BEIDOU_CNAV1_FRAME_SYMBOLS)) + 1e-6;
     const double cn0_linear = std::pow(10.0, static_cast<double>(cn0_db_hz) / 10.0);
     const double snr_sym = std::max(cn0_linear * (BEIDOU_B1C_CODE_PERIOD_MS * 1e-3), 1e-4);
-    const double llr_scale = std::clamp(std::sqrt(snr_sym) / rms, 0.05, 50.0);
+    const double llr_scale = std::min(std::max(std::sqrt(snr_sym) / rms, 0.05), 50.0);
     for (auto& v : frame)
         {
             v = static_cast<float>(static_cast<double>(v) * llr_scale);

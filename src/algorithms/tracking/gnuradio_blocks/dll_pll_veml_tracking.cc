@@ -1221,7 +1221,7 @@ bool dll_pll_veml_tracking::acquire_secondary()
     auto lock_threshold = static_cast<int32_t>(d_secondary_code_length);
     if (d_systemName == "Beidou" && d_signal_type == "1D")
         {
-            const float ratio = std::clamp(d_trk_parameters.b1c_secondary_lock_ratio, 0.5F, 1.0F);
+            const float ratio = std::min(std::max(d_trk_parameters.b1c_secondary_lock_ratio, 0.5F), 1.0F);
             lock_threshold = std::max(1, static_cast<int32_t>(std::lround(
                                              ratio * static_cast<float>(d_secondary_code_length))));
         }
