@@ -242,6 +242,7 @@ void Gnss_Almanac::satellitePosVelComputation(double transmitTime, std::array<do
     const double rkdot = a * this->ecc * sek * ekdot;
 
     // Correct inclination
+    bool skip_izero = (this->System == 'J') || ((this->System == 'C') && ((PRN > 0 && PRN < 6) || (PRN > 58)));
     double i;
     if (this->System == 'E')
         {
@@ -249,7 +250,7 @@ void Gnss_Almanac::satellitePosVelComputation(double transmitTime, std::array<do
         }
     else
         {
-            i = ((this->System == 'J') ? this->delta_i : (0.3 + this->delta_i)) * GNSS_PI;
+            i = (skip_izero ? this->delta_i : (0.3 + this->delta_i)) * GNSS_PI;
         }
 
     const double sik = sin(i);
