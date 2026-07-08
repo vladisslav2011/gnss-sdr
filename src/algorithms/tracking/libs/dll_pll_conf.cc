@@ -155,4 +155,11 @@ void Dll_Pll_Conf::SetFromConfiguration(const ConfigurationInterface *configurat
     bs_stable_best_required = configuration->property(role + ".bs_stable_best_required", bs_stable_best_required);
     bs_min_events_for_lock = configuration->property(role + ".bs_min_events_for_lock", bs_min_events_for_lock);
     bs_use_phase_dot_detector = configuration->property(role + ".bs_use_phase_dot_detector", bs_use_phase_dot_detector);
+
+    b1c_qmboc_tracking = configuration->property(role + ".b1c_qmboc_tracking", b1c_qmboc_tracking);
+    b1c_prompt_use_data_q = configuration->property(role + ".b1c_prompt_use_data_q", b1c_prompt_use_data_q);
+    b1c_prompt_normalize_power = configuration->property(role + ".b1c_prompt_normalize_power", b1c_prompt_normalize_power);
+    b1c_data_prompt_scale = configuration->property(role + ".b1c_data_prompt_scale", b1c_data_prompt_scale);
+    b1c_pilot_prompt_scale = configuration->property(role + ".b1c_pilot_prompt_scale", b1c_pilot_prompt_scale);
+    b1c_secondary_lock_ratio = configuration->property(role + ".b1c_secondary_lock_ratio", b1c_secondary_lock_ratio);
 }

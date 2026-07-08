@@ -235,6 +235,10 @@ private:
     const size_t d_beidou_dnav_iono_sptr_type_hash_code;
     const size_t d_beidou_dnav_utc_model_sptr_type_hash_code;
     const size_t d_beidou_dnav_almanac_sptr_type_hash_code;
+    const size_t d_beidou_cnav1_ephemeris_sptr_type_hash_code;
+    const size_t d_beidou_cnav1_iono_sptr_type_hash_code;
+    const size_t d_beidou_cnav1_utc_model_sptr_type_hash_code;
+    const size_t d_beidou_cnav1_page_data_sptr_type_hash_code;
     const size_t d_galileo_has_data_sptr_type_hash_code;
 
     const double d_rinex_version;
