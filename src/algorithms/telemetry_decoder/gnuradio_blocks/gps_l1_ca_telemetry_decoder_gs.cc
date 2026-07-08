@@ -349,22 +349,8 @@ bool gps_l1_ca_telemetry_decoder_gs::decode_subframe(double cn0, bool flag_inver
                         }
                     switch (subframe_ID)
                         {
-                        case 1:
-                            if (d_nav->satellite_validation() == true)
-                                {
-                                    // get ephemeris object for this SV (mandatory)
-                                    const std::shared_ptr<Gps_Ephemeris> tmp_obj = std::make_shared<Gps_Ephemeris>(d_nav->get_ephemeris());
-                                    this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
-                                }
-                            break;
-                        case 2:
-                            if (d_nav->satellite_validation() == true)
-                                {
-                                    // get ephemeris object for this SV (mandatory)
-                                    const std::shared_ptr<Gps_Ephemeris> tmp_obj = std::make_shared<Gps_Ephemeris>(d_nav->get_ephemeris());
-                                    this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
-                                }
-                            break;
+                        case 1: /* fallthrough */
+                        case 2: /* fallthrough */
                         case 3:  // we have a new set of ephemeris data for the current SV
                             if (d_nav->satellite_validation() == true)
                                 {
