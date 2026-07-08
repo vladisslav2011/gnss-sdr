@@ -93,6 +93,7 @@ beidou_dnav_telemetry_decoder_gs::beidou_dnav_telemetry_decoder_gs(const Tlm_Con
       d_tow_to_trk(conf.tow_to_trk)
 {
     configure_basic_outputs();
+    prev.resize(63);
 
     if (d_enable_navdata_monitor)
         {
@@ -293,7 +294,6 @@ void beidou_dnav_telemetry_decoder_gs::decode_subframe(float *frame_symbols, dou
         {
             // get object for this SV (mandatory)
             const std::shared_ptr<Beidou_Dnav_Ephemeris> tmp_obj = std::make_shared<Beidou_Dnav_Ephemeris>(d_nav.get_ephemeris());
-            static Gnss_Ephemeris::history_set prev(63);
             if (tmp_obj->PRN == d_satellite.get_PRN())
                 {
                     if (Gnss_Ephemeris::validate(prev, tmp_obj, EPH_PUB_THR))
