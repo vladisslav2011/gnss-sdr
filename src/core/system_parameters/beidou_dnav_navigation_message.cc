@@ -668,7 +668,6 @@ int32_t Beidou_Dnav_Navigation_Message::d2_subframe_decoder(std::string const& s
             return 0;
         }
 
-    std::cout << "++++++++++++++++++++++++++++++New BDS " << i_satellite_PRN << " D2 subframe " << subframe_ID << "\n";
     // Decode all 5 sub-frames
     switch (subframe_ID)
         {

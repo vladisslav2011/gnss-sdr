@@ -346,7 +346,7 @@ void beidou_dnav_telemetry_decoder_gs::decode_subframe(float *frame_symbols, dou
             std::cout << text_color << "New BEIDOU B" << d_band << "I DNAV almanac received in channel " << d_channel
                       << " from satellite " << d_satellite
                       << " with CN0=" << std::setprecision(2) << cn0 << std::setprecision(default_precision)
-                      << " dB-Hz" << text_reset << std::endl;
+                      << " dB-Hz for " << tmp_obj->PRN << text_reset << std::endl;
         }
 }
 
