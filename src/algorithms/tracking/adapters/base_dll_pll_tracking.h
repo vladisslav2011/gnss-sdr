@@ -55,53 +55,53 @@ public:
     /*!
      * \brief Get role from the Tracking block adapter
      */
-    inline std::string role() override final { return role_; }
+    inline std::string role() final { return role_; }
 
     /*!
      * \brief Get item_size from the Tracking block adapter
      */
-    inline size_t item_size() override final { return item_size_; }
+    inline size_t item_size() final { return item_size_; }
 
     /*!
      * \brief Connect the Tracking block adapter
      */
-    void connect(gr::top_block_sptr top_block) override final;
+    void connect(gr::top_block_sptr top_block) final;
 
     /*!
      * \brief Disconnect the sTracking block adapter
      */
-    void disconnect(gr::top_block_sptr top_block) override final;
+    void disconnect(gr::top_block_sptr top_block) final;
 
     /*!
      * \brief Get left block from the Tracking block adapter
      */
-    gr::basic_block_sptr get_left_block() override final;
+    gr::basic_block_sptr get_left_block() final;
 
     /*!
      * \brief Get right block from the Tracking block adapter
      */
-    gr::basic_block_sptr get_right_block() override final;
+    gr::basic_block_sptr get_right_block() final;
 
     /*!
      * \brief Set tracking channel unique ID
      */
-    void set_channel(unsigned int channel) override final;
+    void set_channel(unsigned int channel) final;
 
     /*!
      * \brief Set acquisition Gnss_Synchro object pointer
      * to exchange synchronization data between acquisition and tracking blocks
      */
-    void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro) override final;
+    void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro) final;
 
     /*!
      * \brief Start the Tracking block
      */
-    void start_tracking() override final;
+    void start_tracking() final;
 
     /*!
      * \brief Stop the Tracking block
      */
-    void stop_tracking() override final;
+    void stop_tracking() final;
 
 protected:
     // Can be used by each derived class

@@ -37,7 +37,7 @@ std::vector<int8_t> encode_bch_hypothesis_bipolar(
 
     for (int32_t i = 0; i < k; i++)
         {
-            const int32_t bit = static_cast<int32_t>((msg_bits >> static_cast<uint32_t>(k - 1 - i)) & 1U);
+            const auto bit = static_cast<int32_t>((msg_bits >> static_cast<uint32_t>(k - 1 - i)) & 1U);
             register_state[static_cast<size_t>(k - 1 - i)] = (bit == 0) ? 1 : -1;
         }
 
@@ -247,7 +247,7 @@ uint32_t crc24q(const uint8_t* bits, int32_t num_bits)
 bool verify_crc24q(const uint8_t* bits, int32_t data_bits)
 {
     const uint32_t computed = crc24q(bits, data_bits);
-    const uint32_t received = static_cast<uint32_t>(read_unsigned(bits, data_bits, BEIDOU_CNAV1_CRC_BITS));
+    const auto received = static_cast<uint32_t>(read_unsigned(bits, data_bits, BEIDOU_CNAV1_CRC_BITS));
     return computed == received;
 }
 
@@ -609,7 +609,7 @@ bool Beidou_Cnav1_Navigation_Message::decode_frame(
         }
 
     const uint32_t soh = bits_to_unsigned(soh_bits, 8);
-    const double soh_seconds = static_cast<double>(soh * BEIDOU_CNAV1_SOH_LSB_S);
+    const auto soh_seconds = static_cast<double>(soh * BEIDOU_CNAV1_SOH_LSB_S);
     ephemeris_.PRN = static_cast<int32_t>(prn);
 
     std::array<float, BEIDOU_CNAV1_SUBFRAME2_SYMBOLS> sf2_llr{};

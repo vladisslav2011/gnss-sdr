@@ -68,7 +68,7 @@ void BeidouB1cDllPllVemlTracking::configure_tracking_parameters(
     if (config_params().track_pilot)
         {
             config_params().extend_correlation_symbols = 1;
-            const uint32_t min_bit_sync_limit_s = static_cast<uint32_t>(
+            const auto min_bit_sync_limit_s = static_cast<uint32_t>(
                 BEIDOU_B1C_FRAME_PERIOD_S + 30);
             if (config_params().bit_synchronization_time_limit_s < min_bit_sync_limit_s)
                 {

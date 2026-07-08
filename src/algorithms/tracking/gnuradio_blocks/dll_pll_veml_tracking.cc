@@ -975,7 +975,7 @@ void dll_pll_veml_tracking::start_tracking()
     else if (d_systemName == "Beidou" && d_signal_type == "1D")
         {
             const int32_t prn_index = static_cast<int32_t>(d_acquisition_gnss_synchro->PRN) - 1;
-            const int32_t b1c_replica_fs = static_cast<int32_t>(d_code_samples_per_chip * BEIDOU_B1C_CODE_RATE_CPS);
+            const auto b1c_replica_fs = static_cast<int32_t>(d_code_samples_per_chip * BEIDOU_B1C_CODE_RATE_CPS);
             if (d_trk_parameters.track_pilot)
                 {
                     const std::array<char, 3> pilot_signal = {{'1', 'P', '\0'}};
@@ -1218,7 +1218,7 @@ bool dll_pll_veml_tracking::acquire_secondary()
                 }
         }
 
-    int32_t lock_threshold = static_cast<int32_t>(d_secondary_code_length);
+    auto lock_threshold = static_cast<int32_t>(d_secondary_code_length);
     if (d_systemName == "Beidou" && d_signal_type == "1D")
         {
             const float ratio = std::clamp(d_trk_parameters.b1c_secondary_lock_ratio, 0.5F, 1.0F);

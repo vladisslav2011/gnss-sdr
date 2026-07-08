@@ -34,7 +34,7 @@ public:
         unsigned int in_streams,
         unsigned int out_streams);
 
-    ~BeidouB1cPcpsAmbiguousAcquisition() = default;
+    ~BeidouB1cPcpsAmbiguousAcquisition() override = default;
 
     inline std::string implementation() override
     {

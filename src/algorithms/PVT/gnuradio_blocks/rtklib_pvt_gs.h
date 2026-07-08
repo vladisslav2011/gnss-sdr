@@ -84,7 +84,7 @@ rtklib_pvt_gs_sptr rtklib_make_pvt_gs(uint32_t nchannels,
 class rtklib_pvt_gs : public gr::sync_block
 {
 public:
-    ~rtklib_pvt_gs();  //!< Default destructor
+    ~rtklib_pvt_gs() override;  //!< Default destructor
 
     /*!
      * \brief Get latest set of GPS ephemeris from PVT block
@@ -132,7 +132,7 @@ public:
         time_t* UTC_time) const;
 
     int work(int noutput_items, gr_vector_const_void_star& input_items,
-        gr_vector_void_star& output_items);  //!< PVT Signal Processing
+        gr_vector_void_star& output_items) override;  //!< PVT Signal Processing
 
 private:
     friend rtklib_pvt_gs_sptr rtklib_make_pvt_gs(uint32_t nchannels,

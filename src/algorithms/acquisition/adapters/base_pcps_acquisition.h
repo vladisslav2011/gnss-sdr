@@ -53,7 +53,7 @@ public:
         double code_length_chips,
         uint32_t ms_per_code);
 
-    ~BasePcpsAcquisition() = default;
+    ~BasePcpsAcquisition() override = default;
 
     inline std::string role() override
     {

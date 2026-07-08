@@ -88,9 +88,7 @@ beidou_b1c_telemetry_decoder_gs::beidou_b1c_telemetry_decoder_gs(
           gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
           gr::io_signature::make(1, 1, sizeof(Gnss_Synchro))),
       d_dump_filename(conf.dump_filename),
-      d_channel(0),
-      d_stat(0),
-      d_CRC_error_counter(0),
+
       d_symbol_duration_ms(BEIDOU_B1C_CODE_PERIOD_MS),
       d_dump(conf.dump),
       d_dump_mat(conf.dump_mat),
@@ -381,7 +379,7 @@ bool build_rotated_bpsk_frame_from_iq(
     std::complex<float> sum_z2(0.0F, 0.0F);
     for (int32_t i = 0; i < n; i++)
         {
-            const size_t idx = static_cast<size_t>((start_offset + i) % n);
+            const auto idx = static_cast<size_t>((start_offset + i) % n);
             const std::complex<float> zi(history_i[idx], history_q[idx]);
             z[static_cast<size_t>(i)] = zi;
             sum_z2 += zi * zi;
@@ -561,7 +559,7 @@ int beidou_b1c_telemetry_decoder_gs::general_work(
                                 find_secondary_code_candidates(d_symbol_history_q, expected_prn_scan);
                             const auto& candidate_offsets = sec_candidates.second;
                             constexpr int32_t local_offset_span = 32;
-                            const float cn0_db_hz = static_cast<float>(current_symbol.CN0_dB_hz);
+                            const auto cn0_db_hz = static_cast<float>(current_symbol.CN0_dB_hz);
 
                             if (!candidate_offsets.empty())
                                 {

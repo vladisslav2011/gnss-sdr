@@ -164,10 +164,10 @@ void initialize_channel_llr(
             for (int32_t x = 0; x < Q; x++)
                 {
                     float metric = 0.0F;
-                    const uint8_t diff = static_cast<uint8_t>(x ^ hard);
+                    const auto diff = static_cast<uint8_t>(x ^ hard);
                     for (int32_t b = 0; b < BITS_PER_SYMBOL; b++)
                         {
-                            const uint8_t bit_mask = static_cast<uint8_t>(1U << (BITS_PER_SYMBOL - 1 - b));
+                            const auto bit_mask = static_cast<uint8_t>(1U << (BITS_PER_SYMBOL - 1 - b));
                             if ((diff & bit_mask) != 0U)
                                 {
                                     metric += abs_bit_llr[b];
