@@ -95,7 +95,6 @@ set(SYSTEM_PARAMETERS_HEADERS
     Beidou_B1C_codes.h
     Beidou_B1C_prn.h
     Beidou_CNAV1.h
-    Beidou_CNAV1_ldpc.h
     beidou_cnav1_ldpc.h
     beidou_cnav1_ephemeris.h
     beidou_cnav1_navigation_message.h
