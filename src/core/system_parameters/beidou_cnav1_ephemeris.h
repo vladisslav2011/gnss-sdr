@@ -22,6 +22,8 @@ public:
     double TGD_B1Cp{};    //!< §7.6 B1C pilot group delay
     double TGD_B2ap{};    //!< §7.6 B2a pilot group delay
     double ISC_B1Cd{};    //!< §7.6 B1C data-to-pilot intra-frequency delay correction
+    double Adot{};        //!< §7.7 semi-major axis rate [m/s]
+    double delta_n_dot{}; //!< §7.7 mean motion difference rate [rad/s^2]
     double IODC{};        //!< §7.4.2
     double IODE{};        //!< §7.4.1
     int32_t sig_type{7};  //!< B1C data component identifier for PVT
@@ -59,6 +61,8 @@ public:
         archive& BOOST_SERIALIZATION_NVP(TGD_B1Cp);
         archive& BOOST_SERIALIZATION_NVP(TGD_B2ap);
         archive& BOOST_SERIALIZATION_NVP(ISC_B1Cd);
+        archive& BOOST_SERIALIZATION_NVP(Adot);
+        archive& BOOST_SERIALIZATION_NVP(delta_n_dot);
         archive& BOOST_SERIALIZATION_NVP(IODC);
         archive& BOOST_SERIALIZATION_NVP(IODE);
         archive& BOOST_SERIALIZATION_NVP(sig_type);

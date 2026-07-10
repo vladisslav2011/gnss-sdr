@@ -367,7 +367,22 @@ void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts,
             omge = GNSS_OMEGA_EARTH_DOT;
             break;
         }
-    M = eph->M0 + (sqrt(mu / (eph->A * eph->A * eph->A)) + eph->deln) * tk;
+    /* BDS B-CNAV1 (ICD B1C Table 7-9): A_k = A0 + Adot*tk, n_A = n0 + deln + 0.5*ndot*tk */
+    double A = eph->A;
+    double n0 = sqrt(mu / (A * A * A));
+    double nA = n0 + eph->deln;
+    if (sys == SYS_BDS && (eph->Adot != 0.0 || eph->ndot != 0.0))
+        {
+            A = eph->A + eph->Adot * tk;
+            if (A <= 0.0)
+                {
+                    rs[0] = rs[1] = rs[2] = *dts = *var = 0.0;
+                    return;
+                }
+            n0 = sqrt(mu / (eph->A * eph->A * eph->A));
+            nA = n0 + eph->deln + 0.5 * eph->ndot * tk;
+        }
+    M = eph->M0 + nA * tk;
 
     for (n = 0, E = M, Ek = 0.0; fabs(E - Ek) > RTOL_KEPLER && n < MAX_ITER_KEPLER; n++)
         {
@@ -385,7 +400,7 @@ void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts,
     trace(4, "kepler: sat=%2d e=%8.5f n=%2d del=%10.3e\n", eph->sat, eph->e, n, E - Ek);
 
     u = atan2(sqrt(1.0 - eph->e * eph->e) * sinE, cosE - eph->e) + eph->omg;
-    r = eph->A * (1.0 - eph->e * cosE);
+    r = A * (1.0 - eph->e * cosE);
     i = eph->i0 + eph->idot * tk;
     sin2u = sin(2.0 * u);
     cos2u = cos(2.0 * u);
@@ -513,7 +528,7 @@ void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts,
         }
     else
         {
-            *dts -= 2.0 * sqrt(mu * eph->A) * eph->e * sinE / (SPEED_OF_LIGHT_M_S * SPEED_OF_LIGHT_M_S);
+            *dts -= 2.0 * sqrt(mu * A) * eph->e * sinE / (SPEED_OF_LIGHT_M_S * SPEED_OF_LIGHT_M_S);
         }
 
     /* position and clock error variance */
@@ -708,18 +723,21 @@ void seph2pos(gtime_t time, const seph_t *seph, double *rs, double *dts,
 }
 
 
-/* select ephemeris --------------------------------------------------------*/
-eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
+/* select ephemeris --------------------------------------------------------
+ * bds_eph_sel: -1=any, 0=DNAV (eph.code!=7), 7=B-CNAV1 (eph.code==7)
+ *-----------------------------------------------------------------------------*/
+eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav, int bds_eph_sel)
 {
     double t;
     double tmax;
     double tmin;
     int i;
     int j = -1;
+    const int sys = satsys(sat, nullptr);
 
-    trace(4, "seleph  : time=%s sat=%2d iode=%d\n", time_str(time, 3), sat, iode);
+    trace(4, "seleph  : time=%s sat=%2d iode=%d bds_sel=%d\n", time_str(time, 3), sat, iode, bds_eph_sel);
 
-    switch (satsys(sat, nullptr))
+    switch (sys)
         {
         case SYS_QZS:
             tmax = MAXDTOE_QZS + 1.0;
@@ -739,6 +757,14 @@ eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
     for (i = 0; i < nav->n; i++)
         {
             if (nav->eph[i].sat != sat)
+                {
+                    continue;
+                }
+            if (sys == SYS_BDS && bds_eph_sel == 7 && nav->eph[i].code != 7)
+                {
+                    continue;
+                }
+            if (sys == SYS_BDS && bds_eph_sel == 0 && nav->eph[i].code == 7)
                 {
                     continue;
                 }
@@ -853,20 +879,20 @@ seph_t *selseph(gtime_t time, int sat, const nav_t *nav)
 
 /* satellite clock with broadcast ephemeris ----------------------------------*/
 int ephclk(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
-    double *dts)
+    double *dts, int bds_eph_sel)
 {
     eph_t *eph;
     geph_t *geph;
     seph_t *seph;
     int sys;
 
-    trace(4, "ephclk  : time=%s sat=%2d\n", time_str(time, 3), sat);
+    trace(4, "ephclk  : time=%s sat=%2d bds_sel=%d\n", time_str(time, 3), sat, bds_eph_sel);
 
     sys = satsys(sat, nullptr);
 
     if (sys == SYS_GPS || sys == SYS_GAL || sys == SYS_QZS || sys == SYS_BDS)
         {
-            if (!(eph = seleph(teph, sat, -1, nav)))
+            if (!(eph = seleph(teph, sat, -1, nav, bds_eph_sel)))
                 {
                     return 0;
                 }
@@ -899,7 +925,7 @@ int ephclk(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
 
 /* satellite position and clock by broadcast ephemeris -----------------------*/
 int ephpos(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
-    int iode, double *rs, double *dts, double *var, int *svh)
+    int iode, double *rs, double *dts, double *var, int *svh, int bds_eph_sel)
 {
     eph_t *eph;
     geph_t *geph;
@@ -910,7 +936,7 @@ int ephpos(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
     int i;
     int sys;
 
-    trace(4, "ephpos  : time=%s sat=%2d iode=%d\n", time_str(time, 3), sat, iode);
+    trace(4, "ephpos  : time=%s sat=%2d iode=%d bds_sel=%d\n", time_str(time, 3), sat, iode, bds_eph_sel);
 
     sys = satsys(sat, nullptr);
 
@@ -918,7 +944,7 @@ int ephpos(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
 
     if (sys == SYS_GPS || sys == SYS_GAL || sys == SYS_QZS || sys == SYS_BDS)
         {
-            if (!(eph = seleph(teph, sat, iode, nav)))
+            if (!(eph = seleph(teph, sat, iode, nav, bds_eph_sel)))
                 {
                     return 0;
                 }
@@ -1165,16 +1191,16 @@ int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
  *-----------------------------------------------------------------------------*/
 int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
     const nav_t *nav, double *rs, double *dts, double *var,
-    int *svh)
+    int *svh, int bds_eph_sel)
 {
-    trace(4, "satpos  : time=%s sat=%2d ephopt=%d\n", time_str(time, 3), sat, ephopt);
+    trace(4, "satpos  : time=%s sat=%2d ephopt=%d bds_sel=%d\n", time_str(time, 3), sat, ephopt, bds_eph_sel);
 
     *svh = 0;
 
     switch (ephopt)
         {
         case EPHOPT_BRDC:
-            return ephpos(time, teph, sat, nav, -1, rs, dts, var, svh);
+            return ephpos(time, teph, sat, nav, -1, rs, dts, var, svh, bds_eph_sel);
         case EPHOPT_SBAS:
             return satpos_sbas(time, teph, sat, nav, rs, dts, var, svh);
         case EPHOPT_SSRAPC:
@@ -1247,6 +1273,22 @@ void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
             var[i] = 0.0;
             svh[i] = 0;
 
+            /* BDS: prefer CNAV1 when any band carries B1C codes, DNAV otherwise */
+            int bds_eph_sel = -1;
+            if (satsys(obs[i].sat, nullptr) == SYS_BDS)
+                {
+                    bds_eph_sel = 0;
+                    for (j = 0; j < NFREQ; j++)
+                        {
+                            const unsigned char cj = obs[i].code[j];
+                            if (cj == CODE_L1D || cj == CODE_L1P)
+                                {
+                                    bds_eph_sel = 7;
+                                    break;
+                                }
+                        }
+                }
+
             /* search any pseudorange */
             for (j = 0, pr = 0.0; j < NFREQ; j++)
                 {
@@ -1265,7 +1307,7 @@ void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
             time[i] = timeadd(obs[i].time, -pr / SPEED_OF_LIGHT_M_S);
 
             /* satellite clock bias by broadcast ephemeris */
-            if (!ephclk(time[i], teph, obs[i].sat, nav, &dt))
+            if (!ephclk(time[i], teph, obs[i].sat, nav, &dt, bds_eph_sel))
                 {
                     trace(3, "no broadcast clock %s sat=%2d\n", time_str(time[i], 3), obs[i].sat);
                     continue;
@@ -1274,7 +1316,7 @@ void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
 
             /* satellite position and clock at transmission time */
             if (!satpos(time[i], teph, obs[i].sat, ephopt, nav, rs + i * 6, dts + i * 2, var + i,
-                    svh + i))
+                    svh + i, bds_eph_sel))
                 {
                     trace(3, "no ephemeris %s sat=%2d\n", time_str(time[i], 3), obs[i].sat);
                     continue;
@@ -1282,7 +1324,7 @@ void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
             /* if no precise clock available, use broadcast clock instead */
             if (dts[i * 2] == 0.0)
                 {
-                    if (!ephclk(time[i], teph, obs[i].sat, nav, dts + i * 2))
+                    if (!ephclk(time[i], teph, obs[i].sat, nav, dts + i * 2, bds_eph_sel))
                         {
                             continue;
                         }
