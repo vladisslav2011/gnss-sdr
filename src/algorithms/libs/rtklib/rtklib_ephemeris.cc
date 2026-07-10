@@ -379,7 +379,6 @@ void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts,
                     rs[0] = rs[1] = rs[2] = *dts = *var = 0.0;
                     return;
                 }
-            n0 = sqrt(mu / (eph->A * eph->A * eph->A));
             nA = n0 + eph->deln + 0.5 * eph->ndot * tk;
         }
     M = eph->M0 + nA * tk;

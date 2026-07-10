@@ -169,8 +169,11 @@ void Gnss_Ephemeris::satellitePosition(double transmitTime)
 
 void Gnss_Ephemeris::satellitePosVelComputation(double transmitTime, std::array<double, 7>& pos_vel_dtr) const
 {
+    // Time from ephemeris reference epoch
+    double tk = check_t(transmitTime - static_cast<double>(this->toe));
+
     // Restore semi-major axis
-    const double a = this->sqrtA * this->sqrtA;
+    double a = this->sqrtA * this->sqrtA + A0;
 
     // Computed mean motion
     double n0;
@@ -186,12 +189,10 @@ void Gnss_Ephemeris::satellitePosVelComputation(double transmitTime, std::array<
         {
             n0 = sqrt(GPS_GM / (a * a * a));
         }
-
-    // Time from ephemeris reference epoch
-    double tk = check_t(transmitTime - static_cast<double>(this->toe));
+    a += Adot * tk;
 
     // Corrected mean motion
-    const double n = n0 + this->delta_n;
+    const double n = n0 + this->delta_n + 0.5 * delta_n0dot * tk;
 
     // Mean anomaly
     const double M = this->M_0 + n * tk;
