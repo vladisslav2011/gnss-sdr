@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "MATH_CONSTANTS.h"
 #include "gnss_frequencies.h"
 #include "gnss_obs_codes.h"
 #include "gnss_synchro.h"
-#include "MATH_CONSTANTS.h"
 #include "rtklib.h"
 #include "rtklib_conversions.h"
 #include "rtklib_ephemeris.h"
@@ -78,7 +78,7 @@ TEST(BeidouB1cPvtHelpersTest, SelephPrefersCnav1WhenRequested)
     const double ep[] = {2020, 6, 1, 12, 0, 0};
     const gtime_t t0 = epoch2time(ep);
     std::vector<eph_t> ephs;
-    ephs.push_back(make_bds_eph(sat, 1, 1.0e-9, 0.0, t0)); /* DNAV */
+    ephs.push_back(make_bds_eph(sat, 1, 1.0e-9, 0.0, t0));    /* DNAV */
     ephs.push_back(make_bds_eph(sat, 7, 2.0e-9, 1.0e-9, t0)); /* CNAV1 */
     nav_t nav;
     std::memset(&nav, 0, sizeof(nav));
@@ -152,7 +152,7 @@ TEST(BeidouB1cPvtHelpersTest, GettgdPrefersMatchingEphTypeWhenBothPresent)
     const double ep[] = {2021, 3, 1, 0, 0, 0};
     const gtime_t t0 = epoch2time(ep);
     std::vector<eph_t> ephs;
-    ephs.push_back(make_bds_eph(sat, 1, 5.0e-9, 0.0, t0));       /* DNAV TGD1 */
+    ephs.push_back(make_bds_eph(sat, 1, 5.0e-9, 0.0, t0));    /* DNAV TGD1 */
     ephs.push_back(make_bds_eph(sat, 7, 1.0e-9, 2.0e-9, t0)); /* CNAV1 */
     nav_t nav;
     std::memset(&nav, 0, sizeof(nav));

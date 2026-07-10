@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "MATH_CONSTANTS.h"
 #include "beidou_bdgim.h"
 #include "gnss_frequencies.h"
-#include "MATH_CONSTANTS.h"
 #include <gtest/gtest.h>
 #include <cmath>
 
