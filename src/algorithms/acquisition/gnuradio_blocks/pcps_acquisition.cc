@@ -125,6 +125,7 @@ pcps_acquisition::pcps_acquisition(const Acq_Conf& conf_)
       d_doppler_max(conf_.doppler_max),
       d_samplesPerChip(conf_.samples_per_chip),
       d_doppler_step(conf_.doppler_step),
+      d_aiding_level(1),
       d_consumed_samples(conf_.sampled_ms * conf_.samples_per_ms * (conf_.bit_transition_flag ? 2.0 : 1.0)),
       d_fft_size(conf_.sampled_ms == conf_.ms_per_code ? d_consumed_samples : d_consumed_samples * 2),
       d_effective_fft_size(conf_.bit_transition_flag ? (d_fft_size / 2) : d_fft_size),
@@ -828,13 +829,50 @@ float pcps_acquisition::get_threshold() const
 }
 
 
-void pcps_acquisition::set_doppler_center(int32_t doppler_center)
+void pcps_acquisition::set_doppler_center(int32_t doppler_center, int32_t aiding_level)
 {
     gr::thread::scoped_lock lock(d_setlock);  // require mutex with work function called by the scheduler
+    bool flag_update_grid = false;
+    if(aiding_level != d_aiding_level)
+    {
+        d_aiding_level = aiding_level;
+        flag_update_grid = true;
+        switch (d_aiding_level)
+        {
+            case 0:
+                {
+                    d_doppler_max = d_acq_parameters.coarse_doppler_max;
+                    d_doppler_step = d_acq_parameters.coarse_doppler_step;
+                    break;
+                }
+            case 1:
+                {
+                    d_doppler_max = d_acq_parameters.doppler_max;
+                    d_doppler_step = d_acq_parameters.doppler_step;
+                    break;
+                }
+            case 2:
+                {
+                    d_doppler_max = d_acq_parameters.fine_doppler_max;
+                    d_doppler_step = d_acq_parameters.fine_doppler_step;
+                    break;
+                }
+        }
+        d_num_doppler_bins = static_cast<uint32_t>(std::ceil(static_cast<double>(2 * d_doppler_max) / static_cast<double>(d_doppler_step)));
+        d_threshold = d_acq_parameters.pfa > 0.0 ? compute_threshold(d_acq_parameters.pfa, d_effective_fft_size, d_num_doppler_bins, d_acq_parameters.bit_transition_flag ? 1 : d_acq_parameters.max_dwells) : d_acq_parameters.threshold;
+        d_magnitude_grid.resize(std::max(d_num_doppler_bins, d_num_doppler_bins_step2) * d_magnitude_grid_stride),
+        d_grid_doppler_wipeoffs.resize(d_num_doppler_bins * d_doppler_wipeoffs_stride),
+        std::fill(d_magnitude_grid.begin(), d_magnitude_grid.end(), 0.0F);
+        update_grid_doppler_wipeoffs();
+    }
     if (doppler_center != d_doppler_center)
         {
-            DLOG(INFO) << " Doppler assistance for Channel: " << d_channel << " => Doppler: " << doppler_center << "[Hz]";
             d_doppler_center = doppler_center;
+            flag_update_grid = true;
+        }
+    if (flag_update_grid)
+        {
+            DLOG(INFO) << " Doppler assistance for Channel: " << d_channel << " => Doppler: " << doppler_center << "[Hz]";
             update_grid_doppler_wipeoffs();
         }
 }
