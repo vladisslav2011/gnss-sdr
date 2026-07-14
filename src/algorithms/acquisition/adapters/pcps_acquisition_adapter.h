@@ -100,7 +100,7 @@ public:
     /*!
      * \brief Set Doppler center for the grid search
      */
-    void set_doppler_center(int doppler_center) override;
+    void set_doppler_center(int doppler_center, int32_t aiding_level) override;
 
     /*!
      * \brief Returns the maximum peak of grid search

@@ -20,9 +20,11 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <limits>
 #include <numeric>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 double Gnss_Almanac::check_t(double time) const
 {
@@ -75,6 +77,29 @@ double Gnss_Almanac::predicted_doppler(double rx_time_s,
 
     std::vector<double> x_sr = pos_sat;
     std::transform(x_sr.begin(), x_sr.end(), pos_rx.begin(), x_sr.begin(), std::minus<double>());  // pos_sat - pos_rx
+
+    // Elevation angle
+    std::vector<double> x_sr2(3);
+    std::transform(x_sr.begin(), x_sr.end(), x_sr.begin(), x_sr2.begin(), std::multiplies<double>());  // dot(x_sr, x_sr)
+    std::vector<double> pos_rx2(3);
+    std::transform(pos_rx.begin(), pos_rx.end(), pos_rx.begin(), pos_rx2.begin(), std::multiplies<double>());  // dot(pos_rx,pos_rx)
+    const double dot_x_sr2 = std::accumulate(x_sr2.begin(), x_sr2.end(),0.);
+    const double dot_pos_rx2 = std::accumulate(pos_rx2.begin(), pos_rx2.end(),0.);
+    const double sqrt_prod = sqrt(dot_x_sr2 * dot_pos_rx2);
+    std::vector<double> pos_ant_x_rel_sat(3);
+    std::transform(pos_rx.begin(), pos_rx.end(), x_sr.begin(), pos_ant_x_rel_sat.begin(), std::multiplies<double>());  // dot(pos_rx,x_sr)
+    const double ant_dot_sat = std::accumulate(pos_ant_x_rel_sat.begin(), pos_ant_x_rel_sat.end(),0.);
+    double el=0.;
+    if(sqrt_prod > 0.)
+        el = HALF_PI - acos(ant_dot_sat/sqrt_prod);
+    else
+        el = -1;
+
+    if (0. > el)
+        {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+    std::cout<<"A EL["<<System<<PRN<<"]="<<el*R2D<<"\n";
 
     const double norm_x_sr = std::sqrt(std::inner_product(x_sr.begin(), x_sr.end(), x_sr.begin(), 0.0));  // Euclidean norm
 

@@ -221,9 +221,9 @@ void Channel::stop_channel()
 }
 
 
-void Channel::assist_acquisition_doppler(double Carrier_Doppler_hz)
+void Channel::assist_acquisition_doppler(double Carrier_Doppler_hz, int32_t aiding_level)
 {
-    acq_->set_doppler_center(static_cast<int>(Carrier_Doppler_hz));
+    acq_->set_doppler_center(static_cast<int>(Carrier_Doppler_hz), aiding_level);
 }
 
 
