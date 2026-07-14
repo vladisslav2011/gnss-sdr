@@ -1378,17 +1378,51 @@ void ControlThread::keyboard_listener()
     while (read_keys && !stop_)
         {
             std::cin.get(c);
-            if (c == 'q')
+            switch (c)
+            {
+            case 'q':
                 {
                     std::cout << "Quit keystroke order received, stopping GNSS-SDR !!\n";
                     control_queue_->push(pmt::make_any(command_event_make(200, 0)));
                     stop_ = true;
                     read_keys = false;
                 }
-            else
+            break;
+            case 's':
+                {
+                    std::cout << "Standby keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(300, 10)));
+                }
+            break;
+            case 'c':
+                {
+                    std::cout << "Cold start keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(300, 11)));
+                }
+            break;
+            case 'w':
+                {
+                    std::cout << "Warm start keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(300, 13)));
+                }
+            break;
+            case 'h':
+                {
+                    std::cout << "Hot start keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(300, 12)));
+                }
+            break;
+            case 'r':
+                {
+                    std::cout << "Restart keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(200, 1)));
+                }
+            break;
+            default:
                 {
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
+            }
         }
 }
 
