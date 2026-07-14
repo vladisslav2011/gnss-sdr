@@ -1004,29 +1004,38 @@ void ControlThread::apply_action(unsigned int what)
         case 10:  // request standby mode
             LOG(INFO) << "TC request standby mode";
             receiver_on_standby_ = true;
+            flowgraph_->stop();
             break;
         case 11:
             LOG(INFO) << "Receiver action COLDSTART";
             // delete all ephemeris and almanac information from maps (also the PVT map queue)
             pvt_ptr = flowgraph_->get_pvt();
+            if(!receiver_on_standby_)
+                flowgraph_->stop();
             pvt_ptr->clear_ephemeris();
             // todo: reorder the satellite queues to the receiver default startup order.
             // This is required to allow repeatability. Otherwise the satellite search order will depend on the last tracked satellites
             // start again the satellite acquisitions
             receiver_on_standby_ = false;
+            flowgraph_->start();
             break;
         case 12:
             LOG(INFO) << "Receiver action HOTSTART";
+            if(!receiver_on_standby_)
+                flowgraph_->stop();
             visible_satellites = get_visible_sats(cmd_interface_.get_utc_time(), cmd_interface_.get_LLH());
             // reorder the satellite queue to acquire first those visible satellites
             flowgraph_->priorize_satellites(visible_satellites);
             // start again the satellite acquisitions
             receiver_on_standby_ = false;
+            flowgraph_->start();
             break;
         case 13:
             LOG(INFO) << "Receiver action WARMSTART";
             // delete all ephemeris and almanac information from maps (also the PVT map queue)
             pvt_ptr = flowgraph_->get_pvt();
+            if(!receiver_on_standby_)
+                flowgraph_->stop();
             pvt_ptr->clear_ephemeris();
             // load the ephemeris and the almanac from XML files (receiver assistance)
             read_assistance_from_XML();
@@ -1037,6 +1046,7 @@ void ControlThread::apply_action(unsigned int what)
             flowgraph_->priorize_satellites(visible_satellites);
             // start again the satellite acquisitions
             receiver_on_standby_ = false;
+            flowgraph_->start();
             break;
         default:
             LOG(INFO) << "Unrecognized action.";
@@ -1288,17 +1298,51 @@ void ControlThread::keyboard_listener()
     while (read_keys && !stop_)
         {
             std::cin.get(c);
-            if (c == 'q')
+            switch (c)
+            {
+            case 'q':
                 {
                     std::cout << "Quit keystroke order received, stopping GNSS-SDR !!\n";
                     control_queue_->push(pmt::make_any(command_event_make(200, 0)));
                     stop_ = true;
                     read_keys = false;
                 }
-            else
+            break;
+            case 's':
+                {
+                    std::cout << "Standby keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(200, 10)));
+                }
+            break;
+            case 'c':
+                {
+                    std::cout << "Cold start keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(200, 11)));
+                }
+            break;
+            case 'w':
+                {
+                    std::cout << "Warm start keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(200, 13)));
+                }
+            break;
+            case 'h':
+                {
+                    std::cout << "Hot start keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(200, 12)));
+                }
+            break;
+            case 'r':
+                {
+                    std::cout << "Restart keystroke order received !!\n";
+                    control_queue_->push(pmt::make_any(command_event_make(200, 1)));
+                }
+            break;
+            default:
                 {
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
+            }
         }
 }
 
