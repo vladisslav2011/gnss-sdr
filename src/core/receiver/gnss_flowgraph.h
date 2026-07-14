@@ -158,6 +158,10 @@ public:
      * \brief Prioritize visible satellites in the specified vector
      */
     void priorize_satellites(const std::vector<std::pair<int, Gnss_Satellite>>& visible_satellites);
+    /*!
+     * \brief Debug action from control thread
+     */
+    void debug_action();
 
 #if ENABLE_FPGA
     void start_acquisition_helper();

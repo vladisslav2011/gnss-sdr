@@ -2544,3 +2544,9 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
 
     return result;
 }
+
+void GNSSFlowgraph::debug_action()
+{
+    std::cout<<"Debug action!!!!!!!!!!!!!!!!!!!\n"<<std::flush;
+}
+
