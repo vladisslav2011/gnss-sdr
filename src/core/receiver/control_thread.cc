@@ -1045,10 +1045,6 @@ void ControlThread::apply_action(unsigned int what)
             stop_ = true;
             restart_ = true;
             break;
-        case 5:
-            LOG(INFO) << "Received action DEBUG";
-            flowgraph_->debug_action();
-            break;
         case 10:  // request standby mode
             LOG(INFO) << "TC request standby mode";
             receiver_on_standby_ = true;
@@ -1405,7 +1401,7 @@ void ControlThread::keyboard_listener()
             case 'd':
                 {
                     std::cout << "debug keystroke order received !!\n";
-                    control_queue_->push(pmt::make_any(command_event_make(200, 5)));
+                    control_queue_->push(pmt::make_any(command_event_make(0, 5)));
                 }
             break;
             case 's':
