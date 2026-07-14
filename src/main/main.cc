@@ -287,7 +287,13 @@ try
                 auto control_thread = std::make_unique<ControlThread>();
                 // record startup time
                 start = std::chrono::system_clock::now();
-                return_code = control_thread->run();
+                do{
+                    return_code = control_thread->run();
+                    if(return_code == 0)
+                        break;
+                    control_thread.reset();
+                    control_thread = std::make_unique<ControlThread>();
+                }while (return_code == 42);
             }
         catch (const boost::thread_resource_error& e)
             {
