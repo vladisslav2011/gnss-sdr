@@ -2072,6 +2072,12 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                         }
                 }
             break;
+        case 5:
+                {
+                    std::cout<<"Debug action!!!!!!!!!!!!!!!!!!!\n"<<std::flush;
+                }
+            break;
+
         case 10:  // request standby mode
             for (size_t n = 0; n < channels_.size(); n++)
                 {
@@ -2530,10 +2536,5 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
         }
 
     return result;
-}
-
-void GNSSFlowgraph::debug_action()
-{
-    std::cout<<"Debug action!!!!!!!!!!!!!!!!!!!\n"<<std::flush;
 }
 
