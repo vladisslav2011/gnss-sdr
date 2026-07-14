@@ -281,9 +281,9 @@ void PcpsAcquisitionAdapter::stop_acquisition()
 }
 
 
-void PcpsAcquisitionAdapter::set_doppler_center(int doppler_center)
+void PcpsAcquisitionAdapter::set_doppler_center(int doppler_center, int32_t aiding_level)
 {
-    acquisition_->set_doppler_center(doppler_center);
+    acquisition_->set_doppler_center(doppler_center, aiding_level);
 }
 
 
