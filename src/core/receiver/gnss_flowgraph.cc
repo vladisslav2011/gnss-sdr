@@ -1795,8 +1795,9 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                     else
                                                     {
                                                         //std::cout<<"Satellite G"<<sat.get_PRN()<<" is skipped due to negative elevation\n";
-                                                        push_back_signal(gnss_signal);
-                                                        return;
+                                                        aiding_level = 1;
+                                                        //push_back_signal(gnss_signal);
+                                                        //return;
                                                     }
                                                 }else{
                                                     //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
@@ -1815,8 +1816,9 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                         else
                                                         {
                                                             //std::cout<<"Satellite G"<<sat.get_PRN()<<" is skipped due to negative elevation or invalid almanac\n";
-                                                            push_back_signal(gnss_signal);
-                                                            return;
+                                                            aiding_level = 1;
+                                                            //push_back_signal(gnss_signal);
+                                                            //return;
                                                         }
                                                     }else{
                                                         //std::cout<<"]]]] no valid almanac for G"<<sat.get_PRN()<<"\n";
@@ -1840,8 +1842,9 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                     else
                                                     {
                                                         //std::cout<<"Satellite E"<<sat.get_PRN()<<" is skipped due to negative elevation\n";
-                                                        push_back_signal(gnss_signal);
-                                                        return;
+                                                        aiding_level = 1;
+                                                        //push_back_signal(gnss_signal);
+                                                        //return;
                                                     }
                                                 }else{
                                                     //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
@@ -1860,8 +1863,9 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                         else
                                                         {
                                                             //std::cout<<"Satellite E"<<sat.get_PRN()<<" is skipped due to negative elevation or invalid almanac\n";
-                                                            push_back_signal(gnss_signal);
-                                                            return;
+                                                            aiding_level = 1;
+                                                            //push_back_signal(gnss_signal);
+                                                            //return;
                                                         }
                                                     }else{
                                                         //std::cout<<"]]]] no valid ephemeris for E"<<sat.get_PRN()<<"\n";
@@ -1903,8 +1907,9 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                     else
                                                     {
                                                         //std::cout<<"Satellite C"<<sat.get_PRN()<<" is skipped due to negative elevation\n";
-                                                        push_back_signal(gnss_signal);
-                                                        return;
+                                                        aiding_level = 1;
+                                                        //push_back_signal(gnss_signal);
+                                                        //return;
                                                     }
                                                     //std::cout<<"[[[[ found valid ephemeris for C"<<sat.get_PRN()<<" predicted="<<corrected_center<<"\n";
                                                 }else{
@@ -1923,8 +1928,9 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                         else
                                                         {
                                                             //std::cout<<"Satellite C"<<sat.get_PRN()<<" is skipped due to negative elevation or invalid almanac\n";
-                                                            push_back_signal(gnss_signal);
-                                                            return;
+                                                            //return;
+                                                            //push_back_signal(gnss_signal);
+                                                            aiding_level = 1;
                                                         }
                                                         //std::cout<<"[[[[ found valid almanac for C"<<sat.get_PRN()<<" predicted="<<corrected_center<<"\n";
                                                    }else{
