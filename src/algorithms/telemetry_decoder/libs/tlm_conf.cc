@@ -41,4 +41,21 @@ void Tlm_Conf::SetFromConfiguration(const ConfigurationInterface *configuration,
             there_are_e6_channels = true;
         }
     tow_to_trk = configuration->property("GNSS-SDR.tow_to_trk", false);
+    std::string override_str = configuration->property(role + ".override_health", std::string(""));
+    size_t s=0;
+    size_t e=0;
+    if(override_str.size())
+    {
+        while(true)
+        {
+            e=override_str.find(",",s);
+            if(e==std::string::npos)
+            {
+                override_health[std::stoi(override_str.substr(s,override_str.size()-s))]=true;
+                break;
+            }
+            override_health[std::stoi(override_str.substr(s,e-s))]=true;
+            s=e+1;
+        }
+    }
 }

@@ -122,7 +122,8 @@ galileo_telemetry_decoder_gs::galileo_telemetry_decoder_gs(const Tlm_Conf &conf,
       d_there_are_e1_channels(conf.there_are_e1_channels),
       d_there_are_e6_channels(conf.there_are_e6_channels),
       d_use_ced(conf.use_ced),
-      d_tow_to_trk(conf.tow_to_trk)
+      d_tow_to_trk(conf.tow_to_trk),
+      d_override_health(conf.override_health)
 {
     configure_basic_outputs();
 
@@ -636,6 +637,12 @@ void galileo_telemetry_decoder_gs::decode_INAV_word(float *page_part_symbols, in
             // get object for this SV (mandatory)
             const std::shared_ptr<Galileo_Ephemeris> tmp_obj = std::make_shared<Galileo_Ephemeris>(d_inav_nav.get_ephemeris());
             tmp_obj->nav_message_source = d_band == '7' ? Galileo_Nav_Message_Source::E5b : Galileo_Nav_Message_Source::E1B;
+            if(d_override_health.find(d_satellite.get_PRN())!=d_override_health.end())
+            {
+                tmp_obj->E5a_HS=0;
+                tmp_obj->E5b_HS=0;
+                tmp_obj->E1B_HS=0;
+            }
             if (d_band == '1')
                 {
                     const auto default_precision = std::cout.precision();
@@ -802,6 +809,12 @@ void galileo_telemetry_decoder_gs::decode_FNAV_word(float *page_symbols, int32_t
     if (d_fnav_nav.have_new_ephemeris() == true)
         {
             const std::shared_ptr<Galileo_Ephemeris> tmp_obj = std::make_shared<Galileo_Ephemeris>(d_fnav_nav.get_ephemeris());
+            if(d_override_health.find(d_satellite.get_PRN())!=d_override_health.end())
+            {
+                tmp_obj->E5a_HS=0;
+                tmp_obj->E5b_HS=0;
+                tmp_obj->E1B_HS=0;
+            }
             this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
             const auto default_precision = std::cout.precision();
             std::cout << TEXT_MAGENTA << "New Galileo E5a F/NAV message received in channel "
