@@ -19,7 +19,9 @@
 #define GNSS_SDR_TLM_CONF_H
 
 #include "configuration_interface.h"
+#include <map>
 #include <string>
+#include <map>
 
 /** \addtogroup Telemetry_Decoder
  * \{ */
@@ -46,6 +48,7 @@ public:
     bool there_are_e6_channels{false};
     bool use_ced{false};
     bool tow_to_trk{false};
+    std::map<int,bool> override_health{};
 };
 
 
