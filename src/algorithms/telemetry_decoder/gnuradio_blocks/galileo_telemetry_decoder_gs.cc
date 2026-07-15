@@ -808,6 +808,12 @@ void galileo_telemetry_decoder_gs::decode_FNAV_word(float *page_symbols, int32_t
     if (d_fnav_nav.have_new_ephemeris() == true)
         {
             const std::shared_ptr<Galileo_Ephemeris> tmp_obj = std::make_shared<Galileo_Ephemeris>(d_fnav_nav.get_ephemeris());
+            if(d_override_health.find(d_satellite.get_PRN())!=d_override_health.end())
+            {
+                tmp_obj->E5a_HS=0;
+                tmp_obj->E5b_HS=0;
+                tmp_obj->E1B_HS=0;
+            }
             this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
             const auto default_precision = std::cout.precision();
             std::cout << TEXT_MAGENTA << "New Galileo E5a F/NAV message received in channel "
