@@ -26,6 +26,10 @@ extern "C"
 }
 #include "agnss_ref_location.h"
 #include "agnss_ref_time.h"
+#include "beidou_dnav_almanac.h"
+#include "beidou_dnav_ephemeris.h"
+#include "beidou_dnav_iono.h"
+#include "beidou_dnav_utc_model.h"
 #include "galileo_almanac.h"
 #include "galileo_ephemeris.h"
 #include "galileo_iono.h"
@@ -64,21 +68,25 @@ public:
     int server_port;
     int request;
     // ephemeris map
+    std::map<int, Beidou_Dnav_Ephemeris> beidou_dnav_ephemeris_map;
     std::map<int, Gps_Ephemeris> gps_ephemeris_map;
     std::map<int, Galileo_Ephemeris> gal_ephemeris_map;
     std::map<int, Gps_CNAV_Ephemeris> gps_cnav_ephemeris_map;
     std::map<int, Glonass_Gnav_Ephemeris> glonass_gnav_ephemeris_map;
 
     // almanac map
+    std::map<int, Beidou_Dnav_Almanac> beidou_dnav_almanac_map;
     std::map<int, Gps_Almanac> gps_almanac_map;
     std::map<int, Galileo_Almanac> gal_almanac_map;
 
     // ionospheric model
+    Beidou_Dnav_Iono beidou_dnav_iono;
     Gps_Iono gps_iono;
     Galileo_Iono gal_iono;
     // reference time
     Agnss_Ref_Time gps_time;
     // UTC model
+    Beidou_Dnav_Utc_Model beidou_dnav_utc;
     Gps_Utc_Model gps_utc;
     Galileo_Utc_Model gal_utc;
     Gps_CNAV_Utc_Model gps_cnav_utc;
@@ -138,6 +146,17 @@ public:
         std::map<int, Galileo_Ephemeris> eph_map);
 
     /*!
+     * \brief Read BeiDou DNAV ephemeris map from XML file
+     */
+    bool load_beidou_dnav_ephemeris_xml(const std::string& file_name);
+
+    /*!
+     * \brief Save BeiDou DNAV ephemeris map to XML file.
+     */
+    bool save_beidou_dnav_ephemeris_map_xml(const std::string& file_name,
+        std::map<int, Beidou_Dnav_Ephemeris> eph_map);
+
+    /*!
      * \brief Read GLONASS GNAV ephemeris map from XML file
      */
     bool load_gnav_ephemeris_xml(const std::string& file_name);
@@ -169,6 +188,16 @@ public:
     bool save_cnav_utc_xml(const std::string& file_name, Gps_CNAV_Utc_Model& utc);
 
     /*!
+     * \brief Read CNAV GPS utc model from XML file
+     */
+    bool load_beidou_dnav_utc_xml(const std::string& file_name);
+
+    /*!
+     * \brief Save CNAV UTC model map to XML file
+     */
+    bool save_beidou_dnav_utc_xml(const std::string& file_name, Beidou_Dnav_Utc_Model& utc);
+
+    /*!
      * \brief Read Galileo utc model from XML file
      */
     bool load_gal_utc_xml(const std::string& file_name);
@@ -177,6 +206,16 @@ public:
      * \brief Save Galileo UTC model map to XML file
      */
     bool save_gal_utc_xml(const std::string& file_name, Galileo_Utc_Model& utc);
+
+    /*!
+     * \brief Read Beidou DNAV almanac map from XML file
+     */
+    bool load_beidou_dnav_almanac_xml(const std::string& file_name);
+
+    /*!
+     * \brief Save Beidou DNAV almanac map to XML file
+     */
+    bool save_beidou_dnav_almanac_xml(const std::string& file_name, std::map<int, Beidou_Dnav_Almanac> beidou_almanac_map_to_save);
 
     /*!
      * \brief Read Galileo almanac map from XML file
