@@ -93,8 +93,6 @@ double Gnss_Ephemeris::predicted_doppler(double rx_time_s,
         {
             return std::numeric_limits<double>::quiet_NaN();
         }
-    else
-        std::cout<<"E EL["<<System<<PRN<<"]="<<el*R2D<<"\n";
 
     const double norm_x_sr = std::sqrt(std::inner_product(x_sr.begin(), x_sr.end(), x_sr.begin(), 0.0));  // Euclidean norm
 
@@ -173,6 +171,7 @@ double Gnss_Ephemeris::predicted_doppler(double rx_time_s,
         {
             predicted_doppler = 0.0;
         }
+    std::cout<<"E EL["<<System<<PRN<<"]="<<el*R2D<<"deg "<<predicted_doppler<<"Hz\n";
     return predicted_doppler;
 }
 
