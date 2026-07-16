@@ -172,13 +172,16 @@ private:
     const std::string ref_location_default_xml_filename_ = "./gps_ref_location.xml";
     const std::string eph_gal_default_xml_filename_ = "./gal_ephemeris.xml";
     const std::string eph_cnav_default_xml_filename_ = "./gps_cnav_ephemeris.xml";
+    const std::string eph_bds_dnav_default_xml_filename_ = "./bds_dnav_ephemeris.xml";
     const std::string gal_iono_default_xml_filename_ = "./gal_iono.xml";
     const std::string gal_utc_default_xml_filename_ = "./gal_utc_model.xml";
     const std::string cnav_utc_default_xml_filename_ = "./gps_cnav_utc_model.xml";
+    const std::string bds_dnav_utc_default_xml_filename_ = "./bds_dnav_utc_model.xml";
     const std::string eph_glo_gnav_default_xml_filename_ = "./glo_gnav_ephemeris.xml";
     const std::string glo_utc_default_xml_filename_ = "./glo_utc_model.xml";
     const std::string gal_almanac_default_xml_filename_ = "./gal_almanac.xml";
     const std::string gps_almanac_default_xml_filename_ = "./gps_almanac.xml";
+    const std::string bds_dnav_almanac_default_xml_filename_ = "./bds_dnav_almanac.xml";
 
     const std::string control_message_queue_name_ = "receiver_control_queue";
 
