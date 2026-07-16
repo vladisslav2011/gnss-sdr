@@ -530,10 +530,13 @@ bool ControlThread::read_assistance_from_XML()
     std::string ref_location_xml_filename = configuration_->property("GNSS-SDR.SUPL_gps_ref_location_xml", ref_location_default_xml_filename_);
     std::string eph_gal_xml_filename = configuration_->property("GNSS-SDR.SUPL_gal_ephemeris_xml", eph_gal_default_xml_filename_);
     std::string eph_cnav_xml_filename = configuration_->property("GNSS-SDR.SUPL_gps_cnav_ephemeris_xml", eph_cnav_default_xml_filename_);
+    std::string eph_bds_dnav_xml_filename = configuration_->property("GNSS-SDR.SUPL_bds_dnav_ephemeris_xml", eph_bds_dnav_default_xml_filename_);
     std::string gal_utc_xml_filename = configuration_->property("GNSS-SDR.SUPL_gal_utc_model_xml", gal_utc_default_xml_filename_);
     std::string cnav_utc_xml_filename = configuration_->property("GNSS-SDR.SUPL_cnav_utc_model_xml", cnav_utc_default_xml_filename_);
+    std::string bds_dnav_utc_xml_filename = configuration_->property("GNSS-SDR.SUPL_bds_dnav_utc_model_xml", bds_dnav_utc_default_xml_filename_);
     std::string eph_glo_xml_filename = configuration_->property("GNSS-SDR.SUPL_glo_ephemeris_xml", eph_glo_gnav_default_xml_filename_);
     std::string glo_utc_xml_filename = configuration_->property("GNSS-SDR.SUPL_glo_utc_model_xml", glo_utc_default_xml_filename_);
+    std::string bds_dnav_almanac_xml_filename = configuration_->property("GNSS-SDR.SUPL_bds_dnav_almanac_xml", bds_dnav_almanac_default_xml_filename_);
     std::string gal_almanac_xml_filename = configuration_->property("GNSS-SDR.SUPL_gal_almanac_xml", gal_almanac_default_xml_filename_);
     std::string gps_almanac_xml_filename = configuration_->property("GNSS-SDR.SUPL_gps_almanac_xml", gps_almanac_default_xml_filename_);
 
@@ -547,12 +550,15 @@ bool ControlThread::read_assistance_from_XML()
             ref_location_xml_filename = configuration_->property("GNSS-SDR.AGNSS_gps_ref_location_xml", ref_location_default_xml_filename_);
             eph_gal_xml_filename = configuration_->property("GNSS-SDR.AGNSS_gal_ephemeris_xml", eph_gal_default_xml_filename_);
             eph_cnav_xml_filename = configuration_->property("GNSS-SDR.AGNSS_gps_cnav_ephemeris_xml", eph_cnav_default_xml_filename_);
+            eph_bds_dnav_xml_filename = configuration_->property("GNSS-SDR.AGNSS_bds_dnav_ephemeris_xml", eph_bds_dnav_default_xml_filename_);
             gal_utc_xml_filename = configuration_->property("GNSS-SDR.AGNSS_gal_utc_model_xml", gal_utc_default_xml_filename_);
             cnav_utc_xml_filename = configuration_->property("GNSS-SDR.AGNSS_cnav_utc_model_xml", cnav_utc_default_xml_filename_);
+            bds_dnav_utc_xml_filename = configuration_->property("GNSS-SDR.AGNSS_bds_dnav_utc_model_xml", bds_dnav_utc_default_xml_filename_);
             eph_glo_xml_filename = configuration_->property("GNSS-SDR.AGNSS_glo_ephemeris_xml", eph_glo_gnav_default_xml_filename_);
             glo_utc_xml_filename = configuration_->property("GNSS-SDR.AGNSS_glo_utc_model_xml", glo_utc_default_xml_filename_);
             gal_almanac_xml_filename = configuration_->property("GNSS-SDR.AGNSS_gal_almanac_xml", gal_almanac_default_xml_filename_);
             gps_almanac_xml_filename = configuration_->property("GNSS-SDR.AGNSS_gps_almanac_xml", gps_almanac_default_xml_filename_);
+            bds_dnav_almanac_xml_filename = configuration_->property("GNSS-SDR.AGNSS_bds_dnav_almanac_xml", bds_dnav_almanac_default_xml_filename_);
         }
 
     std::cout << "Trying to read GNSS ephemeris from XML file(s)...\n";
@@ -690,6 +696,44 @@ bool ControlThread::read_assistance_from_XML()
                     const std::shared_ptr<Gps_CNAV_Utc_Model> tmp_obj = std::make_shared<Gps_CNAV_Utc_Model>(supl_client_acquisition_.gps_cnav_utc);
                     flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
                     std::cout << "From XML file: Read GPS CNAV UTC model parameters.\n";
+                    ret = true;
+                }
+        }
+
+    if ((configuration_->property("Channels_B1.count", 0) > 0) || (configuration_->property("Channels_B3.count", 0) > 0))
+        {
+            if (supl_client_ephemeris_.load_beidou_dnav_ephemeris_xml(eph_bds_dnav_xml_filename) == true)
+                {
+                    std::map<int, Beidou_Dnav_Ephemeris>::const_iterator eph_iter;
+                    for (eph_iter = supl_client_ephemeris_.beidou_dnav_ephemeris_map.cbegin();
+                        eph_iter != supl_client_ephemeris_.beidou_dnav_ephemeris_map.cend();
+                        eph_iter++)
+                        {
+                            std::cout << "From XML file: Read BeiDou DNAV ephemeris for satellite " << Gnss_Satellite("Beidou", eph_iter->second.PRN) << '\n';
+                            const std::shared_ptr<Beidou_Dnav_Ephemeris> tmp_obj = std::make_shared<Beidou_Dnav_Ephemeris>(eph_iter->second);
+                            flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
+                        }
+                    ret = true;
+                }
+
+            if (supl_client_acquisition_.load_beidou_dnav_utc_xml(bds_dnav_utc_xml_filename) == true)
+                {
+                    const std::shared_ptr<Beidou_Dnav_Utc_Model> tmp_obj = std::make_shared<Beidou_Dnav_Utc_Model>(supl_client_acquisition_.beidou_dnav_utc);
+                    flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
+                    std::cout << "From XML file: Read BeiDou DNAV UTC model parameters.\n";
+                    ret = true;
+                }
+            if (supl_client_ephemeris_.load_beidou_dnav_almanac_xml(bds_dnav_almanac_xml_filename) == true)
+                {
+                    std::map<int, Beidou_Dnav_Almanac>::const_iterator alm_iter;
+                    for (alm_iter = supl_client_ephemeris_.beidou_dnav_almanac_map.cbegin();
+                        alm_iter != supl_client_ephemeris_.beidou_dnav_almanac_map.cend();
+                        alm_iter++)
+                        {
+                            std::cout << "From XML file: Read BeiDou DNAV almanac for satellite " << Gnss_Satellite("Beidou", alm_iter->second.PRN) << '\n';
+                            const std::shared_ptr<Beidou_Dnav_Almanac> tmp_obj = std::make_shared<Beidou_Dnav_Almanac>(alm_iter->second);
+                            flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
+                        }
                     ret = true;
                 }
         }
