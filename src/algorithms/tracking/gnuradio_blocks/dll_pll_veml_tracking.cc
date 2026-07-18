@@ -24,6 +24,7 @@
 #include "dll_pll_veml_tracking.h"
 #include "Beidou_B1I.h"
 #include "Beidou_B3I.h"
+#include "display.h"
 #include "GLONASS_L1_L2_CA.h"
 #include "GPS_L1_CA.h"
 #include "GPS_L2C.h"
@@ -1240,7 +1241,7 @@ bool dll_pll_veml_tracking::cn0_and_tracking_lock_status(double coh_integration_
         }
     if (d_carrier_lock_fail_counter > d_trk_parameters.max_carrier_lock_fail || d_code_lock_fail_counter > d_trk_parameters.max_code_lock_fail)
         {
-            std::cout << "Loss of lock in channel " << d_channel << ", satellite " << Gnss_Satellite(d_systemName, d_acquisition_gnss_synchro->PRN) << " !\n";
+            std::cout << TEXT_RED << "Loss of lock" << TEXT_RESET << " in channel " << d_channel << ", satellite " << Gnss_Satellite(d_systemName, d_acquisition_gnss_synchro->PRN) << " !\n";
             LOG(INFO) << "Loss of lock in channel " << d_channel << ", satellite " << Gnss_Satellite(d_systemName, d_acquisition_gnss_synchro->PRN)
                       << " (carrier_lock_fail_counter:" << d_carrier_lock_fail_counter
                       << " code_lock_fail_counter : " << d_code_lock_fail_counter << ")";
@@ -2252,6 +2253,7 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                             {
                                                 d_dll_bw_hz = d_dll_tgt_bw_hz;
                                                 LOG(INFO) << "Reached narrow dll bw in channel " << d_channel << "\n";
+                                                std::cout << TEXT_MAGENTA << "Reached narrow dll bw in channel " << d_channel << "\n" << TEXT_RESET;
                                             }
                                         d_code_loop_filter.set_noise_bandwidth(d_dll_bw_hz);
                                     }
@@ -2268,6 +2270,7 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                         if (d_pll_bw_hz <= d_pll_tgt_bw_hz)
                                             {
                                                 d_pll_bw_hz = d_pll_tgt_bw_hz;
+                                                LOG(INFO) << "Reached narrow pll bw in channel " << d_channel << "\n";
                                                 LOG(INFO) << "Reached narrow pll bw in channel " << d_channel << "\n";
                                                 enable_extended = true;
                                             }
@@ -2295,7 +2298,7 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                         LOG(INFO) << "Enabled " << d_extend_correlation_symbols * static_cast<int32_t>(d_code_period * 1000.0) << " ms extended correlator in channel "
                                                     << d_channel
                                                     << " for satellite " << Gnss_Satellite(d_systemName, d_acquisition_gnss_synchro->PRN);
-                                        std::cout << "Enabled " << d_extend_correlation_symbols * static_cast<int32_t>(d_code_period * 1000.0) << " ms extended correlator in channel "
+                                        std::cout << TEXT_GREEN << "Enabled " << d_extend_correlation_symbols * static_cast<int32_t>(d_code_period * 1000.0) << " ms extended correlator" << TEXT_RESET << " in channel "
                                                     << d_channel
                                                     << " for satellite " << Gnss_Satellite(d_systemName, d_acquisition_gnss_synchro->PRN) << '\n';
                                         // Set narrow taps delay values [chips]
