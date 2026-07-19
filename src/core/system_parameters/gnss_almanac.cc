@@ -79,22 +79,13 @@ double Gnss_Almanac::predicted_doppler(double rx_time_s,
     std::transform(x_sr.begin(), x_sr.end(), pos_rx.begin(), x_sr.begin(), std::minus<double>());  // pos_sat - pos_rx
 
     // Elevation angle
-    std::vector<double> x_sr2(3);
-    std::transform(x_sr.begin(), x_sr.end(), x_sr.begin(), x_sr2.begin(), std::multiplies<double>());  // dot(x_sr, x_sr)
-    std::vector<double> pos_rx2(3);
-    std::transform(pos_rx.begin(), pos_rx.end(), pos_rx.begin(), pos_rx2.begin(), std::multiplies<double>());  // dot(pos_rx,pos_rx)
-    const double dot_x_sr2 = std::accumulate(x_sr2.begin(), x_sr2.end(),0.);
-    const double dot_pos_rx2 = std::accumulate(pos_rx2.begin(), pos_rx2.end(),0.);
-    const double sqrt_prod = sqrt(dot_x_sr2 * dot_pos_rx2);
-    std::vector<double> pos_ant_x_rel_sat(3);
-    std::transform(pos_rx.begin(), pos_rx.end(), x_sr.begin(), pos_ant_x_rel_sat.begin(), std::multiplies<double>());  // dot(pos_rx,x_sr)
-    const double ant_dot_sat = std::accumulate(pos_ant_x_rel_sat.begin(), pos_ant_x_rel_sat.end(),0.);
-    double el=0.;
-    if(sqrt_prod > 0.)
-        el = HALF_PI - acos(ant_dot_sat/sqrt_prod);
-    else
-        el = -1;
-
+    std::vector<double> enu(3);
+    enu[0] = cosl * x_sr[1] - sinl * x_sr[0];
+    enu[1] = -sinp * cosl * x_sr[0] -sinp * sinl *x_sr[1] + cosp * x_sr[2];
+    enu[2] = cosp * cosl * x_sr[0] + cosp * sinl * x_sr[1] + sinp * x_sr[2];
+    double el = asin(enu[2]/sqrt(enu[0] * enu[0] + enu[1] * enu[1] + enu[2] * enu[2]));
+    double az = atan2(enu[0], enu[1]);
+    az = (az < 0) ? az + TWO_PI : az;
     if (0. > el)
         {
             return std::numeric_limits<double>::quiet_NaN();
@@ -177,7 +168,7 @@ double Gnss_Almanac::predicted_doppler(double rx_time_s,
         {
             predicted_doppler = 0.0;
         }
-    std::cout<<"A EL["<<System<<PRN<<"]="<<el*R2D<<"deg "<<predicted_doppler<<"Hz\n";
+    std::cout<<"A EL["<<System<<PRN<<"]="<<el*R2D<<"deg ("<<az*R2D<<") "<<predicted_doppler<<"Hz\n";
     return predicted_doppler;
 }
 
