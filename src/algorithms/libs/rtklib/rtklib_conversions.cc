@@ -432,7 +432,7 @@ eph_t eph_to_rtklib(const Galileo_Ephemeris& gal_eph,
     rtklib_sat.sat = gal_eph.PRN + NSATGPS + NSATGLO;
     rtklib_sat.code = gal_eph.nav_message_type == Galileo_Nav_Message_Type::FNAV ? 2 : 1;
     rtklib_sat.sva = gal_eph.SISA;
-    rtklib_sat.svh = (gal_eph.E1B_HS | gal_eph.E5b_HS | gal_eph.E5b_HS) ? 1 : 0;
+    rtklib_sat.svh = (gal_eph.E1B_HS | gal_eph.E5a_HS | gal_eph.E5b_HS | gal_eph.E1B_DVS | gal_eph.E5a_DVS | gal_eph.E5b_DVS) ? 1 : 0;
     rtklib_sat.A = gal_eph.sqrtA * gal_eph.sqrtA;
     rtklib_sat.M0 = gal_eph.M_0;
     rtklib_sat.deln = gal_eph.delta_n;
