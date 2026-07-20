@@ -35,6 +35,7 @@
 #include "gnss_obs_codes.h"
 #include "rtklib_rtkcmn.h"
 #include "rtklib_rtksvr.h"
+#include "visible_satellites.h"
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -247,12 +248,32 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
     char *q;
     char *s;
     char sum;
+    char System;
     int prn;
     int sys;
     int n = 0;
     std::vector<int> sats(MAXSAT);
     std::vector<int> signal_ids;
     const int MSG_TAIL = 6;
+
+    switch(target_sys)
+    {
+    case SYS_GPS:
+        System = 'G';
+        break;
+    case SYS_GAL:
+        System = 'E';
+        break;
+    case SYS_GLO:
+        System = 'R';
+        break;
+    case SYS_BDS:
+        System = 'C';
+        break;
+    case SYS_QZS:
+        System = 'J';
+        break;
+    }
 
     for (int sat = 1; sat < MAXSAT && n < 12; sat++)
         {
@@ -275,16 +296,56 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
     for (const auto signal_id : signal_ids)
         {
             int nsat = 0;
-            int nmsg;
+            int nmsg = 0;
             int k;
-            std::vector<int> signal_sats(MAXSAT);
+            struct gsv
+            {
+                int PRN;
+                double az;
+                double el;
+                double snr;
+            };
+            std::vector<gsv> signal_sats(MAXSAT);
+            std::map<int,bool> used_PRNS{};
 
             for (int i = 0; i < n; i++)
                 {
                     sys = satsys(sats[i], nullptr);
-                    if (nmea_gsv_signal(ssat + sats[i] - 1, sys, fallback_signal_id).signal_id == signal_id)
+                    const nmea_gsv_signal_t signal = nmea_gsv_signal(ssat + sats[i] - 1, sys, fallback_signal_id);
+                    if (signal.signal_id == signal_id)
                         {
-                            signal_sats[nsat++] = sats[i];
+                            const int PRN = nmea_gsv_prn(sats[i]);
+                            signal_sats[nsat++] = gsv({ //sats[i]
+                                PRN,
+                                ssat[sats[i] - 1].azel[0] * R2D,
+                                ssat[sats[i] - 1].azel[1] * R2D,
+                                signal.snr * 0.25
+                            });
+                            used_PRNS[PRN] = true;
+                        }
+                }
+            if(1)if(signal_id == fallback_signal_id)
+                {
+                    for (auto it:Visible_Satellites::get())
+                        {
+                            if (it.second.system != System)
+                                {
+                                    continue;
+                                }
+                            if (it.second.el < 0.)
+                                {
+                                    continue;
+                                }
+                            if (used_PRNS.find(it.second.PRN) != used_PRNS.end())
+                                {
+                                    continue;
+                                }
+                            signal_sats[nsat++] = {
+                                it.second.PRN,
+                                it.second.az * R2D,
+                                it.second.el * R2D,
+                                0.
+                            };
                         }
                 }
 
@@ -299,18 +360,8 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
                         {
                             if (k < nsat)
                                 {
-                                    const int sat = signal_sats[k];
-                                    const nmea_gsv_signal_t signal = nmea_gsv_signal(ssat + sat - 1,
-                                        satsys(sat, nullptr), fallback_signal_id);
-                                    double az = ssat[sat - 1].azel[0] * R2D;
-                                    if (az < 0.0)
-                                        {
-                                            az += 360.0;
-                                        }
-                                    const double el = ssat[sat - 1].azel[1] * R2D;
-                                    const double snr = signal.snr * 0.25;
                                     p += std::snprintf(p, MAXSOLBUF - (p - s), ",%02d,%02.0f,%03.0f,%02.0f",
-                                        nmea_gsv_prn(sat), el, az, snr);
+                                        signal_sats[k].PRN, signal_sats[k].el, signal_sats[k].az, signal_sats[k].snr);
                                 }
                             else
                                 {

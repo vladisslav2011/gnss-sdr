@@ -36,6 +36,7 @@ set(SYSTEM_PARAMETERS_SOURCES
     reed_solomon.cc
     osnma_data.cc
     osnma_dsm_reader.cc
+    visible_satellites.cc
 )
 
 set(SYSTEM_PARAMETERS_HEADERS
@@ -123,6 +124,7 @@ set(SYSTEM_PARAMETERS_HEADERS
     qzss_iono.h
     qzss_utc_model.h
     signal_flag.h
+    visible_satellites.h
 )
 
 list(SORT SYSTEM_PARAMETERS_HEADERS)
