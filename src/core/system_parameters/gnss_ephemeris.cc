@@ -18,6 +18,7 @@
 #include "gnss_ephemeris.h"
 #include "MATH_CONSTANTS.h"
 #include "gnss_frequencies.h"
+#include "visible_satellites.h"
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -81,8 +82,9 @@ double Gnss_Ephemeris::predicted_doppler(double rx_time_s,
     double el = asin(enu[2] / sqrt(enu[0] * enu[0] + enu[1] * enu[1] + enu[2] * enu[2]));
     double az = atan2(enu[0], enu[1]);
     az = (az < 0) ? az + TWO_PI : az;
-    if (0. > el)
+    if (!std::isfinite(el) || 0. > el)
         {
+            Visible_Satellites::remove(System, PRN);
             return std::numeric_limits<double>::quiet_NaN();
         }
 
@@ -162,6 +164,14 @@ double Gnss_Ephemeris::predicted_doppler(double rx_time_s,
     else
         {
             predicted_doppler = 0.0;
+        }
+    if (!std::isfinite(predicted_doppler))
+        {
+            Visible_Satellites::remove(System, PRN);
+        }
+    else
+        {
+            Visible_Satellites::add(System, PRN, az, el);
         }
     std::cout << "E EL[" << System << PRN << "]=" << el * R2D << "deg " << predicted_doppler << "Hz\n";
     return predicted_doppler;
