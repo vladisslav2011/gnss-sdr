@@ -2320,7 +2320,7 @@ int rtklib_pvt_gs::work(int noutput_items, gr_vector_const_void_star& input_item
                                             signal_health_available = d_internal_pvt_solver->get_galileo_signal_health(
                                                 gnss_synchro.PRN, galileo_signal, galileo_observation_tow, signal_is_healthy);
                                         }
-                                    signal_is_healthy = d_use_unhealthy_sats || (signal_health_available && signal_is_healthy);
+                                    signal_is_healthy = true;
                                     if (signal_is_healthy && !selected_from_reduced_ced && d_osnma_strict &&
                                         selected_galileo_ephemeris.nav_message_type == Galileo_Nav_Message_Type::INAV)
                                         {
