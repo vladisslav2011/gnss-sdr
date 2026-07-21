@@ -292,6 +292,10 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
                     sats[n++] = sat;
                 }
         }
+    if (std::find(signal_ids.begin(), signal_ids.end(), fallback_signal_id) == signal_ids.end())
+        {
+            signal_ids.push_back(fallback_signal_id);
+        }
 
     for (const auto signal_id : signal_ids)
         {
