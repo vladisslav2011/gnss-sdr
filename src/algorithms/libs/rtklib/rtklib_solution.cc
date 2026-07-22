@@ -296,6 +296,7 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
         {
             signal_ids.push_back(fallback_signal_id);
         }
+    std::map<int,bool> used_PRNS{};
 
     for (const auto signal_id : signal_ids)
         {
@@ -310,7 +311,6 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
                 double snr;
             };
             std::vector<gsv> signal_sats(MAXSAT);
-            std::map<int,bool> used_PRNS{};
 
             for (int i = 0; i < n; i++)
                 {
@@ -344,6 +344,7 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
                                 {
                                     continue;
                                 }
+                            used_PRNS[it.second.PRN] = true;
                             signal_sats[nsat++] = {
                                 it.second.PRN,
                                 it.second.az * R2D,
