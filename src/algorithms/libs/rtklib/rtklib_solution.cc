@@ -297,20 +297,20 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
             signal_ids.push_back(fallback_signal_id);
         }
     std::map<int,bool> used_PRNS{};
+    struct gsv
+    {
+        int PRN;
+        double az;
+        double el;
+        double snr;
+    };
+    std::map<int, std::vector<gsv>> signal_sats{};
+    int nmsg = 0;
+    int totalsat = 0;
 
     for (const auto signal_id : signal_ids)
         {
             int nsat = 0;
-            int nmsg = 0;
-            int k;
-            struct gsv
-            {
-                int PRN;
-                double az;
-                double el;
-                double snr;
-            };
-            std::vector<gsv> signal_sats(MAXSAT);
 
             for (int i = 0; i < n; i++)
                 {
@@ -319,16 +319,18 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
                     if (signal.signal_id == signal_id)
                         {
                             const int PRN = nmea_gsv_prn(sats[i]);
-                            signal_sats[nsat++] = gsv({ //sats[i]
+                            signal_sats[signal_id].push_back(gsv({ //sats[i]
                                 PRN,
                                 ssat[sats[i] - 1].azel[0] * R2D,
                                 ssat[sats[i] - 1].azel[1] * R2D,
                                 signal.snr * 0.25
-                            });
+                            }));
                             used_PRNS[PRN] = true;
+                            nsat++;
+                            totalsat++;
                         }
                 }
-            if(1)if(signal_id == fallback_signal_id)
+            if(1)if(signal_id == signal_ids[signal_ids.size() - 1])
                 {
                     for (auto it:Visible_Satellites::get())
                         {
@@ -345,32 +347,42 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
                                     continue;
                                 }
                             used_PRNS[it.second.PRN] = true;
-                            signal_sats[nsat++] = {
+                            signal_sats[signal_id].push_back(gsv({
                                 it.second.PRN,
                                 it.second.az * R2D,
                                 it.second.el * R2D,
                                 0.
-                            };
+                            }));
+                            nsat++;
+                            totalsat++;
                         }
                 }
+            nmsg += nsat <= 0 ? 0 : (nsat - 1) / 4 + 1;
+        }
 
-            nmsg = nsat <= 0 ? 0 : (nsat - 1) / 4 + 1;
+    int i = 0;
+    for (const auto signal_id : signal_ids)
+        {
+            int nsat = signal_sats[signal_id].size();
+            bool nextsig = false;
 
-            for (int i = k = 0; i < nmsg; i++)
+            for (int k = 0; i < nmsg && k < nsat; i++)
                 {
                     s = p;
-                    p += std::snprintf(p, MAXSOLBUF, "%s,%d,%d,%02d", sentence, nmsg, i + 1, nsat);
+                    p += std::snprintf(p, MAXSOLBUF, "%s,%d,%d,%02d", sentence, nmsg, i + 1, totalsat);
 
                     for (int j = 0; j < 4; j++, k++)
                         {
+                            const auto& signal_sat = signal_sats[signal_id][k];
                             if (k < nsat)
                                 {
                                     p += std::snprintf(p, MAXSOLBUF - (p - s), ",%02d,%02.0f,%03.0f,%02.0f",
-                                        signal_sats[k].PRN, signal_sats[k].el, signal_sats[k].az, signal_sats[k].snr);
+                                        signal_sat.PRN, signal_sat.el, signal_sat.az, signal_sat.snr);
                                 }
                             else
                                 {
                                     p += std::snprintf(p, MAXSOLBUF - (p - s), ",,,,");
+                                    nextsig = true;
                                 }
                         }
                     p += std::snprintf(p, MAXSOLBUF - (p - s), ",%d", signal_id);
@@ -379,6 +391,11 @@ static char *outnmea_gsv_system(char *p, const char *sentence, const ssat_t *ssa
                             sum ^= *q; /* check-sum */
                         }
                     p += std::snprintf(p, MSG_TAIL, "*%02X%c%c", sum, 0x0D, 0x0A);
+                    if(nextsig)
+                    {
+                        i++;
+                        break;
+                    }
                 }
         }
     return p;
