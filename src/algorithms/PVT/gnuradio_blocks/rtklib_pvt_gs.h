@@ -36,6 +36,7 @@
 #include <cstdint>                // for int32_t
 #include <ctime>                  // for time_t
 #include <fstream>                // for std::fstream
+#include <mutex>
 #include <map>                    // for map
 #include <memory>                 // for shared_ptr, unique_ptr
 #include <queue>                  // for std::queue
@@ -172,6 +173,9 @@ public:
         double* ground_speed_kmh,
         double* course_over_ground_deg,
         time_t* UTC_time) const;
+
+    void set_signal_mask(const std::vector<std::string>& mask, bool exclude);
+    bool get_signal_mask(const std::string& mask);
 
     void set_signal_mask(const std::vector<std::string>& mask, bool exclude);
     bool get_signal_mask(const std::string& mask);
@@ -367,6 +371,8 @@ private:
     const bool d_use_has_corrections;
     const bool d_use_unhealthy_sats;
     const bool d_osnma_strict;
+    std::map<uint16_t,bool> exclude_mask{};
+    std::mutex sigmask_mutex{};
 };
 
 
