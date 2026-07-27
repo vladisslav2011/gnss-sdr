@@ -36,6 +36,7 @@
 #include <cstdint>                // for int32_t
 #include <ctime>                  // for time_t
 #include <fstream>                // for std::fstream
+#include <mutex>
 #include <map>                    // for map
 #include <memory>                 // for shared_ptr, unique_ptr
 #include <queue>                  // for std::queue
@@ -150,6 +151,9 @@ public:
         double* ground_speed_north,
         double* ground_speed_up,
         int32_t * TOW) const;
+
+    void set_signal_mask(const std::vector<std::string>& mask, bool exclude);
+    bool get_signal_mask(const std::string& mask);
 
     int work(int noutput_items, gr_vector_const_void_star& input_items,
         gr_vector_void_star& output_items);  //!< PVT Signal Processing
@@ -314,6 +318,8 @@ private:
     const bool d_use_has_corrections;
     const bool d_use_unhealthy_sats;
     const bool d_osnma_strict;
+    std::map<uint16_t,bool> exclude_mask{};
+    std::mutex sigmask_mutex{};
 };
 
 
