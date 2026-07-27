@@ -218,6 +218,16 @@ public:
         return sizeof(Gnss_Synchro);
     }
 
+    inline void set_signal_mask(const std::vector<std::string>& mask, bool exclude) override
+    {
+        pvt_->set_signal_mask(mask, exclude);
+    }
+
+    inline bool get_signal_mask(const std::string& mask) override
+    {
+        return pvt_->get_signal_mask(mask);
+    }
+
     bool get_latest_PVT(double* longitude_deg,
         double* latitude_deg,
         double* height_m,

@@ -2227,6 +2227,7 @@ int rtklib_pvt_gs::work(int noutput_items, gr_vector_const_void_star& input_item
     this->get_tags_in_range(sensor_tags, 0, this->nitems_read(0), this->nitems_read(0) + noutput_items, d_sensor_data_aggregator->SENSOR_DATA_TAG);
     d_sensor_data_aggregator->update(sensor_tags);
 
+    std::unique_lock<std::mutex> lck(sigmask_mutex);
     for (int32_t epoch = 0; epoch < noutput_items; epoch++)
         {
             bool flag_compute_pvt = false;
@@ -2270,6 +2271,10 @@ int rtklib_pvt_gs::work(int noutput_items, gr_vector_const_void_star& input_item
                                         (d_use_unhealthy_sats || (tmp_eph_iter_gps->second.SV_health == 0)))
                                         {
                                             store_valid_observable = true;
+                                        }
+                                    if (get_signal_mask(std::string(gnss_synchro.Signal, 2)))
+                                        {
+                                            store_valid_observable = false;
                                         }
                                 }
                             Galileo_Ephemeris selected_galileo_ephemeris;
@@ -2341,6 +2346,10 @@ int rtklib_pvt_gs::work(int noutput_items, gr_vector_const_void_star& input_item
                                     if ((prn_aux == gnss_synchro.PRN) && (((std::string(gnss_synchro.Signal, 2) == std::string("2S")) || (std::string(gnss_synchro.Signal, 2) == std::string("L5")) || (std::string(gnss_synchro.Signal, 2) == std::string("J5")))))
                                         {
                                             store_valid_observable = true;
+                                        }
+                                    if (get_signal_mask(std::string(gnss_synchro.Signal, 2)))
+                                        {
+                                            store_valid_observable = false;
                                         }
                                 }
                             if (!d_osnma_strict && tmp_eph_iter_glo_gnav != d_internal_pvt_solver->glonass_gnav_ephemeris_map.cend())
@@ -2856,4 +2865,32 @@ int rtklib_pvt_gs::work(int noutput_items, gr_vector_const_void_star& input_item
         }
 
     return noutput_items;
+}
+
+void rtklib_pvt_gs::set_signal_mask(const std::vector<std::string>& mask, bool exclude)
+{
+    std::unique_lock<std::mutex> lck(sigmask_mutex);
+    for (auto& s: mask)
+        {
+            const uint16_t key = static_cast<uint16_t>(s[0]) | (static_cast<uint16_t>(s[1]) << 8);
+            if (exclude)
+                {
+                    exclude_mask[key]=true;
+                }
+            else
+                {
+                    exclude_mask.erase(key);
+                }
+        }
+}
+
+bool rtklib_pvt_gs::get_signal_mask(const std::string& s)
+{
+    const uint16_t key = static_cast<uint16_t>(s[0]) | (static_cast<uint16_t>(s[1]) << 8);
+    auto it = exclude_mask.find(key);
+    if (it == exclude_mask.end())
+        {
+            return false;
+        }
+    return true;
 }

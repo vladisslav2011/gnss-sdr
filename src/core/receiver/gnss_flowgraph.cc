@@ -2080,7 +2080,11 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             break;
         case 5:
                 {
-                    std::cout<<"Debug action!!!!!!!!!!!!!!!!!!!\n"<<std::flush;
+                    //std::cout<<"Debug action!!!!!!!!!!!!!!!!!!!\n"<<std::flush;
+                    auto pvt = std::dynamic_pointer_cast<PvtInterface>(pvt_);
+                    bool prev = pvt->get_signal_mask("L5");
+                    std::cout<<(prev?std::string("enabled GPS"):std::string("disabled GPS"))<<"\n"<<std::flush;
+                    pvt->set_signal_mask({"L5","2S","1C"},!prev);
                 }
             break;
 
