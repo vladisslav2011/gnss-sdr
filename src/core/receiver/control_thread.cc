@@ -698,6 +698,19 @@ bool ControlThread::read_assistance_from_XML()
                     std::cout << "From XML file: Read GPS CNAV UTC model parameters.\n";
                     ret = true;
                 }
+            if (supl_client_ephemeris_.load_gps_almanac_xml(gps_almanac_xml_filename) == true)
+                {
+                    std::map<int, Gps_Almanac>::const_iterator gps_alm_iter;
+                    for (gps_alm_iter = supl_client_ephemeris_.gps_almanac_map.cbegin();
+                        gps_alm_iter != supl_client_ephemeris_.gps_almanac_map.cend();
+                        gps_alm_iter++)
+                        {
+                            std::cout << "From XML file: Read GPS almanac for satellite " << Gnss_Satellite("GPS", gps_alm_iter->second.PRN) << '\n';
+                            const std::shared_ptr<Gps_Almanac> tmp_obj = std::make_shared<Gps_Almanac>(gps_alm_iter->second);
+                            flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
+                        }
+                    ret = true;
+                }
         }
 
     if ((configuration_->property("Channels_B1.count", 0) > 0) || (configuration_->property("Channels_B3.count", 0) > 0))
