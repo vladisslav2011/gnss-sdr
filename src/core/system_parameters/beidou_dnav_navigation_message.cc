@@ -1181,20 +1181,29 @@ Beidou_Dnav_Utc_Model Beidou_Dnav_Navigation_Message::get_utc_model()
 Beidou_Dnav_Almanac Beidou_Dnav_Navigation_Message::get_almanac() const
 {
     Beidou_Dnav_Almanac almanac = d_almanac;
-    int32_t expanded_week = almanac_WN;
-    if (i_BEIDOU_week != 0)
+    if (flag_almanac_week_valid)
         {
-            expanded_week = (i_BEIDOU_week & ~0xFF) | almanac_WN;
-            if (expanded_week - i_BEIDOU_week > 128)
+            int32_t expanded_week = almanac_WN;
+            if (i_BEIDOU_week != 0)
                 {
-                    expanded_week -= 256;
+                    expanded_week = (i_BEIDOU_week & ~0xFF) | almanac_WN;
+                    if (expanded_week - i_BEIDOU_week > 128)
+                        {
+                            expanded_week -= 256;
+                        }
+                    else if (i_BEIDOU_week - expanded_week > 128)
+                        {
+                            expanded_week += 256;
+                        }
                 }
-            else if (i_BEIDOU_week - expanded_week > 128)
-                {
-                    expanded_week += 256;
-                }
+            almanac.WNa = expanded_week;
         }
-    almanac.WNa = expanded_week;
+    else
+        {
+            // Assume almanac_WN = BEIDOU week from latest ephemeris and hope for the best
+            // This usually works and speeds up almanac reception
+            almanac.WNa = i_BEIDOU_week;
+        }
     const auto health = almanacHealth.find(static_cast<int32_t>(almanac.PRN));
     if (health != almanacHealth.cend())
         {
@@ -1316,7 +1325,7 @@ bool Beidou_Dnav_Navigation_Message::have_new_utc_model()
 
 bool Beidou_Dnav_Navigation_Message::have_new_almanac()
 {
-    if (flag_new_almanac && flag_almanac_week_valid)
+    if (flag_new_almanac)
         {
             flag_new_almanac = false;
             return true;
