@@ -426,9 +426,9 @@ void parse_reduced_almanac(const uint8_t* bits, int32_t& offset, Bds3_B1c_Almana
     offset += 2;
     almanac.delta_a_m = static_cast<double>(read_signed(bits, offset, 8)) * twos_pow(9);
     offset += 8;
-    almanac.omega0_rad = static_cast<double>(read_signed(bits, offset, 7)) * twos_pow(-6) * GNSS_PI;
+    almanac.omega0_rad = static_cast<double>(read_signed(bits, offset, 7)) * twos_pow(-6);
     offset += 7;
-    almanac.phi0_rad = static_cast<double>(read_signed(bits, offset, 7)) * twos_pow(-6) * GNSS_PI;
+    almanac.phi0_rad = static_cast<double>(read_signed(bits, offset, 7)) * twos_pow(-6);
     offset += 7;
     almanac.health = static_cast<int32_t>(read_unsigned(bits, offset, 8));
     offset += 8;
@@ -447,17 +447,17 @@ void parse_medium_almanac(const uint8_t* bits, int32_t& offset, Bds3_B1c_Almanac
     offset += 8;
     almanac.eccentricity = static_cast<double>(read_unsigned(bits, offset, 11)) * twos_pow(-16);
     offset += 11;
-    almanac.delta_i_rad = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-14) * GNSS_PI;
+    almanac.delta_i_rad = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-14);
     offset += 11;
     almanac.sqrt_a_m_sqrt = static_cast<double>(read_unsigned(bits, offset, 17)) * twos_pow(-4);
     offset += 17;
-    almanac.omega0_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15) * GNSS_PI;
+    almanac.omega0_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15);
     offset += 16;
-    almanac.omega_dot_rad_s = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-33) * GNSS_PI;
+    almanac.omega_dot_rad_s = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-33);
     offset += 11;
-    almanac.omega_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15) * GNSS_PI;
+    almanac.omega_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15);
     offset += 16;
-    almanac.m0_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15) * GNSS_PI;
+    almanac.m0_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15);
     offset += 16;
     almanac.af0_s = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-20);
     offset += 11;
@@ -885,4 +885,57 @@ const std::string& Beidou_Cnav1_Navigation_Message::get_last_nav_bits() const
 double Beidou_Cnav1_Navigation_Message::get_tow_s() const
 {
     return tow_s_;
+}
+
+Beidou_Dnav_Almanac Bds3_B1c_PageData::get_almanac(int idx)
+{
+    Beidou_Dnav_Almanac almanac{};
+    enum {
+        SAT_TYPE_RES = 0,
+        SAT_TYPE_GEO,
+        SAT_TYPE_IGSO,
+        SAT_TYPE_MEO
+        };
+    if (idx == 0)
+        {
+            // medium almanac
+            if (medium_almanac.sat_type == SAT_TYPE_RES)
+                {
+                    // we don't know how to handle 'reserved' sat_type
+                    return almanac;
+                }
+            almanac.PRN = medium_almanac.prn;
+            almanac.sqrtA = medium_almanac.sqrt_a_m_sqrt;
+            almanac.af1 = medium_almanac.af1_s_s;
+            almanac.af0 = medium_almanac.af0_s;
+            almanac.OMEGA_0 = medium_almanac.omega0_rad;
+            almanac.ecc = medium_almanac.eccentricity;
+            almanac.delta_i = medium_almanac.delta_i_rad;
+            almanac.toa = medium_almanac.toa_s;
+            almanac.OMEGAdot = medium_almanac.omega_dot_rad_s;
+            almanac.omega = medium_almanac.omega_rad;
+            almanac.M_0 = medium_almanac.m0_rad;
+            almanac.WNa = medium_almanac.wna;
+            almanac.SV_health = medium_almanac.health;
+        }
+    else
+        {
+            // reduced almanac index 1...4
+            idx--;
+            if (reduced_almanac[idx].sat_type == SAT_TYPE_RES)
+                {
+                    // we don't know how to handle 'reserved' sat_type
+                    return almanac;
+                }
+            almanac.PRN = reduced_almanac[idx].prn;
+            const double A_ref = a_ref_from_sat_type(reduced_almanac[idx].sat_type);
+            almanac.sqrtA = sqrt(A_ref + reduced_almanac[idx].delta_a_m);
+            almanac.OMEGA_0 = reduced_almanac[idx].omega0_rad;
+            almanac.delta_i = (reduced_almanac[idx].sat_type == SAT_TYPE_GEO) ? 0.3 - 55./180. : 0.;
+            almanac.toa = toa_s;
+            almanac.M_0 = reduced_almanac[idx].phi0_rad;
+            almanac.WNa = wna;
+            almanac.SV_health = reduced_almanac[idx].health;
+        }
+    return almanac;
 }
