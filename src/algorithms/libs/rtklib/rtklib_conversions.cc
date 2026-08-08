@@ -942,10 +942,10 @@ alm_t alm_to_rtklib(const Beidou_Dnav_Almanac& bei_alm)
     rtklib_alm.e = bei_alm.ecc;
     const bool geo = (bei_alm.PRN >= 1 && bei_alm.PRN <= 5) || (bei_alm.PRN >= 59 && bei_alm.PRN <= 63);
     rtklib_alm.i0 = bei_alm.delta_i + (geo ? 0.0 : 0.3 * GNSS_PI);
-    rtklib_alm.OMG0 = bei_alm.OMEGA_0;
-    rtklib_alm.OMGd = bei_alm.OMEGAdot;
-    rtklib_alm.omg = bei_alm.omega;
-    rtklib_alm.M0 = bei_alm.M_0;
+    rtklib_alm.OMG0 = bei_alm.OMEGA_0 * GNSS_PI;
+    rtklib_alm.OMGd = bei_alm.OMEGAdot * GNSS_PI;
+    rtklib_alm.omg = bei_alm.omega * GNSS_PI;
+    rtklib_alm.M0 = bei_alm.M_0 * GNSS_PI;
     rtklib_alm.f0 = bei_alm.af0;
     rtklib_alm.f1 = bei_alm.af1;
     rtklib_alm.toas = static_cast<double>(bei_alm.toa);
