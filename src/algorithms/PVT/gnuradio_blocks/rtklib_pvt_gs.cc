@@ -1970,6 +1970,34 @@ void rtklib_pvt_gs::msg_handler_telemetry(const pmt::pmt_t& msg)
                         {
                             d_user_pvt_solver->beidou_cnav1_page_data_map[bds_cnav1_page->PRN] = bds_cnav1_page->page_data;
                         }
+                    const Beidou_Dnav_Almanac sv = bds_cnav1_page->page_data.get_almanac(0);
+
+                    if (sv.PRN != 0)
+                        {
+                            d_internal_pvt_solver->beidou_dnav_almanac_map[sv.PRN] = sv;
+                            if (d_enable_rx_clock_correction == true)
+                                {
+                                    d_user_pvt_solver->beidou_dnav_almanac_map[sv.PRN] = sv;
+                                }
+                            std::cout<<"New BeiDou B-CNAV1 medium almanac received for PRN"<<sv.PRN<<"\n";
+                        }
+                    for (int k = 1; k < 5; k++)
+                        {
+                            const Beidou_Dnav_Almanac sv = bds_cnav1_page->page_data.get_almanac(k);
+                            if (sv.PRN == 0)
+                                {
+                                    continue;
+                                }
+                            if (d_internal_pvt_solver->beidou_dnav_almanac_map.find(sv.PRN) == d_internal_pvt_solver->beidou_dnav_almanac_map.end())
+                                {
+                                    d_internal_pvt_solver->beidou_dnav_almanac_map.emplace(sv.PRN, sv);
+                                    if (d_enable_rx_clock_correction == true)
+                                        {
+                                            d_user_pvt_solver->beidou_dnav_almanac_map.emplace(sv.PRN,  sv);
+                                        }
+                                    std::cout<<"New BeiDou B-CNAV1 reduced almanac received for PRN"<<sv.PRN<<"\n";
+                                }
+                        }
                     DLOG(INFO) << "New BeiDou B-CNAV1 page data record has arrived from SAT ID " << bds_cnav1_page->PRN
                                << " PageID=" << bds_cnav1_page->page_data.common.page_id;
                 }
