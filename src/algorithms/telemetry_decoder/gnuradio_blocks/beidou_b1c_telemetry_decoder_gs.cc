@@ -383,6 +383,15 @@ void beidou_b1c_telemetry_decoder_gs::publish_navigation(double cn0_db_hz)
             DLOG(INFO) << "New BeiDou B-CNAV1 UTC model from PRN " << d_satellite.get_PRN()
                        << " in channel " << d_channel;
         }
+    if (d_nav.have_new_almanac())
+        {
+            const std::shared_ptr<Beidou_Dnav_Almanac> tmp_obj = std::make_shared<Beidou_Dnav_Almanac>(d_nav.get_almanac());
+            message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
+            DLOG(INFO) << "BEIDOU CNAV Medium Almanac data have been received in channel" << d_channel << " from satellite " << d_satellite;
+            std::cout << "New BEIDOU B1C medium almanac received in channel " << d_channel
+                      << " from satellite " << d_satellite
+                      << " for " << tmp_obj->PRN << std::endl;
+        }
     if (d_nav.have_new_page_data())
         {
             Beidou_Cnav1_PageData_Message page_msg{};

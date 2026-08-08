@@ -19,6 +19,7 @@
 #include "beidou_cnav1_ephemeris.h"
 #include "beidou_cnav1_iono.h"
 #include "beidou_cnav1_utc_model.h"
+#include "beidou_dnav_almanac.h"
 #include <array>
 #include <cstdint>
 #include <string>
@@ -111,11 +112,13 @@ public:
     bool have_new_iono() const;
     bool have_new_utc_model() const;
     bool have_new_page_data() const;
+    bool have_new_almanac() const;
     void clear_flags();
     const Beidou_Cnav1_Ephemeris& get_ephemeris() const;
     const Beidou_Cnav1_Iono& get_iono() const;
     const Beidou_Cnav1_Utc_Model& get_utc_model() const;
     const Bds3_B1c_PageData& get_page_data() const;
+    Beidou_Dnav_Almanac get_almanac();
     //! Last successfully decoded frame as '0'/'1' chars for Nav_msg_from_TLM (SF1 info + SF2 [+ SF3]).
     const std::string& get_last_nav_bits() const;
     double get_tow_s() const;
@@ -128,6 +131,7 @@ private:
     bool flag_new_iono_{false};
     bool flag_new_utc_{false};
     bool flag_new_page_data_{false};
+    bool flag_new_almanac_{false};
     double tow_s_{0.0};
     Bds3_B1c_PageData page_data_{};
     std::string last_nav_bits_{};

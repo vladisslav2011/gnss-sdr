@@ -408,9 +408,9 @@ void parse_reduced_almanac(const uint8_t* bits, int32_t& offset, Bds3_B1c_Almana
     offset += 2;
     almanac.delta_a_m = static_cast<double>(read_signed(bits, offset, 8)) * twos_pow(9);
     offset += 8;
-    almanac.omega0_rad = static_cast<double>(read_signed(bits, offset, 7)) * twos_pow(-6) * GNSS_PI;
+    almanac.omega0_rad = static_cast<double>(read_signed(bits, offset, 7)) * twos_pow(-6);
     offset += 7;
-    almanac.phi0_rad = static_cast<double>(read_signed(bits, offset, 7)) * twos_pow(-6) * GNSS_PI;
+    almanac.phi0_rad = static_cast<double>(read_signed(bits, offset, 7)) * twos_pow(-6);
     offset += 7;
     almanac.health = static_cast<int32_t>(read_unsigned(bits, offset, 8));
     offset += 8;
@@ -428,17 +428,17 @@ void parse_medium_almanac(const uint8_t* bits, int32_t& offset, Bds3_B1c_Almanac
     offset += 8;
     almanac.eccentricity = static_cast<double>(read_unsigned(bits, offset, 11)) * twos_pow(-16);
     offset += 11;
-    almanac.delta_i_rad = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-14) * GNSS_PI;
+    almanac.delta_i_rad = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-14);
     offset += 11;
     almanac.sqrt_a_m_sqrt = static_cast<double>(read_unsigned(bits, offset, 17)) * twos_pow(-4);
     offset += 17;
-    almanac.omega0_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15) * GNSS_PI;
+    almanac.omega0_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15);
     offset += 16;
-    almanac.omega_dot_rad_s = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-33) * GNSS_PI;
+    almanac.omega_dot_rad_s = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-33);
     offset += 11;
-    almanac.omega_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15) * GNSS_PI;
+    almanac.omega_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15);
     offset += 16;
-    almanac.m0_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15) * GNSS_PI;
+    almanac.m0_rad = static_cast<double>(read_signed(bits, offset, 16)) * twos_pow(-15);
     offset += 16;
     almanac.af0_s = static_cast<double>(read_signed(bits, offset, 11)) * twos_pow(-20);
     offset += 11;
@@ -734,6 +734,7 @@ bool Beidou_Cnav1_Navigation_Message::decode_frame(
                     break;
                 case 4:
                     parse_page4(sf3_data.data(), page_data_);
+                    flag_new_almanac_ = true;
                     flag_new_page_data_ = true;
                     break;
                 default:
@@ -813,12 +814,18 @@ bool Beidou_Cnav1_Navigation_Message::have_new_page_data() const
     return flag_new_page_data_;
 }
 
+bool Beidou_Cnav1_Navigation_Message::have_new_almanac() const
+{
+    return flag_new_almanac_;
+}
+
 void Beidou_Cnav1_Navigation_Message::clear_flags()
 {
     flag_new_ephemeris_ = false;
     flag_new_iono_ = false;
     flag_new_utc_ = false;
     flag_new_page_data_ = false;
+    flag_new_almanac_ = false;
     last_nav_bits_.clear();
 }
 
@@ -850,4 +857,25 @@ const std::string& Beidou_Cnav1_Navigation_Message::get_last_nav_bits() const
 double Beidou_Cnav1_Navigation_Message::get_tow_s() const
 {
     return tow_s_;
+}
+
+Beidou_Dnav_Almanac Beidou_Cnav1_Navigation_Message::get_almanac()
+{
+    Beidou_Dnav_Almanac almanac{};
+    almanac.PRN = page_data_.medium_almanac.prn;
+    //almanac.sat_type = page_data_.medium_almanac.sat_type;
+    almanac.sqrtA = page_data_.medium_almanac.sqrt_a_m_sqrt;
+    almanac.af1 = page_data_.medium_almanac.af1_s_s;
+    almanac.af0 = page_data_.medium_almanac.af0_s;
+    almanac.OMEGA_0 = page_data_.medium_almanac.omega0_rad;
+    almanac.ecc = page_data_.medium_almanac.eccentricity;
+    almanac.delta_i = page_data_.medium_almanac.delta_i_rad;
+    almanac.toa = page_data_.medium_almanac.toa_s;
+    almanac.OMEGAdot = page_data_.medium_almanac.omega_dot_rad_s;
+    almanac.omega = page_data_.medium_almanac.omega_rad;
+    almanac.M_0 = page_data_.medium_almanac.m0_rad;
+    almanac.WNa = page_data_.medium_almanac.wna;
+    almanac.SV_health = page_data_.medium_almanac.health;
+    flag_new_almanac_ = false;
+    return almanac;
 }
