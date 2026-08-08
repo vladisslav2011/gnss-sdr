@@ -20,6 +20,7 @@
 #include "beidou_cnav1_ephemeris.h"
 #include "beidou_cnav1_iono.h"
 #include "beidou_cnav1_utc_model.h"
+#include "beidou_dnav_almanac.h"
 #include <array>
 #include <cstdint>
 #include <string>
@@ -104,6 +105,7 @@ struct Bds3_B1c_PageData
     Bds3_B1c_Eop eop{};
     Bds3_B1c_Bgto bgto{};
     Bds3_B1c_AlmanacMedium medium_almanac{};
+    Beidou_Dnav_Almanac get_almanac(int);
 };
 
 
