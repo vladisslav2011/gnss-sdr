@@ -650,10 +650,10 @@ int beidou_b1c_telemetry_decoder_gs::general_work(
 
     consume_each(1);
 
-    if (d_flag_valid_word)
+    if (true)
         {
             current_symbol.TOW_at_current_symbol_ms = d_TOW_at_current_symbol_ms;
-            current_symbol.Flag_valid_word = true;
+            current_symbol.Flag_valid_word = d_flag_valid_word;
             if (d_dump)
                 {
                     try

@@ -346,7 +346,7 @@ int gps_l5_telemetry_decoder_gs::general_work(int noutput_items __attribute__((u
                 }
         }
 
-    if (d_flag_valid_word == true)
+    if (true)
         {
             if (d_flag_PLL_180_deg_phase_locked == true)
                 {

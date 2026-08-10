@@ -1501,7 +1501,7 @@ int galileo_telemetry_decoder_gs::general_work(int noutput_items __attribute__((
             break;
         }
 
-    if (current_symbol.Flag_valid_word == true)
+    if (true)
         {
             current_symbol.TOW_at_current_symbol_ms = d_TOW_at_current_symbol_ms;
             // todo: Galileo to GPS time conversion should be moved to observable block.

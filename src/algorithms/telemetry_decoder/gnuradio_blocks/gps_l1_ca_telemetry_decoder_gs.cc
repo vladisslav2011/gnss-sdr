@@ -686,7 +686,7 @@ int gps_l1_ca_telemetry_decoder_gs::general_work(int noutput_items __attribute__
                 }
         }
 
-    if (d_flag_TOW_set == true)
+    if (true)
         {
             // Check validity of TOW estimation
             // int64_t estimation_error = d_TOW_at_current_symbol_ms - current_symbol.TOW_at_current_symbol_ms;

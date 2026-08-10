@@ -610,7 +610,7 @@ int beidou_dnav_telemetry_decoder_gs::general_work(int noutput_items __attribute
                 }
         }
 
-    if (d_flag_valid_word == true)
+    if (true)
         {
             current_symbol.TOW_at_current_symbol_ms = d_TOW_at_current_symbol_ms;
             current_symbol.Flag_valid_word = d_flag_valid_word;
