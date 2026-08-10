@@ -261,6 +261,8 @@ private:
     float d_pll_bw_hz;
     float d_dll_tgt_bw_hz;
     float d_pll_tgt_bw_hz;
+    const bool d_early_monitor;
+    bool d_beidou_b1c;
 };
 
 
