@@ -166,6 +166,7 @@ private:
     const bool d_use_ced;
     const bool d_tow_to_trk;
     std::map<int,bool> d_override_health;
+    const bool d_early_monitor;
 };
 
 

@@ -51,6 +51,7 @@ public:
     std::map<int,bool> override_health{};
     int32_t ecc_errors_reject{1};
     int32_t ecc_errors_resync{6};
+    bool early_monitor{true};         // early tracking monitor output in on by default
 };
 
 

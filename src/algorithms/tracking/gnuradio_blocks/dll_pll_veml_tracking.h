@@ -223,6 +223,8 @@ private:
     bool d_wait_for_bit_edge{false};
     bool d_b1c_prelock_output_pending{false};
     bool d_carrier_phase_discontinuity{true};  // pending report of a new carrier phase ambiguity
+    const bool d_early_monitor;
+    bool d_beidou_b1c;
     float d_dll_bw_hz;
     float d_pll_bw_hz;
     float d_dll_tgt_bw_hz;
