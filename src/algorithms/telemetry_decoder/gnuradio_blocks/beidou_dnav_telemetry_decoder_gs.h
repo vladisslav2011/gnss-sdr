@@ -127,6 +127,7 @@ private:
     Gnss_Ephemeris::history_set prev;
     int32_t d_ecc_errors_reject;
     int32_t d_ecc_errors_resync;
+    const bool d_early_monitor;
 };
 
 
