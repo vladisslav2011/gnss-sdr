@@ -122,6 +122,7 @@ private:
     bool d_dump_crc_stats;
     const bool d_tow_to_trk;
     bool d_have_last_decoded_tow;
+    const bool d_early_monitor;
 };
 
 
