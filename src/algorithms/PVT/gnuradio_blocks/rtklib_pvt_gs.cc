@@ -2034,6 +2034,12 @@ std::map<int, Gps_Ephemeris> rtklib_pvt_gs::get_gps_ephemeris_map() const
 }
 
 
+std::map<int, Gps_CNAV_Ephemeris> rtklib_pvt_gs::get_gps_cnav_ephemeris_map() const
+{
+    return d_internal_pvt_solver->gps_cnav_ephemeris_map;
+}
+
+
 std::map<int, Gps_Almanac> rtklib_pvt_gs::get_gps_almanac_map() const
 {
     return d_internal_pvt_solver->gps_almanac_map;

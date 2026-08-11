@@ -1783,11 +1783,13 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                             const Gnss_Satellite & sat = channels_[current_channel]->get_signal().get_satellite();
                                             if((sat.get_system() == "GPS")||(sat.get_system() == "QZSS"))
                                             {
+                                                bool ephemeris_found = false;
                                                 const auto& ephemeris_map = get_pvt()->get_gps_ephemeris();
                                                 auto iter = ephemeris_map.find(sat.get_PRN());
                                                 if(iter != ephemeris_map.cend())
                                                 {
                                                     aiding_level = 2;
+                                                    ephemeris_found = true;
                                                     auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                     TOW /= 1000;
                                                     double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
@@ -1802,7 +1804,32 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                         //push_back_signal(gnss_signal);
                                                         //return;
                                                     }
-                                                }else{
+                                                }
+                                                if(!ephemeris_found)
+                                                {
+                                                    const auto& ephemeris_map = get_pvt()->get_gps_cnav_ephemeris();
+                                                    auto iter = ephemeris_map.find(sat.get_PRN());
+                                                    if(iter != ephemeris_map.cend())
+                                                    {
+                                                        aiding_level = 2;
+                                                        auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
+                                                        TOW /= 1000;
+                                                        double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
+                                                        ground_speed_north,ground_speed_east,ground_speed_up,freq_idx->second);
+                                                        //std::cout<<"[[[[ found valid ephemeris for J"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
+                                                        if(std::isfinite(predicted))
+                                                            corrected_center+=predicted;
+                                                        else
+                                                        {
+                                                            //std::cout<<"Satellite G"<<sat.get_PRN()<<" is skipped due to negative elevation\n";
+                                                            aiding_level = 1;
+                                                            //push_back_signal(gnss_signal);
+                                                            //return;
+                                                        }
+                                                    }
+                                                }
+                                                if(!ephemeris_found)
+                                                {
                                                     //std::cout<<"]]]] no valid ephemeris for "<<sat.get_PRN()<<"\n";
                                                     const auto& almanac_map = get_pvt()->get_gps_almanac();
                                                     auto iter = almanac_map.find(sat.get_PRN());
