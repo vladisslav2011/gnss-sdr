@@ -61,6 +61,7 @@ class Geohash;
 class GeoJSON_Printer;
 class Gps_Almanac;
 class Gps_Ephemeris;
+class Gps_CNAV_Ephemeris;
 class Gpx_Printer;
 class Kml_Printer;
 class Monitor_Pvt_Udp_Sink;
@@ -95,6 +96,11 @@ public:
      * \brief Get latest set of GPS ephemeris from PVT block
      */
     std::map<int, Gps_Ephemeris> get_gps_ephemeris_map() const;
+
+    /*!
+     * \brief Get latest set of GPS CNAV ephemeris from PVT block
+     */
+    std::map<int, Gps_CNAV_Ephemeris> get_gps_cnav_ephemeris_map() const;
 
     /*!
      * \brief Get latest set of GPS almanac from PVT block

@@ -918,6 +918,12 @@ std::map<int, Gps_Ephemeris> Rtklib_Pvt::get_gps_ephemeris() const
 }
 
 
+std::map<int, Gps_CNAV_Ephemeris> Rtklib_Pvt::get_gps_cnav_ephemeris() const
+{
+    return pvt_->get_gps_cnav_ephemeris_map();
+}
+
+
 std::map<int, Galileo_Ephemeris> Rtklib_Pvt::get_galileo_ephemeris() const
 {
     return pvt_->get_galileo_ephemeris_map();
