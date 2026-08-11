@@ -846,6 +846,17 @@ void galileo_telemetry_decoder_gs::decode_FNAV_word(float *page_symbols, int32_t
                       << " with CN0=" << std::setprecision(2) << cn0 << std::setprecision(default_precision)
                       << " dB-Hz" << TEXT_RESET << std::endl;
         }
+    if (d_fnav_nav.have_new_almanac() == true)
+        {
+            const std::shared_ptr<Galileo_Almanac_Helper> tmp_obj = std::make_shared<Galileo_Almanac_Helper>(d_fnav_nav.get_almanac());
+            this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
+            // debug
+            const auto default_precision = std::cout.precision();
+            std::cout << TEXT_BLUE << "Galileo E5a F/NAV almanac received in channel "
+                        << d_channel << " from satellite " << d_satellite << " with CN0="
+                        << std::setprecision(2) << cn0 << std::setprecision(default_precision)
+                        << " dB-Hz" << TEXT_RESET << std::endl;
+        }
 }
 
 
