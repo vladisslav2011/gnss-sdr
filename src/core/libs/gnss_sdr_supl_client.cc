@@ -635,6 +635,53 @@ bool Gnss_Sdr_Supl_Client::save_beidou_dnav_ephemeris_map_xml(const std::string&
 }
 
 
+bool Gnss_Sdr_Supl_Client::load_beidou_cnav1_ephemeris_xml(const std::string& file_name)
+{
+    std::ifstream ifs;
+    try
+        {
+            ifs.open(file_name.c_str(), std::ifstream::binary | std::ifstream::in);
+            boost::archive::xml_iarchive xml(ifs);
+            beidou_cnav1_ephemeris_map.clear();
+            xml >> boost::serialization::make_nvp("GNSS-SDR_bds_cnav1_ephemeris_map", this->beidou_cnav1_ephemeris_map);
+            LOG(INFO) << "Loaded BeiDou CNAV1 Ephemeris map data with " << this->beidou_cnav1_ephemeris_map.size() << " satellites";
+        }
+    catch (std::exception& e)
+        {
+            LOG(WARNING) << e.what() << "File: " << file_name;
+            return false;
+        }
+    return true;
+}
+
+
+bool Gnss_Sdr_Supl_Client::save_beidou_cnav1_ephemeris_map_xml(const std::string& file_name, std::map<int, Beidou_Cnav1_Ephemeris> eph_map)
+{
+    if (eph_map.empty() == false)
+        {
+            std::ofstream ofs;
+            try
+                {
+                    ofs.open(file_name.c_str(), std::ofstream::trunc | std::ofstream::out);
+                    boost::archive::xml_oarchive xml(ofs);
+                    xml << boost::serialization::make_nvp("GNSS-SDR_bds_cnav1_ephemeris_map", eph_map);
+                    LOG(INFO) << "Saved BeiDou CNAV1 ephemeris map data";
+                }
+            catch (std::exception& e)
+                {
+                    LOG(WARNING) << e.what();
+                    return false;
+                }
+        }
+    else
+        {
+            LOG(WARNING) << "Failed to save BeiDou CNAV1 ephemeris, map is empty";
+            return false;
+        }
+    return true;
+}
+
+
 bool Gnss_Sdr_Supl_Client::load_gnav_ephemeris_xml(const std::string& file_name)
 {
     std::ifstream ifs;
