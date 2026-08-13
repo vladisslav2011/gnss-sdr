@@ -172,6 +172,8 @@ private:
     const std::string ref_location_default_xml_filename_ = "./gps_ref_location.xml";
     const std::string eph_gal_default_xml_filename_ = "./gal_ephemeris.xml";
     const std::string eph_cnav_default_xml_filename_ = "./gps_cnav_ephemeris.xml";
+    const std::string eph_bds_dnav_default_xml_filename_ = "./bds_dnav_ephemeris.xml";
+    const std::string eph_bds_cnav1_default_xml_filename_ = "./bds_cnav1_ephemeris.xml";
     const std::string gal_iono_default_xml_filename_ = "./gal_iono.xml";
     const std::string gal_utc_default_xml_filename_ = "./gal_utc_model.xml";
     const std::string cnav_utc_default_xml_filename_ = "./gps_cnav_utc_model.xml";
