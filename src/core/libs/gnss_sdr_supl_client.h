@@ -28,6 +28,7 @@ extern "C"
 #include "agnss_ref_time.h"
 #include "beidou_dnav_almanac.h"
 #include "beidou_dnav_ephemeris.h"
+#include "beidou_cnav1_ephemeris.h"
 #include "beidou_dnav_iono.h"
 #include "beidou_dnav_utc_model.h"
 #include "galileo_almanac.h"
@@ -68,6 +69,7 @@ public:
     int server_port;
     int request;
     // ephemeris map
+    std::map<int, Beidou_Cnav1_Ephemeris> beidou_cnav1_ephemeris_map;
     std::map<int, Beidou_Dnav_Ephemeris> beidou_dnav_ephemeris_map;
     std::map<int, Gps_Ephemeris> gps_ephemeris_map;
     std::map<int, Galileo_Ephemeris> gal_ephemeris_map;
@@ -155,6 +157,17 @@ public:
      */
     bool save_beidou_dnav_ephemeris_map_xml(const std::string& file_name,
         std::map<int, Beidou_Dnav_Ephemeris> eph_map);
+
+    /*!
+     * \brief Read BeiDou CNAV1 ephemeris map from XML file
+     */
+    bool load_beidou_cnav1_ephemeris_xml(const std::string& file_name);
+
+    /*!
+     * \brief Save BeiDou CNAV1 ephemeris map to XML file.
+     */
+    bool save_beidou_cnav1_ephemeris_map_xml(const std::string& file_name,
+        std::map<int, Beidou_Cnav1_Ephemeris> eph_map);
 
     /*!
      * \brief Read GLONASS GNAV ephemeris map from XML file
