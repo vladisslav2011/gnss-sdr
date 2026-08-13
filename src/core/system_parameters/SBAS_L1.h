@@ -42,7 +42,7 @@ constexpr uint32_t SBAS_L1_OPT_ACQ_FS_SPS = 2000000U;  //!< Sampling frequency t
 
 // PRN range (RTCA DO-229, Table A-1)
 constexpr uint32_t SBAS_L1_PRN_MIN = 120U;  //!< Minimum SBAS PRN (inclusive)
-constexpr uint32_t SBAS_L1_PRN_MAX = 138U;  //!< Maximum SBAS PRN (inclusive)
+constexpr uint32_t SBAS_L1_PRN_MAX = 158U;  //!< Maximum SBAS PRN (inclusive)
 
 // Message rates and encoding
 //   SBAS broadcasts at 250 raw data bits/s, convolutionally encoded

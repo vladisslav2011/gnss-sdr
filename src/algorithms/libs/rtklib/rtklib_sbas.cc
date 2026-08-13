@@ -113,9 +113,9 @@ int decode_sbstype1(const sbsmsg_t *msg, sbssat_t *sbssat)
                         {
                             sat = 0; /*  62-119: future gnss */
                         }
-                    else if (i <= 138)
+                    else if (i <= 158)
                         {
-                            sat = satno(SYS_SBS, i); /* 120-138: geo/waas */
+                            sat = satno(SYS_SBS, i); /* 120-158: geo/waas */
                         }
                     else if (i <= 182)
                         {

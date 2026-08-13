@@ -37,13 +37,14 @@ void gps_l1_ca_code_gen_int(own::span<int32_t> dest, int32_t prn, uint32_t chip_
     bool aux;
 
     // G2 Delays as defined in GPS-ISD-200D
-    const std::array<int32_t, 51> delays = {5 /*PRN1*/, 6, 7, 8, 17, 18, 139, 140, 141, 251, 252, 254, 255, 256, 257, 258, 469, 470, 471, 472,
+    const std::array<int32_t, 71> delays = {5 /*PRN1*/, 6, 7, 8, 17, 18, 139, 140, 141, 251, 252, 254, 255, 256, 257, 258, 469, 470, 471, 472,
         473, 474, 509, 512, 513, 514, 515, 516, 859, 860, 861, 862 /*PRN32*/,
         145 /*PRN120*/, 175, 52, 21, 237, 235, 886, 657, 634, 762,
-        355, 1012, 176, 603, 130, 359, 595, 68, 386 /*PRN138*/};
+        355, 1012, 176, 603, 130, 359, 595, 68, 386 /*PRN138*/, 797, 456, 499, 883, 307, 127, 211, 121, 118, 163 /*PRN148*/,
+        628, 853, 484, 289, 811, 202, 1021, 463, 568, 904 /*PRN158*/};
 
     // compute delay array index for given PRN number
-    if (120 <= prn && prn <= 138)
+    if (120 <= prn && prn <= 158)
         {
             prn_idx = prn - 88;  // SBAS PRNs are at array indices 32 to 50 (offset: -120+33-1 =-88)
         }
@@ -53,7 +54,7 @@ void gps_l1_ca_code_gen_int(own::span<int32_t> dest, int32_t prn, uint32_t chip_
         }
 
     // A simple error check
-    if ((prn_idx < 0) || (prn_idx > 50))
+    if ((prn_idx < 0) || (prn_idx > 70))
         {
             return;
         }
