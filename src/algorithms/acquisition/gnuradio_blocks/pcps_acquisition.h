@@ -53,6 +53,7 @@
 #include <gnuradio/types.h>                   // for gr_vector_const_void_star
 #include <volk/volk_complex.h>                // for lv_16sc_t
 #include <volk_gnsssdr/volk_gnsssdr_alloc.h>  // for volk_gnsssdr::vector
+#include <array>
 #include <complex>
 #include <cstdint>
 #include <memory>
@@ -151,7 +152,7 @@ public:
      * \param doppler_center - Frequency center of the search grid [Hz].
      * \param aiding_level - Aiding level: 0 - unassisted, 1 - LO drift, 2 - predicted doppler.
      */
-    void set_doppler_center(int32_t doppler_center, int32_t aiding_level = 1);
+    void set_doppler_center(int32_t doppler_center, int32_t aiding_level = 1) override;
 
     /*!
      * \brief Parallel Code Phase Search Acquisition signal processing.
@@ -201,16 +202,16 @@ private:
 
     const Acq_Conf d_acq_parameters;
     const std::string d_dump_filename;
-    float d_doppler_max;
+    const std::array<float, AIDING_COUNT> d_doppler_max;
     const uint32_t d_samplesPerChip;
-    uint32_t d_doppler_step;
+    const std::array<uint32_t, AIDING_COUNT> d_doppler_step;
     int32_t d_aiding_level;
     const uint32_t d_consumed_samples;
     const uint32_t d_fft_size;
     const uint32_t d_effective_fft_size;
     const uint32_t d_magnitude_grid_stride;
     const uint32_t d_doppler_wipeoffs_stride;
-    uint32_t d_num_doppler_bins;
+    const std::array<uint32_t, AIDING_COUNT> d_num_doppler_bins;
     const uint32_t d_num_doppler_bins_step2;
     const uint32_t d_dump_channel;
     float d_threshold;
