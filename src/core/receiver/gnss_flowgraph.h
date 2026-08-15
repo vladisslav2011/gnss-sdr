@@ -291,6 +291,7 @@ private:
     bool enable_fpga_offloading_;
     bool enable_osnma_rx_;
     bool enable_e6_has_rx_;
+    bool repeat_acquisition_;
 };
 
 
