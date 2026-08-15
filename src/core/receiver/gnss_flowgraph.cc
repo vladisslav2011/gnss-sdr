@@ -129,6 +129,7 @@ GNSSFlowgraph::GNSSFlowgraph(std::shared_ptr<ConfigurationInterface> configurati
       enable_e6_has_rx_(false)
 {
     enable_fpga_offloading_ = configuration_->property("GNSS-SDR.enable_FPGA", false);
+    repeat_acquisition_ = configuration_->property("Channels.repeat_acquisition", false);
     init();
 }
 
@@ -2105,38 +2106,56 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         case 2:
             gs = channels_[who]->get_signal();
             DLOG(INFO) << "Channel " << who << " TRK FAILED satellite " << gs.get_satellite();
-            if (acq_channels_count_ < max_acq_channels_)
+            if (repeat_acquisition_)
                 {
-                    // try to acquire the same satellite
-                    channels_state_[who] = 2;
-                    acq_channels_count_++;
-                    DLOG(INFO) << "Channel " << who << " Starting acquisition " << gs.get_satellite() << ", Signal " << gs.get_signal_str();
-                    channels_[who]->set_signal(channels_[who]->get_signal());
+                    if (acq_channels_count_ < max_acq_channels_)
+                        {
+                            // try to acquire the same satellite
+                            channels_state_[who] = 2;
+                            acq_channels_count_++;
+                            DLOG(INFO) << "Channel " << who << " Starting acquisition " << gs.get_satellite() << ", Signal " << gs.get_signal_str();
+                            channels_[who]->set_signal(channels_[who]->get_signal());
 
 #if ENABLE_FPGA
-                    if (enable_fpga_offloading_)
-                        {
-                            // create a task for the FPGA such that it doesn't stop the flow
-                            std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[who]);
-                            tmp_thread.detach();
+                            if (enable_fpga_offloading_)
+                                {
+                                    // create a task for the FPGA such that it doesn't stop the flow
+                                    std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[who]);
+                                    tmp_thread.detach();
+                                }
+                            else
+                                {
+                                    channels_[who]->start_acquisition();
+                                }
+#else
+                            channels_[who]->start_acquisition();
+#endif
                         }
                     else
                         {
-                            channels_[who]->start_acquisition();
+                            channels_state_[who] = 0;
+                            LOG(INFO) << "Channel " << who << " Idle state";
+                            if (sat == 0)
+                                {
+                                    push_back_signal(channels_[who]->get_signal());
+                                }
                         }
-#else
-                    channels_[who]->start_acquisition();
-#endif
-                }
-            else
-                {
-                    channels_state_[who] = 0;
-                    LOG(INFO) << "Channel " << who << " Idle state";
-                    if (sat == 0)
-                        {
-                            push_back_signal(channels_[who]->get_signal());
-                        }
-                }
+                    }
+                else
+                    {
+                        channels_state_[who] = 0;
+                        if (acq_channels_count_ > 0)
+                            {
+                                acq_channels_count_--;
+                            }
+                        // call the acquisition manager to assign new satellite and start next acquisition (if required)
+                        acquisition_manager(who);
+                        // push back the old signal AFTER assigning a new one to avoid selecting the same signal
+                        if (sat == 0)
+                            {
+                                push_back_signal(gs);
+                            }
+                    }
             break;
         case 10:  // request standby mode
             for (size_t n = 0; n < channels_.size(); n++)
