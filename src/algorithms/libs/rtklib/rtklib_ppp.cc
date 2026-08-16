@@ -1901,7 +1901,7 @@ void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
             rtk->sol.dtr[1] = rtk->x[IC_PPP(1, opt)] - rtk->x[IC_PPP(0, opt)];
             for (i = 0; i < n && i < MAXOBS; i++)
                 {
-                    const int ppp_snr_index = obs[i].SNR[0] <= obs[i].SNR[1] ? 0 : 1;
+                    const int ppp_snr_index = obs[i].SNR[0] <= obs[i].SNR[1] ? 1 : 0;
                     rtk->ssat[obs[i].sat - 1].snr[0] = obs[i].SNR[ppp_snr_index];
                     rtk->ssat[obs[i].sat - 1].code[0] = obs[i].code[ppp_snr_index];
                 }
