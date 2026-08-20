@@ -585,6 +585,7 @@ eph_t eph_to_rtklib(const Gps_Ephemeris& gps_eph,
     rtklib_sat.toes = gps_eph.toe;
     rtklib_sat.toc = gpst2time(rtklib_sat.week, gps_eph.toc);
     rtklib_sat.ttr = gpst2time(rtklib_sat.week, gps_eph.tow);
+    rtklib_sat.svh = gps_eph.SV_health;
 
     /* adjustment for week handover */
     double tow;
@@ -818,6 +819,7 @@ eph_t eph_to_rtklib(const Gps_CNAV_Ephemeris& gps_cnav_eph)
     rtklib_sat.cnav_wnop = gps_cnav_eph.WNop;
     rtklib_sat.cnav_ura_valid = 1;
     rtklib_sat.sva = gps_cnav_ura_to_rtklib_sva(gps_cnav_eph.URAED, gps_cnav_eph.URANED0);
+    rtklib_sat.svh = (gps_cnav_eph.signal_health & 6) | gps_cnav_eph.integrity_status_flag | gps_cnav_eph.alert_flag;
 
     rtklib_sat.week = adjgpsweek(gps_cnav_eph.WN); /* week of tow */
     rtklib_sat.cic = gps_cnav_eph.Cic;
