@@ -311,6 +311,7 @@ private:
     static bool is_gps_lnav_prn(uint32_t prn);
     static bool is_qzss_lnav_prn(uint32_t prn);
     static void restore_gps_lnav_ephemeris_metadata(Gps_Ephemeris& ephemeris);
+    static void restore_gps_lnav_almanac_metadata(Gps_Almanac& alm);
     bool read_gal_almanac_from_gsa(const std::string& file_name);
     // assistance protocol structure
     supl_ctx_t ctx{};

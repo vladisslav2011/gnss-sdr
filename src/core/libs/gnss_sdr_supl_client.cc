@@ -81,6 +81,13 @@ void Gnss_Sdr_Supl_Client::restore_gps_lnav_ephemeris_metadata(Gps_Ephemeris& ep
 }
 
 
+void Gnss_Sdr_Supl_Client::restore_gps_lnav_almanac_metadata(Gps_Almanac& alm)
+{
+    const bool is_qzss = is_qzss_lnav_prn(alm.PRN);
+    alm.set_system(is_qzss ? 'J' : 'G');
+}
+
+
 void Gnss_Sdr_Supl_Client::print_assistance()
 {
     if (assist.set & SUPL_RRLP_ASSIST_REFTIME)
@@ -1008,19 +1015,46 @@ bool Gnss_Sdr_Supl_Client::save_gal_iono_xml(const std::string& file_name, Galil
 bool Gnss_Sdr_Supl_Client::load_gps_almanac_xml(const std::string& file_name)
 {
     std::ifstream ifs;
+    std::map<int, Gps_Almanac> loaded_almanac_map;
+    gps_almanac_map.clear();
     try
         {
             ifs.open(file_name.c_str(), std::ifstream::binary | std::ifstream::in);
             boost::archive::xml_iarchive xml(ifs);
-            gps_almanac_map.clear();
-            xml >> boost::serialization::make_nvp("GNSS-SDR_gps_almanac_map", this->gps_almanac_map);
-            LOG(INFO) << "Loaded GPS almanac map data with " << this->gps_almanac_map.size() << " satellites";
+            xml >> boost::serialization::make_nvp("GNSS-SDR_gps_almanac_map", loaded_almanac_map);
         }
     catch (std::exception& e)
         {
             LOG(WARNING) << e.what() << "File: " << file_name;
             return false;
         }
+    size_t rejected_records = 0;
+    for (auto& item : loaded_almanac_map)
+        {
+            const int map_key = item.first;
+            Gps_Almanac& alm = item.second;
+            const bool key_matches_prn = map_key >= 0 && static_cast<uint32_t>(map_key) == alm.PRN;
+            const bool valid_prn = is_gps_lnav_prn(alm.PRN) || is_qzss_lnav_prn(alm.PRN);
+
+            if (!key_matches_prn || !valid_prn)
+                {
+                    LOG(WARNING) << "Rejected malformed GPS/QZSS almanac from " << file_name
+                                 << ": map key=" << map_key << ", PRN=" << alm.PRN;
+                    ++rejected_records;
+                    continue;
+                }
+
+            restore_gps_lnav_almanac_metadata(alm);
+            gps_almanac_map.emplace(map_key, std::move(alm));
+        }
+
+    if (gps_almanac_map.empty())
+        {
+            LOG(WARNING) << "No valid GPS/QZSS almanac records found in " << file_name;
+            return false;
+        }
+
+    LOG(INFO) << "Loaded GPS/QZSS almanac map data with " << this->gps_almanac_map.size() << " satellites";
     return true;
 }
 
