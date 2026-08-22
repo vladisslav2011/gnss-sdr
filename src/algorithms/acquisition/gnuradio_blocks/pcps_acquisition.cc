@@ -123,15 +123,15 @@ pcps_acquisition::pcps_acquisition(const Acq_Conf& conf_)
       d_acq_parameters(conf_),
       d_dump_filename(conf_.dump ? get_dump_filename(conf_.dump_filename) : std::string{}),
       d_doppler_max({
-            static_cast<float>(conf_.coarse_doppler_max),
+            static_cast<float>(conf_.wide_doppler_max),
             static_cast<float>(conf_.doppler_max),
-            static_cast<float>(conf_.fine_doppler_max)
+            static_cast<float>(conf_.narrow_doppler_max)
             }),
       d_samplesPerChip(conf_.samples_per_chip),
       d_doppler_step({
-            uint32_t(conf_.coarse_doppler_step),
+            uint32_t(conf_.wide_doppler_step),
             uint32_t(conf_.doppler_step),
-            uint32_t(conf_.fine_doppler_step)
+            uint32_t(conf_.narrow_doppler_step)
             }),
       d_aiding_level(1),
       d_consumed_samples(conf_.sampled_ms * conf_.samples_per_ms * (conf_.bit_transition_flag ? 2.0 : 1.0)),
