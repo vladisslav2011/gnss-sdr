@@ -605,7 +605,8 @@ bool ControlThread::read_assistance_from_XML()
                         gps_alm_iter != supl_client_ephemeris_.gps_almanac_map.cend();
                         gps_alm_iter++)
                         {
-                            std::cout << "From XML file: Read GPS almanac for satellite " << Gnss_Satellite("GPS", gps_alm_iter->second.PRN) << '\n';
+                            const std::string system = gps_alm_iter->second.get_system() == 'J' ? "QZSS" : "GPS";
+                            std::cout << "From XML file: Read " << system << " almanac for satellite " << Gnss_Satellite(system, gps_alm_iter->second.PRN) << '\n';
                             const std::shared_ptr<Gps_Almanac> tmp_obj = std::make_shared<Gps_Almanac>(gps_alm_iter->second);
                             flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
                         }
@@ -707,7 +708,8 @@ bool ControlThread::read_assistance_from_XML()
                         gps_alm_iter != supl_client_ephemeris_.gps_almanac_map.cend();
                         gps_alm_iter++)
                         {
-                            std::cout << "From XML file: Read GPS almanac for satellite " << Gnss_Satellite("GPS", gps_alm_iter->second.PRN) << '\n';
+                            const std::string system = gps_alm_iter->second.get_system() == 'J' ? "QZSS" : "GPS";
+                            std::cout << "From XML file: Read " << system << " almanac for satellite " << Gnss_Satellite(system, gps_alm_iter->second.PRN) << '\n';
                             const std::shared_ptr<Gps_Almanac> tmp_obj = std::make_shared<Gps_Almanac>(gps_alm_iter->second);
                             flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
                         }
