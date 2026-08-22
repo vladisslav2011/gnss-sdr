@@ -643,7 +643,7 @@ bool Gnss_Sdr_Supl_Client::load_beidou_cnav1_ephemeris_xml(const std::string& fi
             ifs.open(file_name.c_str(), std::ifstream::binary | std::ifstream::in);
             boost::archive::xml_iarchive xml(ifs);
             beidou_cnav1_ephemeris_map.clear();
-            xml >> boost::serialization::make_nvp("GNSS-SDR_bds_cnav_ephemeris_map", this->beidou_cnav1_ephemeris_map);
+            xml >> boost::serialization::make_nvp("GNSS-SDR_bds_cnav1_ephemeris_map", this->beidou_cnav1_ephemeris_map);
             LOG(INFO) << "Loaded BeiDou CNAV1 Ephemeris map data with " << this->beidou_cnav1_ephemeris_map.size() << " satellites";
         }
     catch (std::exception& e)
