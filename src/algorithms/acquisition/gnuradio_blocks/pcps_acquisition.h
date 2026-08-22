@@ -150,9 +150,9 @@ public:
     /*!
      * \brief Set Doppler center frequency for the grid search. It will refresh the Doppler grid.
      * \param doppler_center - Frequency center of the search grid [Hz].
-     * \param aiding_level - Aiding level: 0 - unassisted, 1 - LO drift, 2 - predicted doppler.
+     * \param assist_level - Assistance level: 0 - unassisted, 1 - LO drift, 2 - predicted doppler.
      */
-    void set_doppler_center(int32_t doppler_center, int32_t aiding_level = 1) override;
+    void set_doppler_center(int32_t doppler_center, int32_t assist_level = 1) override;
 
     /*!
      * \brief Parallel Code Phase Search Acquisition signal processing.
@@ -205,7 +205,7 @@ private:
     const std::array<float, AIDING_COUNT> d_doppler_max;
     const uint32_t d_samplesPerChip;
     const std::array<uint32_t, AIDING_COUNT> d_doppler_step;
-    int32_t d_aiding_level;
+    int32_t d_assist_level;
     const uint32_t d_consumed_samples;
     const uint32_t d_fft_size;
     const uint32_t d_effective_fft_size;
