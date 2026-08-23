@@ -168,7 +168,15 @@ double Gnss_Almanac::predicted_doppler(double rx_time_s,
         {
             predicted_doppler = 0.0;
         }
-    std::cout<<"A EL["<<System<<PRN<<"]="<<el*R2D<<"deg "<<predicted_doppler<<"Hz\n";
+    if (!std::isfinite(predicted_doppler))
+        {
+            Visible_Satellites::remove(System, PRN);
+        }
+    else
+        {
+            Visible_Satellites::add(System, PRN, az, el);
+        }
+    //std::cout<<"A EL["<<System<<PRN<<"]="<<el*R2D<<"deg ("<<az*R2D<<") "<<predicted_doppler<<"Hz\n";
     return predicted_doppler;
 }
 
