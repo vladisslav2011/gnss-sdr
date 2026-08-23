@@ -173,7 +173,7 @@ double Gnss_Ephemeris::predicted_doppler(double rx_time_s,
         {
             Visible_Satellites::add(System, PRN, az, el);
         }
-    std::cout << "E EL[" << System << PRN << "]=" << el * R2D << "deg " << predicted_doppler << "Hz\n";
+    // std::cout << "E EL[" << System << PRN << "]=" << el * R2D << "deg " << predicted_doppler << "Hz\n";
     return predicted_doppler;
 }
 
