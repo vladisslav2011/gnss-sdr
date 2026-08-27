@@ -1674,7 +1674,7 @@ def plot_satellite_tracks(
                 bbox={
                     "facecolor": system_colors.get(prn[0], "white"),
                     "alpha": 0.2,
-                    "pad": 2,
+                    #"pad": 2,
                 },
                 zorder=3,
             )
@@ -1708,7 +1708,7 @@ def plot_satellite_tracks(
     plt.title(
         f"GNSS skyplot from {abs(lat_deg):.2f}° {lat_hemisphere}, "
         f"{abs(lon_deg):.2f}° {lon_hemisphere}",
-        pad=25,
+        #pad=25,
         fontsize=20,
     )
 
