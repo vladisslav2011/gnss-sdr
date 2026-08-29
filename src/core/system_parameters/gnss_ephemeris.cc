@@ -164,14 +164,6 @@ double Gnss_Ephemeris::predicted_doppler(double rx_time_s,
         {
             predicted_doppler = 0.0;
         }
-    if (!std::isfinite(predicted_doppler))
-        {
-            Visible_Satellites::remove(System, PRN);
-        }
-    else
-        {
-            Visible_Satellites::add(System, PRN, az, el);
-        }
     //std::cout<<"E EL["<<System<<PRN<<"]="<<el*R2D<<"deg ("<<az*R2D<<") "<<predicted_doppler<<"Hz\n";
     return predicted_doppler;
 }
