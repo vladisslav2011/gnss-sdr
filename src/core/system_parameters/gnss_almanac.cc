@@ -87,7 +87,7 @@ double Gnss_Almanac::predicted_doppler(double rx_time_s,
     double el = asin(enu[2] / sqrt(enu[0] * enu[0] + enu[1] * enu[1] + enu[2] * enu[2]));
     double az = atan2(enu[0], enu[1]);
     az = (az < 0) ? az + TWO_PI : az;
-    if (!std::isfinite(el) || 0. > el)
+    if (!std::isfinite(el) || -5. > el)
         {
             Visible_Satellites::remove(System, PRN);
             return std::numeric_limits<double>::quiet_NaN();

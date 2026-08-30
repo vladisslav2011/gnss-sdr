@@ -1812,6 +1812,7 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                     if(iter != ephemeris_map.cend())
                                                     {
                                                         aiding_level = 2;
+                                                        ephemeris_found = true;
                                                         auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                         TOW /= 1000;
                                                         double predicted = iter->second.predicted_doppler(TOW,latitude_deg,longitude_deg,height_m,
