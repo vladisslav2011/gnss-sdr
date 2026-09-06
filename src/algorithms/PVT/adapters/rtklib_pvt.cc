@@ -954,6 +954,10 @@ double Rtklib_Pvt::get_clock_drift_ppm() const
     return pvt_->get_clock_drift_ppm();
 }
 
+std::mutex & Rtklib_Pvt::get_navdata_mutex() const
+{
+    return pvt_->get_navdata_mutex();
+}
 
 void Rtklib_Pvt::connect(gr::top_block_sptr top_block)
 {
