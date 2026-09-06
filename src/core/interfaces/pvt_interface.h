@@ -35,6 +35,7 @@
 #include "gps_cnav_ephemeris.h"
 #include "gps_ephemeris.h"
 #include <map>
+#include <mutex>
 
 /** \addtogroup Core
  * \{ */
@@ -65,6 +66,7 @@ public:
     virtual std::map<int, Galileo_Almanac> get_galileo_almanac() const = 0;
     virtual std::map<int, Beidou_Dnav_Almanac> get_beidou_dnav_almanac() const = 0;
     virtual std::map<int, Glonass_Gnav_Ephemeris> get_glonass_gnav_ephemeris() const = 0;
+    virtual std::mutex & get_navdata_mutex() const = 0;
     virtual double get_clock_drift_ppm() const = 0;
     virtual void set_signal_mask(const std::vector<std::string>& mask, bool exclude) = 0;
     virtual bool get_signal_mask(const std::string& mask) = 0;

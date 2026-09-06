@@ -1778,6 +1778,7 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                     bool has_solution = latest_pvt.get() != nullptr;
                                     if (has_solution)
                                         {
+                                            std::unique_lock<std::mutex> lck(get_pvt()->get_navdata_mutex());
                                             assist_level = ASSIST_COMPENSATEED_DRIFT;
                                             double TOW = static_cast<double>(latest_pvt->TOW_at_current_symbol_ms) * 0.001;
                                             double drift_correction = latest_pvt->user_clk_drift_ppm * -1e-6;

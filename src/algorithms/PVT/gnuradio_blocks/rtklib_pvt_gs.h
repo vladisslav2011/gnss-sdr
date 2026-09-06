@@ -144,6 +144,11 @@ public:
     double get_clock_drift_ppm() const;
 
     /*!
+     * \brief Navidation data mutex from PVT block
+     */
+    std::mutex& get_navdata_mutex();
+
+    /*!
      * \brief Clear all ephemeris information and the almanacs for GPS and Galileo
      */
     void clear_ephemeris();
@@ -370,6 +375,7 @@ private:
     const bool d_osnma_strict;
     std::map<uint16_t,bool> exclude_mask{};
     std::mutex sigmask_mutex{};
+    std::mutex navdata_mutex{};
 };
 
 

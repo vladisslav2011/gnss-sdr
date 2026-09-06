@@ -1450,6 +1450,7 @@ void rtklib_pvt_gs::msg_handler_telemetry(const pmt::pmt_t& msg)
     try
         {
             const size_t msg_type_hash_code = pmt::any_ref(msg).type().hash_code();
+            std::unique_lock<std::mutex> lck(navdata_mutex);
             // ************************* GPS telemetry *************************
             if (msg_type_hash_code == d_gps_ephemeris_sptr_type_hash_code)
                 {
@@ -2158,9 +2159,14 @@ double rtklib_pvt_gs::get_clock_drift_ppm() const
     return d_user_pvt_solver->get_clock_drift_ppm();
 }
 
+std::mutex& rtklib_pvt_gs::get_navdata_mutex()
+{
+    return navdata_mutex;
+}
 
 void rtklib_pvt_gs::clear_ephemeris()
 {
+    std::unique_lock<std::mutex> lck(navdata_mutex);
     d_internal_pvt_solver->clear_gps_ephemerides();
     d_internal_pvt_solver->gps_almanac_map.clear();
     d_internal_pvt_solver->galileo_ephemeris_map.clear();
