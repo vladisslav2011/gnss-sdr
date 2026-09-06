@@ -1776,13 +1776,18 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                     // set Doppler center to 0 Hz taking into account detected clock drift
                                     std::shared_ptr<Monitor_Pvt> latest_pvt = channels_status_->get_current_status_pvt();
                                     bool has_solution = latest_pvt.get() != nullptr;
+                                    double TOW = 0.;
                                     if (has_solution)
                                         {
                                             std::unique_lock<std::mutex> lck(get_pvt()->get_navdata_mutex());
                                             assist_level = ASSIST_COMPENSATEED_DRIFT;
-                                            double TOW = static_cast<double>(latest_pvt->TOW_at_current_symbol_ms) * 0.001;
+                                            TOW = static_cast<double>(latest_pvt->TOW_at_current_symbol_ms) * 0.001;
                                             double drift_correction = latest_pvt->user_clk_drift_ppm * -1e-6;
                                             corrected_center = project_doppler(channels_[current_channel]->get_signal().get_signal_str(), drift_correction * FREQ1);
+                                        }
+                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
+                                    if (has_solution && freq_idx != SIGNAL_FREQ_IDX.end())
+                                        {
                                             const Gnss_Satellite& sat = channels_[current_channel]->get_signal().get_satellite();
                                             if ((sat.get_system() == "GPS") || (sat.get_system() == "QZSS"))
                                                 {
@@ -1793,7 +1798,6 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                         {
                                                             ephemeris_found = true;
                                                             assist_level = ASSIST_ESTIMATED_DOPPLER;
-                                                            auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                             double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
                                                                 latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
                                                             // std::cout<<"[[[[ found valid ephemeris for J"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
@@ -1816,7 +1820,6 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                                 {
                                                                     ephemeris_found = true;
                                                                     assist_level = ASSIST_ESTIMATED_DOPPLER;
-                                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                                     double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
                                                                         latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
                                                                     // std::cout<<"[[[[ found valid ephemeris for J"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
@@ -1839,7 +1842,6 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                             if (iter != almanac_map.cend())
                                                                 {
                                                                     assist_level = ASSIST_ESTIMATED_DOPPLER;
-                                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                                     double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
                                                                         latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
                                                                     // std::cout<<"[[[[ found valid almanac for G"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
@@ -1867,7 +1869,6 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                     if (iter != ephemeris_map.cend())
                                                         {
                                                             assist_level = ASSIST_ESTIMATED_DOPPLER;
-                                                            auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                             double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
                                                                 latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
                                                             // std::cout<<"[[[[ found valid ephemeris for E"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
@@ -1890,7 +1891,6 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                             if (iter != almanac_map.cend())
                                                                 {
                                                                     assist_level = ASSIST_ESTIMATED_DOPPLER;
-                                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                                     double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
                                                                         latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
                                                                     // std::cout<<"[[[[ found valid almanac for E"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
@@ -1920,7 +1920,6 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                 if(iter != ephemeris_map.cend())
                                                 {
                                                     assist_level = ASSIST_ESTIMATED_DOPPLER;
-                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                     double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
                                                         latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
                                                     std::cout<<"[[[[ found valid ephemeris for R"<<sat.get_PRN()<<" predicted="<<predicted<<"\n";
@@ -1939,7 +1938,6 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                         {
                                                             ephemeris_found = true;
                                                             assist_level = ASSIST_ESTIMATED_DOPPLER;
-                                                            auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                             double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
                                                                 latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
                                                             if (std::isfinite(predicted))
@@ -1962,7 +1960,6 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                                 {
                                                                     ephemeris_found = true;
                                                                     assist_level = ASSIST_ESTIMATED_DOPPLER;
-                                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                                     double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
                                                                         latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
                                                                     if (std::isfinite(predicted))
@@ -1986,7 +1983,6 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                             if (iter != almanac_map.cend())
                                                                 {
                                                                     assist_level = ASSIST_ESTIMATED_DOPPLER;
-                                                                    auto freq_idx = SIGNAL_FREQ_IDX.find(channels_[current_channel]->get_signal().get_signal_str());
                                                                     double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
                                                                         latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
                                                                     if (std::isfinite(predicted))
