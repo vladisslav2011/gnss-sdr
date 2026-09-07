@@ -177,9 +177,6 @@ public:
     void set_signal_mask(const std::vector<std::string>& mask, bool exclude);
     bool get_signal_mask(const std::string& mask);
 
-    void set_signal_mask(const std::vector<std::string>& mask, bool exclude);
-    bool get_signal_mask(const std::string& mask);
-
     int work(int noutput_items, gr_vector_const_void_star& input_items,
         gr_vector_void_star& output_items) override;  //!< PVT Signal Processing
 
