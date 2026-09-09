@@ -1143,12 +1143,35 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
     // New non-coherent integration started
     if (d_state == 0)
         {
+            d_state = 1;
+            if (d_step_two)
+                {
+                    // Perform second step alignment to code boundary
+                    // Calculate alignment taking into account possible runaway in non-blocking mode
+                    const auto samples_per_code = static_cast<int64_t>(d_acq_parameters.samples_per_code);
+                    int64_t n_skip = static_cast<int64_t>(std::floor(d_gnss_synchro->Acq_delay_samples / d_acq_parameters.resampler_ratio)) -
+                                        (d_sample_count - static_cast<int64_t>(std::floor(d_gnss_synchro->Acq_samplestamp_samples / d_acq_parameters.resampler_ratio))) % samples_per_code;
+                    // Make sure, that number of skipped samples is not negative
+                    n_skip = (n_skip + d_samples_to_consume) % samples_per_code;
+                    if (n_skip > 0)
+                        {
+                            const int64_t n_consume = std::min(n_skip, static_cast<int64_t>(ninput_items[0]));
+                            DLOG(INFO) << "Performing second acquisition step alignment in Channel: " << d_channel << ". Remaining samples: " << n_skip
+                                        << " Acq_samplestamp_samples: " << d_gnss_synchro->Acq_samplestamp_samples
+                                        << " d_sample_count: " << d_sample_count;
+                            d_sample_count += n_consume;
+                            consume_each(n_consume);
+                            if (n_consume < n_skip)
+                                {
+                                    d_state = 0;
+                                }
+                        }
+                }
             // Restart acquisition variables
             d_gnss_synchro->Acq_delay_samples = 0.0;
             d_gnss_synchro->Acq_doppler_hz = 0.0;
             d_gnss_synchro->Acq_samplestamp_samples = 0ULL;
             d_gnss_synchro->Acq_doppler_step = 0U;
-            d_state = 1;
             d_buffer_sample_count = 0U;
             d_num_noncoherent_integrations_counter = 0U;
             if (d_data_buffer_size)
