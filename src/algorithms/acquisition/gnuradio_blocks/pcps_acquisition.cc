@@ -170,7 +170,7 @@ pcps_acquisition::pcps_acquisition(const Acq_Conf& conf_)
       d_ifft(gnss_fft_rev_make_unique(d_fft_size)),
       d_grid_doppler_wipeoffs(*std::max_element(d_num_doppler_bins.begin(), d_num_doppler_bins.end()) * d_doppler_wipeoffs_stride),
       d_fft_codes(d_fft_size),
-      d_data_buffer(d_consumed_samples),
+      d_data_buffer(d_acq_parameters.blocking ? d_consumed_samples : d_consumed_samples * d_acq_parameters.max_dwells),
       d_fft_if(gnss_fft_fwd_make_unique(d_fft_size))
 {
     this->message_port_register_out(pmt::mp("events"));
@@ -744,9 +744,10 @@ void pcps_acquisition::acquisition_core(uint64_t sample_count)
 
     // Initialize acquisition algorithm
     const gr_complex* in = nullptr;  // Get the input samples pointer
+    const size_t offset = d_acq_parameters.blocking ? 0 : d_consumed_samples * d_num_noncoherent_integrations_counter;
     if (d_cshort)
         {
-            volk_gnsssdr_16ic_convert_32fc(d_input_signal.data(), d_data_buffer_sc.data(), d_consumed_samples);
+            volk_gnsssdr_16ic_convert_32fc(d_input_signal.data() + offset, d_data_buffer_sc.data(), d_consumed_samples);
             if (d_fft_size > d_consumed_samples)
                 {
                     std::fill_n(d_input_signal.data() + d_consumed_samples, d_fft_size - d_consumed_samples, gr_complex(0.0, 0.0));
@@ -755,11 +756,13 @@ void pcps_acquisition::acquisition_core(uint64_t sample_count)
         }
     else if (d_fft_size == d_consumed_samples)
         {
-            in = d_data_buffer.data();
+            in = d_data_buffer.data() + offset;
         }
     else
         {
-            std::copy(d_data_buffer.data(), d_data_buffer.data() + d_consumed_samples, d_input_signal.data());
+            std::copy(d_data_buffer.data() + offset,
+                      d_data_buffer.data()  + offset + d_consumed_samples,
+                      d_input_signal.data());
             std::fill_n(d_input_signal.data() + d_consumed_samples, d_fft_size - d_consumed_samples, gr_complex(0.0, 0.0));
             in = d_input_signal.data();
         }
@@ -797,8 +800,11 @@ void pcps_acquisition::acquisition_core(uint64_t sample_count)
                 }
             else
                 {
-                    d_buffer_count = 0;
-                    d_state = 1;
+                    if (d_acq_parameters.blocking)
+                        {
+                            d_buffer_count = 0;
+                            d_state = 1;
+                        }
                 }
 
             if (d_num_noncoherent_integrations_counter == d_acq_parameters.max_dwells)
@@ -900,9 +906,8 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
     gr::thread::scoped_lock lk(d_setlock);
     if (!d_active || d_worker_active)
         {
-            // do not consume samples while performing a non-coherent integration
-            const bool consume_samples = ((!d_active) || (d_worker_active && (d_num_noncoherent_integrations_counter == d_acq_parameters.max_dwells)));
-            if ((!d_acq_parameters.blocking_on_standby) && consume_samples)
+            // we can consume samples while performing a non-coherent integration as all required data is already buffered
+            if (!d_acq_parameters.blocking_on_standby)
                 {
                     d_sample_count += static_cast<uint64_t>(ninput_items[0]);
                     consume_each(ninput_items[0]);
@@ -928,8 +933,8 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
             }
         case 1:
             {
-                const auto fit_in_buffer = (ninput_items[0] + d_buffer_count) <= d_consumed_samples;
-                const uint32_t buff_increment = fit_in_buffer ? ninput_items[0] : d_consumed_samples - d_buffer_count;
+                const auto fit_in_buffer = (ninput_items[0] + d_buffer_count) <= d_data_buffer.size();
+                const uint32_t buff_increment = fit_in_buffer ? ninput_items[0] : d_data_buffer.size() - d_buffer_count;
 
                 if (d_cshort)
                     {
@@ -943,7 +948,7 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                     }
 
                 // If buffer will be full in next iteration
-                if (d_buffer_count >= d_consumed_samples)
+                if (d_buffer_count >= d_data_buffer.size())
                     {
                         d_state = 2;
                     }
