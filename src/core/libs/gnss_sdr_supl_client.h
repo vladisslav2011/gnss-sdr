@@ -164,6 +164,17 @@ public:
         std::map<int, Beidou_Cnav1_Ephemeris> eph_map);
 
     /*!
+     * \brief Read BeiDou CNAV2 ephemeris map from XML file
+     */
+    bool load_beidou_cnav2_ephemeris_xml(const std::string& file_name);
+
+    /*!
+     * \brief Save BeiDou CNAV2 ephemeris map to XML file.
+     */
+    bool save_beidou_cnav2_ephemeris_map_xml(const std::string& file_name,
+        std::map<int, Beidou_Cnav1_Ephemeris> eph_map);
+
+    /*!
      * \brief Read GLONASS GNAV ephemeris map from XML file
      */
     bool load_gnav_ephemeris_xml(const std::string& file_name);
