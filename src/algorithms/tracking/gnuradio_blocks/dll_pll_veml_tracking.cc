@@ -2708,6 +2708,7 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                             {
                                                 d_dll_bw_hz = d_dll_tgt_bw_hz;
                                                 LOG(INFO) << "Reached narrow dll bw in channel " << d_channel << "\n";
+                                                std::cout << "Reached narrow dll bw in channel " << d_channel << "\n";
                                             }
                                         d_code_loop_filter.set_noise_bandwidth(d_dll_bw_hz);
                                     }
@@ -2725,6 +2726,7 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                                             {
                                                 d_pll_bw_hz = d_pll_tgt_bw_hz;
                                                 LOG(INFO) << "Reached narrow pll bw in channel " << d_channel << "\n";
+                                                std::cout << "Reached narrow pll bw in channel " << d_channel << "\n";
                                                 enable_extended = true;
                                             }
                                         d_carrier_loop_filter.set_params(d_trk_parameters.fll_bw_hz, d_pll_bw_hz, d_trk_parameters.pll_filter_order);
