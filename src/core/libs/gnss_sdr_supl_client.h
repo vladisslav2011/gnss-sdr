@@ -142,8 +142,6 @@ public:
         std::map<int, Galileo_Ephemeris> eph_map);
 
     /*!
-<<<<<<< HEAD
-=======
      * \brief Read BeiDou DNAV ephemeris map from XML file
      */
     bool load_beidou_dnav_ephemeris_xml(const std::string& file_name);
@@ -166,7 +164,6 @@ public:
         std::map<int, Beidou_Cnav1_Ephemeris> eph_map);
 
     /*!
->>>>>>> 7eb10b4e4... Load BeiDou CNAV1 ephemeris from xml file
      * \brief Read GLONASS GNAV ephemeris map from XML file
      */
     bool load_gnav_ephemeris_xml(const std::string& file_name);
