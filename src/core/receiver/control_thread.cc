@@ -509,6 +509,7 @@ bool ControlThread::read_assistance_from_XML()
     std::string eph_cnav_xml_filename = configuration_->property("GNSS-SDR.SUPL_gps_cnav_ephemeris_xml", eph_cnav_default_xml_filename_);
     std::string eph_bds_dnav_xml_filename = configuration_->property("GNSS-SDR.SUPL_bds_dnav_ephemeris_xml", eph_bds_dnav_default_xml_filename_);
     std::string eph_bds_cnav1_xml_filename = configuration_->property("GNSS-SDR.SUPL_bds_cnav1_ephemeris_xml", eph_bds_cnav1_default_xml_filename_);
+    std::string eph_bds_cnav2_xml_filename = configuration_->property("GNSS-SDR.SUPL_bds_cnav2_ephemeris_xml", eph_bds_cnav2_default_xml_filename_);
     std::string gal_utc_xml_filename = configuration_->property("GNSS-SDR.SUPL_gal_utc_model_xml", gal_utc_default_xml_filename_);
     std::string cnav_utc_xml_filename = configuration_->property("GNSS-SDR.SUPL_cnav_utc_model_xml", cnav_utc_default_xml_filename_);
     std::string eph_glo_xml_filename = configuration_->property("GNSS-SDR.SUPL_glo_ephemeris_xml", eph_glo_gnav_default_xml_filename_);
@@ -528,6 +529,7 @@ bool ControlThread::read_assistance_from_XML()
             eph_cnav_xml_filename = configuration_->property("GNSS-SDR.AGNSS_gps_cnav_ephemeris_xml", eph_cnav_default_xml_filename_);
             eph_bds_dnav_xml_filename = configuration_->property("GNSS-SDR.AGNSS_bds_dnav_ephemeris_xml", eph_bds_dnav_default_xml_filename_);
             eph_bds_cnav1_xml_filename = configuration_->property("GNSS-SDR.AGNSS_bds_cnav1_ephemeris_xml", eph_bds_cnav1_default_xml_filename_);
+            eph_bds_cnav2_xml_filename = configuration_->property("GNSS-SDR.AGNSS_bds_cnav2_ephemeris_xml", eph_bds_cnav2_default_xml_filename_);
             gal_utc_xml_filename = configuration_->property("GNSS-SDR.AGNSS_gal_utc_model_xml", gal_utc_default_xml_filename_);
             cnav_utc_xml_filename = configuration_->property("GNSS-SDR.AGNSS_cnav_utc_model_xml", cnav_utc_default_xml_filename_);
             eph_glo_xml_filename = configuration_->property("GNSS-SDR.AGNSS_glo_ephemeris_xml", eph_glo_gnav_default_xml_filename_);
@@ -687,6 +689,23 @@ bool ControlThread::read_assistance_from_XML()
                         eph_iter++)
                         {
                             std::cout << "From XML file: Read BeiDou CNAV1 ephemeris for satellite " << Gnss_Satellite("Beidou", eph_iter->second.PRN) << '\n';
+                            const std::shared_ptr<Beidou_Cnav1_Ephemeris> tmp_obj = std::make_shared<Beidou_Cnav1_Ephemeris>(eph_iter->second);
+                            flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
+                        }
+                    ret = true;
+                }
+        }
+
+    if (configuration_->property("Channels_5D.count", 0) > 0)
+        {
+            if (supl_client_ephemeris_.load_beidou_cnav2_ephemeris_xml(eph_bds_cnav2_xml_filename) == true)
+                {
+                    std::map<int, Beidou_Cnav1_Ephemeris>::const_iterator eph_iter;
+                    for (eph_iter = supl_client_ephemeris_.beidou_cnav1_ephemeris_map.cbegin();
+                        eph_iter != supl_client_ephemeris_.beidou_cnav1_ephemeris_map.cend();
+                        eph_iter++)
+                        {
+                            std::cout << "From XML file: Read BeiDou CNAV2 ephemeris for satellite " << Gnss_Satellite("Beidou", eph_iter->second.PRN) << '\n';
                             const std::shared_ptr<Beidou_Cnav1_Ephemeris> tmp_obj = std::make_shared<Beidou_Cnav1_Ephemeris>(eph_iter->second);
                             flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
                         }
