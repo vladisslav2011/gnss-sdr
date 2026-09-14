@@ -340,7 +340,8 @@ void pcps_acquisition::log_acquisition(const AcquisitionResult& result) const
                << ", code phase " << d_gnss_synchro->Acq_delay_samples
                << ", doppler " << static_cast<double>(result.doppler)
                << ", input signal power " << d_input_power
-               << ", Assist doppler_center " << d_doppler_center;
+               << ", Assist doppler_center " << d_doppler_center
+               <<"\n";
 }
 
 
@@ -702,8 +703,8 @@ void pcps_acquisition::handle_threshold_reached(AcquisitionResult& result)
         {
             if (d_step_two)
                 {
-                    send_positive_acquisition(result);
                     result.positive_acq = true;
+                    send_positive_acquisition(result);
                     d_active = false;
                 }
             else
@@ -717,8 +718,8 @@ void pcps_acquisition::handle_threshold_reached(AcquisitionResult& result)
         }
     else
         {
-            send_positive_acquisition(result);
             result.positive_acq = true;
+            send_positive_acquisition(result);
             d_active = false;
         }
 }
