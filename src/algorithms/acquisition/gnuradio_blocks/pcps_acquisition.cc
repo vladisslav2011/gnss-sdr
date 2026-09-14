@@ -742,98 +742,106 @@ void pcps_acquisition::acquisition_core(uint64_t sample_count)
 {
     gr::thread::scoped_lock lk(d_setlock);
 
-    // Initialize acquisition algorithm
-    const gr_complex* in = nullptr;  // Get the input samples pointer
-    const size_t offset = d_acq_parameters.blocking ? 0 : d_consumed_samples * d_num_noncoherent_integrations_counter;
-    if (d_cshort)
+    do
         {
-            volk_gnsssdr_16ic_convert_32fc(d_input_signal.data() + offset, d_data_buffer_sc.data(), d_consumed_samples);
-            if (d_fft_size > d_consumed_samples)
+            // Initialize acquisition algorithm
+            const gr_complex* in = nullptr;  // Get the input samples pointer
+            const size_t offset = d_acq_parameters.blocking ? 0 : d_consumed_samples * d_num_noncoherent_integrations_counter;
+            if (offset + d_consumed_samples > d_buffer_count)
                 {
-                    std::fill_n(d_input_signal.data() + d_consumed_samples, d_fft_size - d_consumed_samples, gr_complex(0.0, 0.0));
+                    break;
                 }
-            in = d_input_signal.data();
-        }
-    else if (d_fft_size == d_consumed_samples)
-        {
-            in = d_data_buffer.data() + offset;
-        }
-    else
-        {
-            std::copy(d_data_buffer.data() + offset,
-                      d_data_buffer.data()  + offset + d_consumed_samples,
-                      d_input_signal.data());
-            std::fill_n(d_input_signal.data() + d_consumed_samples, d_fft_size - d_consumed_samples, gr_complex(0.0, 0.0));
-            in = d_input_signal.data();
-        }
-
-    d_num_noncoherent_integrations_counter++;
-
-    DLOG(INFO) << "Channel: " << d_channel
-               << " , doing acquisition of satellite: " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN
-               << " , sample stamp: " << sample_count
-               << ", threshold: " << get_threshold()
-               << ", doppler_max: " << d_doppler_max[d_assist_level]
-               << ", doppler_step: " << d_doppler_step[d_assist_level]
-               << ", use_CFAR_algorithm_flag: " << (d_use_CFAR_algorithm_flag ? "true" : "false");
-
-    lk.unlock();
-
-    // Doppler frequency grid loop, only access variables that doesn't need a lock
-    doppler_grid(in);
-    if (should_dump_channel())
-        {
-            copy_magnitude_grid_to_dump_grid();
-        }
-    auto result = compute_statistics();
-    result.sample_count = sample_count;
-
-    lk.lock();
-
-    update_synchro(result);
-
-    if (!d_acq_parameters.bit_transition_flag)
-        {
-            if (result.test_statistics > get_threshold())
+            if (d_cshort)
                 {
-                    handle_threshold_reached(result);
+                    volk_gnsssdr_16ic_convert_32fc(d_input_signal.data() + offset, d_data_buffer_sc.data(), d_consumed_samples);
+                    if (d_fft_size > d_consumed_samples)
+                        {
+                            std::fill_n(d_input_signal.data() + d_consumed_samples, d_fft_size - d_consumed_samples, gr_complex(0.0, 0.0));
+                        }
+                    in = d_input_signal.data();
+                }
+            else if (d_fft_size == d_consumed_samples)
+                {
+                    in = d_data_buffer.data() + offset;
                 }
             else
                 {
-                    if (d_acq_parameters.blocking)
+                    std::copy(d_data_buffer.data() + offset,
+                            d_data_buffer.data()  + offset + d_consumed_samples,
+                            d_input_signal.data());
+                    std::fill_n(d_input_signal.data() + d_consumed_samples, d_fft_size - d_consumed_samples, gr_complex(0.0, 0.0));
+                    in = d_input_signal.data();
+                }
+
+            d_num_noncoherent_integrations_counter++;
+
+            DLOG(INFO) << "Channel: " << d_channel
+                    << " , doing acquisition of satellite: " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN
+                    << " , sample stamp: " << sample_count
+                    << ", threshold: " << get_threshold()
+                    << ", doppler_max: " << d_doppler_max[d_assist_level]
+                    << ", doppler_step: " << d_doppler_step[d_assist_level]
+                    << ", use_CFAR_algorithm_flag: " << (d_use_CFAR_algorithm_flag ? "true" : "false");
+
+            lk.unlock();
+
+            // Doppler frequency grid loop, only access variables that doesn't need a lock
+            doppler_grid(in);
+            if (should_dump_channel())
+                {
+                    copy_magnitude_grid_to_dump_grid();
+                }
+            auto result = compute_statistics();
+            result.sample_count = sample_count;
+
+            lk.lock();
+
+            update_synchro(result);
+
+            if (!d_acq_parameters.bit_transition_flag)
+                {
+                    if (result.test_statistics > get_threshold())
                         {
-                            d_buffer_count = 0;
-                            d_state = 1;
+                            handle_threshold_reached(result);
+                        }
+                    else
+                        {
+                            if (d_acq_parameters.blocking)
+                                {
+                                    d_buffer_count = 0;
+                                    d_state = 1;
+                                }
+                        }
+
+                    if (d_num_noncoherent_integrations_counter == d_acq_parameters.max_dwells)
+                        {
+                            handle_integration_done(result);
+                        }
+                }
+            else
+                {
+                    if (result.test_statistics > get_threshold())
+                        {
+                            handle_threshold_reached(result);
+                        }
+                    else
+                        {
+                            handle_integration_done(result);
                         }
                 }
 
-            if (d_num_noncoherent_integrations_counter == d_acq_parameters.max_dwells)
+            if ((d_num_noncoherent_integrations_counter == d_acq_parameters.max_dwells) || (result.positive_acq) || (d_acq_parameters.bit_transition_flag))
                 {
-                    handle_integration_done(result);
+                    // Record results to file if required
+                    if (should_dump_channel())
+                        {
+                            pcps_acquisition::dump_results(result);
+                        }
+                    d_num_noncoherent_integrations_counter = 0U;
+                    break;
                 }
         }
-    else
-        {
-            if (result.test_statistics > get_threshold())
-                {
-                    handle_threshold_reached(result);
-                }
-            else
-                {
-                    handle_integration_done(result);
-                }
-        }
-
-    if ((d_num_noncoherent_integrations_counter == d_acq_parameters.max_dwells) || (result.positive_acq) || (d_acq_parameters.bit_transition_flag))
-        {
-            // Record results to file if required
-            if (should_dump_channel())
-                {
-                    pcps_acquisition::dump_results(result);
-                }
-            d_num_noncoherent_integrations_counter = 0U;
-        }
-
+    while (d_num_noncoherent_integrations_counter < d_acq_parameters.max_dwells);
     d_worker_active = false;
 }
 
