@@ -227,6 +227,16 @@ pcps_acquisition::~pcps_acquisition() noexcept
 }
 
 
+void pcps_acquisition::forecast(int noutput_items __attribute__((unused)), gr_vector_int& ninput_items_required)
+{
+    unsigned ninputs = ninput_items_required.size();
+    for (unsigned i = 0; i < ninputs; i++)
+        {
+            ninput_items_required[i] = d_data_buffer.size();
+        }
+}
+
+
 void pcps_acquisition::set_active(bool active)
 {
     {
@@ -975,8 +985,9 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
             // we can consume samples while performing a non-coherent integration as all required data is already buffered
             if (!d_acq_parameters.blocking_on_standby)
                 {
-                    d_sample_count += static_cast<uint64_t>(ninput_items[0]);
-                    consume_each(ninput_items[0]);
+                    auto n_consume = std::min(static_cast<uint32_t>(ninput_items[0]), d_consumed_samples);
+                    d_sample_count += static_cast<uint64_t>(n_consume);
+                    consume_each(n_consume);
                 }
             return 0;
         }
@@ -1013,8 +1024,9 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                     d_state = 2;
                 }
             d_buffer_count += buff_increment;
-            d_sample_count += static_cast<uint64_t>(buff_increment);
-            consume_each(buff_increment);
+            auto n_consume = std::min(static_cast<uint32_t>(ninput_items[0]), d_consumed_samples);
+            d_sample_count += static_cast<uint64_t>(n_consume);
+            consume_each(n_consume);
         }
     if (d_state == 2)
         {
