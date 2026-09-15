@@ -203,6 +203,12 @@ pcps_acquisition::pcps_acquisition(const Acq_Conf& conf_)
         }
 
     update_grid_doppler_wipeoffs();
+
+    // Give a hint to GNU Radio scheduler on how many samples we may want
+    // As pcps_acquisition is not inherited from gr::sync_block, This doesn't prevent us
+    // from producing exactly 1 sample (or even 0 samples) in the general_work
+    // Fixes CI freeze and retains performance improvement
+    this->set_output_multiple(std::max(d_samples_to_consume, static_cast<uint32_t>(d_data_buffer.size())));
 }
 
 
@@ -928,11 +934,13 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
             // we can consume samples while performing a non-coherent integration as all required data is already buffered
             if (!d_acq_parameters.blocking_on_standby)
                 {
-                    d_sample_count += static_cast<uint64_t>(ninput_items[0]);
-                    consume_each(ninput_items[0]);
-                    /*                    d_buffer_count += ninput_items[0];
-                    while(d_buffer_count > d_consumed_samples)
-                        d_buffer_count-=d_consumed_samples;*/
+                    // Advance the input buffer reader by d_samples_to_consume to improve acquisition performance
+                    // in realtime configurations.
+                    // This should not result in misalignment as d_samples_to_consume is always a multiple of code size in samples
+                    // and input buffer is expected to have enough samples to fill a data buffer after set_output_multiple call
+                    auto n_consume = std::min(static_cast<uint32_t>(ninput_items[0]), d_samples_to_consume);
+                    d_sample_count += static_cast<uint64_t>(n_consume);
+                    consume_each(n_consume);
                 }
             return 0;
         }
@@ -972,14 +980,16 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                 }
 
             d_buffer_sample_count += samples_to_copy;
-            d_sample_count += static_cast<uint64_t>(samples_to_copy);
-            consume_each(samples_to_copy);
+            // Advance the input buffer reader by d_samples_to_consume.
+            // See notes above.
+            auto n_consume = std::min(static_cast<uint32_t>(ninput_items[0]), d_samples_to_consume);
+            d_sample_count += static_cast<uint64_t>(n_consume);
+            consume_each(n_consume);
 
             if (d_buffer_sample_count == buffer_size)  // Buffer is full
                 {
                     d_state = 2;
                 }
-
         }
     if (d_state == 2)
         {
