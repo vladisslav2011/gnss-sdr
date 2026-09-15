@@ -931,9 +931,6 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                     auto n_consume = std::min(static_cast<uint32_t>(ninput_items[0]), d_consumed_samples);
                     d_sample_count += static_cast<uint64_t>(n_consume);
                     consume_each(n_consume);
-                    /*                    d_buffer_count += ninput_items[0];
-                    while(d_buffer_count > d_consumed_samples)
-                        d_buffer_count-=d_consumed_samples;*/
                 }
             return 0;
         }
