@@ -2231,6 +2231,9 @@ void rtklib_pvt_gs::clear_ephemeris()
     d_internal_pvt_solver->galileo_almanac_map.clear();
     d_internal_pvt_solver->beidou_dnav_ephemeris_map.clear();
     d_internal_pvt_solver->beidou_dnav_almanac_map.clear();
+    d_internal_pvt_solver->beidou_cnav1_ephemeris_map.clear();
+    d_internal_pvt_solver->beidou_cnav2_ephemeris_map.clear();
+    d_internal_pvt_solver->beidou_cnav1_page_data_map.clear();
     if (d_enable_rx_clock_correction == true)
         {
             d_user_pvt_solver->clear_gps_ephemerides();
@@ -2241,6 +2244,9 @@ void rtklib_pvt_gs::clear_ephemeris()
             d_user_pvt_solver->galileo_almanac_map.clear();
             d_user_pvt_solver->beidou_dnav_ephemeris_map.clear();
             d_user_pvt_solver->beidou_dnav_almanac_map.clear();
+            d_user_pvt_solver->beidou_cnav1_ephemeris_map.clear();
+            d_user_pvt_solver->beidou_cnav2_ephemeris_map.clear();
+            d_user_pvt_solver->beidou_cnav1_page_data_map.clear();
         }
 }
 

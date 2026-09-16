@@ -2572,12 +2572,13 @@ bool GNSSFlowgraph::is_multiband() const
                     multiband = true;
                 }
         }
-    if (configuration_->property("Channels_B1.count", 0) > 0)
+    const bool has_bds_b1 = configuration_->property("Channels_B1.count", 0) > 0 ||
+                            configuration_->property("Channels_1D.count", 0) > 0;
+    const bool has_bds_b3 = configuration_->property("Channels_B3.count", 0) > 0;
+    const bool has_bds_b2a = configuration_->property("Channels_5D.count", 0) > 0;
+    if ((has_bds_b1 && (has_bds_b3 || has_bds_b2a)) || (has_bds_b3 && has_bds_b2a))
         {
-            if (configuration_->property("Channels_B3.count", 0) > 0)
-                {
-                    multiband = true;
-                }
+            multiband = true;
         }
     if (configuration_->property("Channels_J1.count", 0) > 0)
         {
@@ -2601,6 +2602,7 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
     assistance_available = false;
     Gnss_Signal result{};
     bool found_signal = false;
+    std::vector<std::string> assist_signal_candidates;
     std::string assist_signal = "";
     auto& available_signals = available_signals_map_.at(searched_signal);
 
@@ -2616,13 +2618,17 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
         {
         case evGPS_2S:
         case evGPS_L5:
-            assist_signal = "1C";
+            assist_signal_candidates = {"1C"};
             break;
 
         case evGAL_5X:
         case evGAL_7X:
         case evGAL_E6:
-            assist_signal = "1B";
+            assist_signal_candidates = {"1B"};
+            break;
+
+        case evBDS_B2A:
+            assist_signal_candidates = {"B1", "1D", "B3"};
             break;
 
         case evGPS_1C:
@@ -2630,44 +2636,52 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
         case evGLO_1G:
         case evBDS_B1:
         case evBDS_B1C:
-        case evBDS_B2A:
         case evQZS_J1:
             is_primary_frequency = true;
             break;
 
         case evQZS_J5:
-            assist_signal = "J1";
+            assist_signal_candidates = {"J1"};
             break;
 
         default:
             break;
         }
 
-    if (!assist_signal.empty())
-        {
-            if (configuration_->property("Channels_" + assist_signal + ".count", 0) > 0)
-                {
-                    // 1. Get the current channel status map
-                    const auto current_channels_status = channels_status_->get_current_status_map();
-                    // 2. search the currently tracked primary signal satellites and assist the acquisition if the satellite is not tracked on the assisted signal
-                    for (const auto& current_status : current_channels_status)
-                        {
-                            if (std::string(current_status.second->Signal) == assist_signal)
-                                {
-                                    std::list<Gnss_Signal>::iterator it2;
-                                    it2 = std::find_if(std::begin(available_signals), std::end(available_signals),
-                                        [&](Gnss_Signal const& sig) { return sig.get_satellite().get_PRN() == current_status.second->PRN; });
+    const bool any_assist_configured = std::any_of(assist_signal_candidates.begin(), assist_signal_candidates.end(),
+        [&](const std::string& assist_signal) { return configuration_->property("Channels_" + assist_signal + ".count", 0) > 0; });
 
-                                    if (it2 != available_signals.end())
-                                        {
-                                            estimated_doppler = static_cast<float>(current_status.second->Carrier_Doppler_hz);
-                                            RX_time = current_status.second->RX_time;
-                                            result = *it2;
-                                            available_signals.erase(it2);
-                                            found_signal = true;
-                                            assistance_available = true;
-                                            break;
-                                        }
+    // A BeiDou band without an enabled assisting band must acquire on its
+    // own, even when another constellation makes the receiver multiband.
+    // In B3I+B2a, B3I starts first and then assists B2a.
+    if (!any_assist_configured && (searched_signal == "5D" || searched_signal == "B3"))
+        {
+            assist_signal_candidates.clear();
+            is_primary_frequency = true;
+        }
+
+    if (any_assist_configured)
+        {
+            // 1. Get the current channel status map
+            const auto current_channels_status = channels_status_->get_current_status_map();
+            // 2. search the currently tracked primary signal satellites and assist the acquisition if the satellite is not tracked on the assisted signal
+            for (const auto& current_status : current_channels_status)
+                {
+                    if (std::string(current_status.second->Signal) == assist_signal)
+                        {
+                            std::list<Gnss_Signal>::iterator it2;
+                            it2 = std::find_if(std::begin(available_signals), std::end(available_signals),
+                                [&](Gnss_Signal const& sig) { return sig.get_satellite().get_PRN() == current_status.second->PRN; });
+
+                            if (it2 != available_signals.end())
+                                {
+                                    estimated_doppler = static_cast<float>(current_status.second->Carrier_Doppler_hz);
+                                    RX_time = current_status.second->RX_time;
+                                    result = *it2;
+                                    available_signals.erase(it2);
+                                    found_signal = true;
+                                    assistance_available = true;
+                                    break;
                                 }
                         }
                 }
