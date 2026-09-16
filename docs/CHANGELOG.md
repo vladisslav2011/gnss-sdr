@@ -306,6 +306,15 @@ All notable changes to GNSS-SDR will be documented in this file.
   metadata in satellite status, and the NMEA printer emits the strongest
   available C/N0 with the corresponding NMEA signal identifier. Contributed by
   @vladisslav2011.
+- The custom output stream defined by `monitor_pvt.proto` now includes a
+  `tracked_satellites` list. Each entry reports one tracked signal (`system`,
+  `prn`, `signal`), its `azimuth_deg` and `elevation_deg`, whether it was
+  `combined` with another signal of the same satellite (e.g., the Galileo E1+E5a
+  ionosphere-free combination), and a `used` flag telling whether it contributed
+  to the reported fix. Satellites that were tracked but left out of the solution
+  (below `PVT.elevation_mask`, or excluded by RAIM) are listed with
+  `used = false`. Unhealthy satellites are listed with `healthy = false`.
+  Contributed by @joebre.
 
 ### Improvements in Maintainability:
 
