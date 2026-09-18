@@ -298,6 +298,26 @@ std::string find_line_containing(const std::string& filename, const std::string&
 }
 
 
+void dump_to_console(const std::string& filename)
+{
+    std::fstream fstr(filename.c_str(), std::fstream::in);
+    if (!fstr.is_open())
+        {
+            return;
+        }
+    fstr.seekg(0);
+
+    std::string line_str;
+    std::cout << "------------------------------------------------\n";
+    while (!fstr.eof())
+        {
+            std::getline(fstr, line_str);
+            std::cout << line_str << "\n";
+        }
+    std::cout << "------------------------------------------------\n";
+}
+
+
 int32_t count_record_body_lines(const std::string& filename, const std::string& record_header)
 {
     std::fstream fstr(filename.c_str(), std::fstream::in);
@@ -538,6 +558,7 @@ TEST_F(RinexPrinterTest, Rinex4GpsNavAndObs)
     const std::string navfile = rp->get_navfilename()[0];
     rp = nullptr;  // close the RINEX files so we can inspect them
 
+    dump_to_console(navfile);
     const std::string obs_version_line = find_rinex_header_line(obsfile, "RINEX VERSION / TYPE");
     EXPECT_NE(std::string::npos, obs_version_line.find("4.02"));
     EXPECT_NE(std::string::npos, obs_version_line.find("OBSERVATION DATA"));
