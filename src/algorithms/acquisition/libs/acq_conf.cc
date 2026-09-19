@@ -93,6 +93,7 @@ void Acq_Conf::SetFromConfiguration(const ConfigurationInterface *configuration,
 
     enable_monitor_output = configuration->property("AcquisitionMonitor.enable_monitor", false);
 
+
     SetDerivedParams();
 }
 

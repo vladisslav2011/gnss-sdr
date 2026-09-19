@@ -32,6 +32,7 @@
 #include "Galileo_E5b.h"
 #include "Galileo_E6.h"
 #include "Galileo_OSNMA.h"
+#include "buffer_pool.h" // TODO: move to appropriate place
 #include "channel.h"
 #include "channel_fsm.h"
 #include "channel_interface.h"
@@ -519,6 +520,7 @@ int GNSSFlowgraph::connect_desktop_flowgraph()
 {
     // Connect blocks to the top_block
     const int max_channels_in_acq = configuration_->property("Channels.in_acquisition", 0);
+    BufferPool<gr_complex>::resize(max_channels_in_acq); // TODO: move to appropriate place
     if (max_channels_in_acq > channels_count_)
         {
             help_hint_ += " * The maximum number of channels with concurrent signal acquisition is set to Channels.in_acquisition=" + std::to_string(max_channels_in_acq) + ",\n";
