@@ -1161,10 +1161,7 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                                         << " d_sample_count: " << d_sample_count;
                             d_sample_count += n_consume;
                             consume_each(n_consume);
-                            if (n_consume < n_skip)
-                                {
-                                    d_state = 0;
-                                }
+                            d_state = 0;
                         }
                 }
             // Restart acquisition variables
