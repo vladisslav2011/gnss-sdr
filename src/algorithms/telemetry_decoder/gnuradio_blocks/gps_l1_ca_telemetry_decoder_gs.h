@@ -123,6 +123,8 @@ private:
     const bool d_tow_to_trk;
     bool d_have_last_decoded_tow;
     const bool d_early_monitor;
+    bool d_flag_frame_sync_confirmed;
+    bool d_flag_subframe_parity_ok;
 };
 
 
