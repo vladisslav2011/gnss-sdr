@@ -256,6 +256,7 @@ private:
     size_t d_data_buffer_size;
     volk_gnsssdr::vector<std::complex<float>> d_data_buffer;
     std::unique_ptr<gnss_fft_complex_fwd> d_fft_if;
+    gr::thread::condition_variable worker_cv;
 };
 
 
