@@ -1164,17 +1164,20 @@ int pcps_acquisition::general_work(int noutput_items __attribute__((unused)),
                             d_state = 0;
                         }
                 }
-            // Restart acquisition variables
-            d_gnss_synchro->Acq_delay_samples = 0.0;
-            d_gnss_synchro->Acq_doppler_hz = 0.0;
-            d_gnss_synchro->Acq_samplestamp_samples = 0ULL;
-            d_gnss_synchro->Acq_doppler_step = 0U;
-            d_buffer_sample_count = 0U;
-            d_num_noncoherent_integrations_counter = 0U;
-            if (d_data_buffer_size)
+            if (d_state == 1)
                 {
-                    d_data_buffer = BufferPool<gr_complex>::take();
-                    d_data_buffer.resize(d_data_buffer_size);
+                    // Restart acquisition variables
+                    d_gnss_synchro->Acq_delay_samples = 0.0;
+                    d_gnss_synchro->Acq_doppler_hz = 0.0;
+                    d_gnss_synchro->Acq_samplestamp_samples = 0ULL;
+                    d_gnss_synchro->Acq_doppler_step = 0U;
+                    d_buffer_sample_count = 0U;
+                    d_num_noncoherent_integrations_counter = 0U;
+                    if (d_data_buffer_size)
+                        {
+                            d_data_buffer = BufferPool<gr_complex>::take();
+                            d_data_buffer.resize(d_data_buffer_size);
+                        }
                 }
         }
     // Initial buffering
