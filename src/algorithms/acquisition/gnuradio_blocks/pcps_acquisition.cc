@@ -219,7 +219,7 @@ pcps_acquisition::pcps_acquisition(const Acq_Conf& conf_)
 }
 
 
-pcps_acquisition::~pcps_acquisition() noexcept
+bool pcps_acquisition::stop()
 {
     try
         {
@@ -232,12 +232,13 @@ pcps_acquisition::~pcps_acquisition() noexcept
         }
     catch (const std::exception& e)
         {
-            LOG(WARNING) << "Exception while waiting for the acquisition worker in destructor: " << e.what();
+            LOG(WARNING) << "Exception while waiting for the acquisition worker to terminate: " << e.what();
         }
     catch (...)
         {
-            LOG(WARNING) << "Unknown exception while waiting for the acquisition worker in destructor";
+            LOG(WARNING) << "Unknown exception while waiting for the acquisition worker to terminate";
         }
+    return acquisition_impl_interface::stop();
 }
 
 
