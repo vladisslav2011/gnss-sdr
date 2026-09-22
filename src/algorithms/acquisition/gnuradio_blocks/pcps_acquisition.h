@@ -325,6 +325,8 @@ private:
 #endif
     gr::thread::condition_variable worker_cv;
     gr::thread::mutex d_wait_mutex;
+    bool d_optimize_grid;
+    uint32_t d_opt_wipeoffs;
 };
 
 
