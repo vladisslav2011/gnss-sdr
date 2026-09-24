@@ -62,6 +62,7 @@
 #include "ibyte_to_cshort.h"
 #include "ishort_to_complex.h"
 #include "ishort_to_cshort.h"
+#include "kf_tracking_adapter.h"
 #include "labsat_signal_source.h"
 #include "mmse_resampler_conditioner.h"
 #include "multichannel_file_signal_source.h"
@@ -664,6 +665,66 @@ std::unique_ptr<TrackingInterface> get_trk_block(
     else if (implementation == "SBAS_L1_DLL_PLL_Tracking")
         {
             return std::make_unique<DllPllTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, SBAS_S1);
+        }
+    else if (implementation == "Galileo_E1_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, GAL_1B);
+        }
+    else if (implementation == "Galileo_E5a_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, GAL_E5a);
+        }
+    else if (implementation == "Galileo_E5b_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, GAL_E5b);
+        }
+    else if (implementation == "Galileo_E6_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, GAL_E6);
+        }
+    else if (implementation == "GPS_L2_M_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, GPS_2S);
+        }
+    else if ((implementation == "GPS_L5i_KF_Tracking") || (implementation == "GPS_L5_KF_Tracking"))
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, GPS_L5);
+        }
+    else if (implementation == "GLONASS_L1_CA_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, GLO_1G);
+        }
+    else if (implementation == "GLONASS_L2_CA_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, GLO_2G);
+        }
+    else if (implementation == "BEIDOU_B1I_KK_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, BDS_B1);
+        }
+    else if (implementation == "BEIDOU_B1C_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, BDS_B1C);
+        }
+    else if (implementation == "BEIDOU_B2A_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, BDS_B2A);
+        }
+    else if (implementation == "BEIDOU_B3I_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, BDS_B3);
+        }
+    else if (implementation == "QZSS_L1_CA_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, QZS_J1);
+        }
+    else if (implementation == "QZSS_L5_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, QZS_J5);
+        }
+    else if (implementation == "SBAS_L1_KF_Tracking")
+        {
+            return std::make_unique<KfTrackingAdapter>(configuration, role, implementation, in_streams, out_streams, SBAS_S1);
         }
 #if CUDA_GPU_ACCEL
     else if (implementation == "GPS_L1_CA_DLL_PLL_Tracking_GPU")

@@ -28,6 +28,7 @@ endif()
 
 set(TRACKING_ADAPTER_SOURCES
     dll_pll_tracking_adapter.cc
+    kf_tracking_adapter.cc
     galileo_e1_tcp_connector_tracking.cc
     gps_l1_ca_tcp_connector_tracking.cc
     gps_l1_ca_gaussian_tracking.cc
@@ -37,6 +38,7 @@ set(TRACKING_ADAPTER_SOURCES
 
 set(TRACKING_ADAPTER_HEADERS
     dll_pll_tracking_adapter.h
+    kf_tracking_adapter.h
     galileo_e1_tcp_connector_tracking.h
     gps_l1_ca_tcp_connector_tracking.h
     gps_l1_ca_gaussian_tracking.h
