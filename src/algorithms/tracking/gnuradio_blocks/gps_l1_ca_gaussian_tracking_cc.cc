@@ -176,6 +176,9 @@ Gps_L1_Ca_Gaussian_Tracking_cc::Gps_L1_Ca_Gaussian_Tracking_cc(
     this->set_relative_rate(1.0 / static_cast<double>(d_vector_length));
 #endif
 
+    // Make sure that GNU Radio scheduler will always be able to satisfy our request from forecast()
+    set_history(d_vector_length + 1);
+
     // Kalman filter initialization (receiver initialization)
 
     const double CN_dB_Hz = 30;
