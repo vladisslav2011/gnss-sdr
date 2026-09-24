@@ -131,6 +131,10 @@ Galileo_E1_Tcp_Connector_Tracking_cc::Galileo_E1_Tcp_Connector_Tracking_cc(
 #else
     this->set_relative_rate(1.0 / static_cast<double>(vector_length));
 #endif
+
+    // Make sure that GNU Radio scheduler will always be able to satisfy our request from forecast()
+    set_history(vector_length + 1);
+
     this->message_port_register_out(pmt::mp("events"));
     // Telemetry message port input
     this->message_port_register_in(pmt::mp("telemetry_to_trk"));
