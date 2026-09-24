@@ -146,6 +146,9 @@ kf_tracking::kf_tracking(const Kf_Conf &conf_)
     // prevent telemetry symbols accumulation in output buffers
     this->set_max_noutput_items(1);
 
+    // Make sure that GNU Radio scheduler will always be able to satisfy our request from forecast()
+    set_history(d_trk_parameters.vector_length + 1);
+
     // Telemetry bit synchronization message port input
     this->message_port_register_out(pmt::mp("events"));
 
