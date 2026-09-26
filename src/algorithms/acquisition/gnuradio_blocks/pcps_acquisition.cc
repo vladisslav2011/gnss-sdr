@@ -788,6 +788,7 @@ void pcps_acquisition::acquisition_core(uint64_t sample_count)
                     // Handle termination request
                     if (!d_active)
                         {
+                            BufferPool<gr_complex>::instance().release(std::move(d_data_buffer));
                             d_worker_active = false;
                             return;
                         }
@@ -821,6 +822,10 @@ void pcps_acquisition::acquisition_core(uint64_t sample_count)
             // Handle termination request
             if (!d_active)
                 {
+                    if (is_buffering)
+                        {
+                            BufferPool<gr_complex>::instance().release(std::move(d_data_buffer));
+                        }
                     d_worker_active = false;
                     return;
                 }
