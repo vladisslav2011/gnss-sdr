@@ -2194,6 +2194,12 @@ std::map<int, Beidou_Cnav1_Ephemeris> rtklib_pvt_gs::get_beidou_cnav1_ephemeris_
 }
 
 
+std::map<int, Beidou_Cnav1_Ephemeris> rtklib_pvt_gs::get_beidou_cnav2_ephemeris_map() const
+{
+    return d_internal_pvt_solver->beidou_cnav2_ephemeris_map;
+}
+
+
 std::map<int, Beidou_Dnav_Almanac> rtklib_pvt_gs::get_beidou_dnav_almanac_map() const
 {
     return d_internal_pvt_solver->beidou_dnav_almanac_map;

@@ -129,6 +129,11 @@ public:
     std::map<int, Beidou_Cnav1_Ephemeris> get_beidou_cnav1_ephemeris_map() const;
 
     /*!
+     * \brief Get latest set of BeiDou CNAV2 ephemeris from PVT block
+     */
+    std::map<int, Beidou_Cnav1_Ephemeris> get_beidou_cnav2_ephemeris_map() const;
+
+    /*!
      * \brief Get latest set of BeiDou DNAV almanac from PVT block
      */
     std::map<int, Beidou_Dnav_Almanac> get_beidou_dnav_almanac_map() const;

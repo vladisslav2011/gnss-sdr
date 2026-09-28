@@ -755,8 +755,22 @@ bool ControlThread::read_assistance_from_XML()
                 }
         }
 
-    if (configuration_->property("Channels_1D.count", 0) > 0)
+    if ((configuration_->property("Channels_1D.count", 0) > 0) || (configuration_->property("Channels_5D.count", 0) > 0))
         {
+            if (supl_client_ephemeris_.load_beidou_dnav_ephemeris_xml(eph_bds_dnav_xml_filename) == true)
+                {
+                    std::map<int, Beidou_Dnav_Ephemeris>::const_iterator eph_iter;
+                    for (eph_iter = supl_client_ephemeris_.beidou_dnav_ephemeris_map.cbegin();
+                        eph_iter != supl_client_ephemeris_.beidou_dnav_ephemeris_map.cend();
+                        eph_iter++)
+                        {
+                            std::cout << "From XML file: Read BeiDou DNAV ephemeris for satellite " << Gnss_Satellite("Beidou", eph_iter->second.PRN) << '\n';
+                            const std::shared_ptr<Beidou_Dnav_Ephemeris> tmp_obj = std::make_shared<Beidou_Dnav_Ephemeris>(eph_iter->second);
+                            flowgraph_->send_telemetry_msg(pmt::make_any(tmp_obj));
+                        }
+                    ret = true;
+                }
+
             if (supl_client_ephemeris_.load_beidou_cnav1_ephemeris_xml(eph_bds_cnav1_xml_filename) == true)
                 {
                     std::map<int, Beidou_Cnav1_Ephemeris>::const_iterator eph_iter;

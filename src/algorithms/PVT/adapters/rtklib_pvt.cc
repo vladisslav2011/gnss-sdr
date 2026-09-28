@@ -925,6 +925,12 @@ std::map<int, Beidou_Cnav1_Ephemeris> Rtklib_Pvt::get_beidou_cnav1_ephemeris() c
 }
 
 
+std::map<int, Beidou_Cnav1_Ephemeris> Rtklib_Pvt::get_beidou_cnav2_ephemeris() const
+{
+    return pvt_->get_beidou_cnav2_ephemeris_map();
+}
+
+
 std::map<int, Gps_Almanac> Rtklib_Pvt::get_gps_almanac() const
 {
     return pvt_->get_gps_almanac_map();

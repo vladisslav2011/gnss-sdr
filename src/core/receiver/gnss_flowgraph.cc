@@ -1987,6 +1987,29 @@ void GNSSFlowgraph::acquisition_manager(unsigned int who)
                                                         }
                                                     if (!ephemeris_found)
                                                         {
+                                                            const auto& ephemeris_map = get_pvt()->get_beidou_cnav2_ephemeris();
+                                                            auto iter = ephemeris_map.find(sat.get_PRN());
+                                                            if (iter != ephemeris_map.cend())
+                                                                {
+                                                                    ephemeris_found = true;
+                                                                    assist_level = ASSIST_ESTIMATED_DOPPLER;
+                                                                    double predicted = iter->second.predicted_doppler(TOW, latest_pvt->latitude, latest_pvt->longitude, latest_pvt->height,
+                                                                        latest_pvt->vel_n, latest_pvt->vel_e, latest_pvt->vel_u, freq_idx->second);
+                                                                    if (std::isfinite(predicted))
+                                                                        {
+                                                                            corrected_center += predicted;
+                                                                        }
+                                                                    else
+                                                                        {
+                                                                            // std::cout<<"Satellite C"<<sat.get_PRN()<<" is skipped due to negative elevation\n";
+                                                                            // push_back_signal(gnss_signal);
+                                                                            // return;
+                                                                        }
+                                                                    // std::cout<<"[[[[ found valid ephemeris for C"<<sat.get_PRN()<<" predicted="<<corrected_center<<"\n";
+                                                                }
+                                                        }
+                                                    if (!ephemeris_found)
+                                                        {
                                                             // std::cout<<"]]]] no valid ephemeris for C"<<sat.get_PRN()<<"\n";
                                                             const auto& almanac_map = get_pvt()->get_beidou_dnav_almanac();
                                                             auto iter = almanac_map.find(sat.get_PRN());

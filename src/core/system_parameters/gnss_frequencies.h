@@ -77,6 +77,7 @@ const std::unordered_map<std::string, int> SIGNAL_FREQ_IDX = {
     {"B2", 2},
     {"B3", 3},
     {"1D", 4},
+    {"5D", 5},
     {"J1", 2},
     {"J5", 3},
 };
