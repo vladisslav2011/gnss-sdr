@@ -920,6 +920,7 @@ void pcps_acquisition::acquisition_core(uint64_t sample_count)
 {
     gr::thread::scoped_lock lk(d_setlock);
     const bool is_buffering = !d_data_buffer.empty();
+    std::cout << "pcps_acquisition::acquisition_core: d_buffer_sample_count: " << d_buffer_sample_count << "\n";
 
     do
         {
@@ -929,6 +930,7 @@ void pcps_acquisition::acquisition_core(uint64_t sample_count)
                     if (offset + d_samples_to_consume > d_buffer_sample_count)
                         {
                             worker_cv.wait(lk);
+                            std::cout << "pcps_acquisition::acquisition_core: d_buffer_sample_count after worker_cv.wait(): " << d_buffer_sample_count << "\n";
                         }
                     // Handle termination request
                     if (!d_active)
