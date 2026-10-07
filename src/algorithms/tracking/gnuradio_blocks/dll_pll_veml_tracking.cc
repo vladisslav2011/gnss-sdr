@@ -2385,7 +2385,7 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
         case 0:  // Standby - Consume samples at full throttle, do nothing
             {
                 // d_sample_counter += static_cast<uint64_t>(ninput_items[0]);
-                consume_each(ninput_items[0]);
+                consume_each(ninput_items[0] - history() - 1);
                 return 0;
                 break;
             }
